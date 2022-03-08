@@ -1,22 +1,9 @@
 import { Account, Address, Balance, IProvider, ISigner, Nonce, Token, TokenOfAccountOnNetwork, TransactionHash } from "@elrondnetwork/erdjs";
 
-export interface IWorkspaceConfig {
-    readonly proxyUrl: string;
-    readonly session: string;
-}
-
 export interface ITestSessionConfig {
+    readonly proxyUrl: string;
     readonly whalePem: string;
     readonly accountsPem: string;
-}
-
-export interface IUser {
-    readonly address: Address;
-    readonly account: Account;
-    readonly signer: ISigner;
-    readonly accountTokens: TokenOfAccountOnNetwork[];
-
-    sync(proxy: IProvider): Promise<void>;
 }
 
 export interface ITestSession {
@@ -37,6 +24,17 @@ export interface ITestSession {
     saveToken(name: string, token: Token): Promise<void>;
     loadToken(name: string): Promise<Token>;
     getTokensOnFocus(): Promise<Token[]>;
+}
+
+// TODO: IBunchOfUsers: whale, regularAccounts, alice, bob, carol etc.
+
+export interface IUser {
+    readonly address: Address;
+    readonly account: Account;
+    readonly signer: ISigner;
+    readonly accountTokens: TokenOfAccountOnNetwork[];
+
+    sync(proxy: IProvider): Promise<void>;
 }
 
 /**

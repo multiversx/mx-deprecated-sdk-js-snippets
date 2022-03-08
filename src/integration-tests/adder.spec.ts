@@ -1,20 +1,17 @@
-import { Balance, Logger, LogLevel } from "@elrondnetwork/erdjs";
-import { Workspace } from "../workspace";
+import { Balance } from "@elrondnetwork/erdjs";
 import { AdderInteractor } from "./adderInteractor";
 import { AirdropService } from "../airdrop";
 import { MOCHA_TIMEOUT_ONE_MINUTE } from "../constants";
 import { ITestSession, IUser } from "../interfaces";
+import { TestSession } from "../session";
 
 describe("adder snippet", async function () {
     let scope = this.fullTitle();
-    let workspace: Workspace;
     let session: ITestSession;
     let owner: IUser;
 
     this.beforeAll(async function () {
-        Logger.setLevel(LogLevel.Debug);
-        workspace = Workspace.load();
-        session = await workspace.loadSession(scope);
+        session = await TestSession.loadSession(__dirname, "default", scope);
         owner = session.whale;
         await session.syncNetworkConfig();
     });

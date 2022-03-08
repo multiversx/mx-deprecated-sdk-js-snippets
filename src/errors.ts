@@ -25,18 +25,6 @@ export class Err extends Error {
     }
 }
 
-export class ErrBadWorkspace extends Err {
-    public constructor(workspace: string) {
-        super(`Bad workspace: ${workspace}`);
-    }
-}
-
-export class ErrBadWorkspaceConfig extends Err {
-    public constructor(workspace: string, message: string) {
-        super(`Bad workspace config for ${workspace}: ${message}`);
-    }
-}
-
 export class ErrBadSessionConfig extends Err {
     public constructor(session: string, message: string) {
         super(`Bad session config for ${session}: ${message}`);

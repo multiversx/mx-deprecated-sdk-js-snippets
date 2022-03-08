@@ -1,6 +1,9 @@
-import { Address, IProvider, NetworkConfig, Token } from "@elrondnetwork/erdjs";
+import { Address, IProvider, NetworkConfig, ProxyProvider, Token } from "@elrondnetwork/erdjs";
+import { readFileSync } from "fs";
+import path from "path";
 import { ErrBadSessionConfig } from "./errors";
 import { IStorage, ITestSession, ITestSessionConfig, IUser } from "./interfaces";
+import { Storage } from "./storage/storage";
 import { User } from "./users";
 
 const TypeToken = "token";
@@ -19,8 +22,11 @@ export class TestSession implements ITestSession {
         scope: string,
         proxy: IProvider,
         storage: IStorage,
+        // TODO: Receive IBunchOfUsers
         config: ITestSessionConfig
     }) {
+        
+        // TODO: Remove checks (move them at load time)
         if (!args.config.whalePem) {
             throw new ErrBadSessionConfig(args.name, "missing 'whalePem'");
         }
@@ -34,6 +40,30 @@ export class TestSession implements ITestSession {
         this.storage = args.storage;
         this.whale = User.fromPemFile(args.config.whalePem);
         this.users = User.moreFromPemFile(args.config.accountsPem);
+    }
+
+    static async loadSession(folder: string, sessionName: string, scope: string): Promise<ITestSession> {
+        let configFile = path.join(folder, `${sessionName}.session.json`);
+        let configJson = readFileSync(configFile, { encoding: "utf8" });
+        let config = <ITestSessionConfig>JSON.parse(configJson);
+        
+        if (!config.proxyUrl) {
+            throw new ErrBadSessionConfig(sessionName, "missing 'proxyUrl'");
+        }
+
+        let proxy = new ProxyProvider(config.proxyUrl);
+        let storageName = path.join(folder, `${sessionName}.sqlite`);
+        let storage = await Storage.create(storageName);
+
+        let session = new TestSession({
+            name: sessionName,
+            scope: scope,
+            proxy: proxy,
+            storage: storage,
+            config: config
+        });
+
+        return session;
     }
 
     async syncNetworkConfig(): Promise<void> {
