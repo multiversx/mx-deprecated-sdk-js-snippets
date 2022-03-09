@@ -2,18 +2,19 @@ import { AbiRegistry, Address, BigUIntValue, Code, GasLimit, Interaction, SmartC
 import { DefaultInteractor } from "../interactors";
 import { ITestSession, IUser } from "../interfaces";
 
+const PathToWasm = "./src/integration-tests/adder.wasm";
+const PathToAbi = "./src/integration-tests/adder.abi.json";
+
 export class AdderInteractor extends DefaultInteractor {
-    private readonly session: ITestSession;
     private readonly contract: SmartContract;
 
     private constructor(session: ITestSession, contract: SmartContract) {
         super(session);
-        this.session = session;
         this.contract = contract;
     }
 
     static async create(session: ITestSession, address?: Address): Promise<AdderInteractor> {
-        let registry = await AbiRegistry.load({ files: ["./src/integration-tests/adder.abi.json"] });
+        let registry = await AbiRegistry.load({ files: [PathToAbi] });
         let abi = new SmartContractAbi(registry, ["Adder"]);
         let contract = new SmartContract({ address: address, abi: abi });
         let interactor = new AdderInteractor(session, contract);
@@ -21,30 +22,22 @@ export class AdderInteractor extends DefaultInteractor {
     }
 
     async deploy(deployer: IUser, initialValue: number): Promise<Address> {
-        let code = await Code.fromFile("./src/integration-tests/adder.wasm");
+        let code = await Code.fromFile(PathToWasm);
 
         let transaction = this.contract.deploy({
             code: code,
-            gasLimit: new GasLimit(200000000),
+            gasLimit: new GasLimit(20000000),
             initArguments: [new BigUIntValue(initialValue)]
         });
 
-        transaction.setNonce(deployer.account.getNonceThenIncrement());
-        await deployer.signer.sign(transaction);
-        await transaction.send(this.session.proxy);
-        await transaction.awaitExecuted(this.session.proxy);
-
-        console.log("Deploy transaction:", transaction.getHash().toString());
-        console.log("Contract address:", this.contract.getAddress().bech32());
-
+        await this.doDeploy(deployer, transaction);
         return this.contract.getAddress();
     }
 
     async add(owner: IUser, value: number): Promise<void> {
         let interaction = <Interaction>this.contract.methods
             .add([new BigUIntValue(value)])
-            .withGasLimit(new GasLimit(100000000))
-            .withNonce(owner.account.getNonceThenIncrement());
+            .withGasLimit(new GasLimit(10000000));
 
         await this.runInteraction(owner, interaction);
     }

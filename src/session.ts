@@ -96,6 +96,7 @@ export class TestSession implements ITestSession {
     }
 
     async saveAddress(name: string, address: Address): Promise<void> {
+        console.log(`TestSession.saveAddress(): name = [${name}], address = ${address.bech32()}`);
         await this.storage.storeBreadcrumb(this.scope, TypeAddress, name, address.bech32());
     }
 

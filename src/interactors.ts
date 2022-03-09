@@ -17,6 +17,16 @@ export class DefaultInteractor {
         this.checker = new StrictChecker();
     }
 
+    async doDeploy(deployer: IUser, deployTransaction: Transaction): Promise<void> {
+        deployTransaction.setNonce(deployer.account.getNonceThenIncrement());
+
+        await deployer.signer.sign(deployTransaction);
+        await deployTransaction.send(this.proxy);
+        await deployTransaction.awaitExecuted(this.proxy);
+
+        console.log(`DefaultInteractor.doDeploy(): transaction = ${deployTransaction.getHash()}`);
+    }
+
     async runQuery(user: IUser, interaction: Interaction, caller?: Address): Promise<{ firstValue: TypedValue, values: TypedValue[] }> {
         this.checker.checkInteraction(interaction);
 
@@ -34,7 +44,7 @@ export class DefaultInteractor {
         let functionName = interaction.getExecutingFunction().name;
         let args = interaction.getArguments();
         let argsPlain = args.map(arg => arg.valueOf());
-        console.info(`${functionName}(${argsPlain.join(", ")})`);
+        console.debug(`DefaultInteractor.runInteraction(): call = ${functionName}(${argsPlain.join(", ")})`);
 
         let interactingParticipants: Address[] = [
             user.address,
@@ -42,11 +52,13 @@ export class DefaultInteractor {
         ];
 
         let transaction = interaction.buildTransaction();
+        transaction.setNonce(user.account.getNonceThenIncrement());
         await user.signer.sign(transaction);
 
         let snapshotsBeforeInteraction = await this.takeSnapshotsOfAccounts(interactingParticipants);
 
-        await transaction.send(this.proxy);
+        let transactionHash = await transaction.send(this.proxy);
+        console.debug(`DefaultInteractor.runInteraction(): transaction = ${transactionHash}`);
         let transactionOnNetwork = await transaction.getAsOnNetwork(this.proxy);
 
         let snapshotsAfterInteraction = await this.takeSnapshotsOfAccounts(interactingParticipants);
