@@ -1,5 +1,4 @@
 {
     "proxyUrl": "https://testnet-gateway.elrond.com",
-    "whalePem": "wallets/dummy.pem",
-    "accountsPem": "wallets/dummy.pem"
+    "whalePem": "~/test-wallets/TestnetWhale.pem"
 }

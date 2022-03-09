@@ -3,7 +3,7 @@ import { Account, Address, Balance, IProvider, ISigner, Nonce, Token, TokenOfAcc
 export interface ITestSessionConfig {
     readonly proxyUrl: string;
     readonly whalePem: string;
-    readonly accountsPem: string;
+    readonly othersPem: string;
 }
 
 export interface ITestSession {
@@ -11,12 +11,12 @@ export interface ITestSession {
     readonly scope: string;
     readonly proxy: IProvider;
     readonly storage: IStorage;
-    readonly whale: IUser;
-    readonly users: IUser[];
+    readonly users: IBunchOfUsers;
 
     syncNetworkConfig(): Promise<void>;
     syncWhale(): Promise<void>;
-    syncUsers(): Promise<void>;
+    syncAllUsers(): Promise<void>;
+    syncUsers(users: IUser[]): Promise<void>;
 
     saveAddress(name: string, address: Address): Promise<void>;
     loadAddress(name: string): Promise<Address>;
@@ -26,7 +26,27 @@ export interface ITestSession {
     getTokensOnFocus(): Promise<Token[]>;
 }
 
-// TODO: IBunchOfUsers: whale, regularAccounts, alice, bob, carol etc.
+export interface IBunchOfUsers {
+    readonly whale: IUser;
+
+    readonly alice: IUser;
+    readonly bob: IUser;
+    readonly carol: IUser;
+    readonly dan: IUser;
+    readonly eve: IUser;
+    readonly frank: IUser;
+    readonly grace: IUser;
+    readonly heidi: IUser;
+    readonly ivan: IUser;
+    readonly judy: IUser;
+    readonly mallory: IUser;
+    readonly mike: IUser;
+
+    getFriends(): IUser[];
+    getOthers(): IUser[];
+    getAll(): IUser[];
+    getAllExceptWhale(): IUser[];
+}
 
 export interface IUser {
     readonly address: Address;

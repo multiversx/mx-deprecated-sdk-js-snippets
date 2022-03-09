@@ -49,9 +49,9 @@ export class AdderInteractor extends DefaultInteractor {
         await this.runInteraction(owner, interaction);
     }
 
-    async getSum(caller: IUser): Promise<any> {
+    async getSum(caller: IUser): Promise<number> {
         let interaction = <Interaction>this.contract.methods.getSum();
         let { firstValue: result } = await this.runQuery(caller, interaction);
-        return (<BigUIntValue>result).valueOf();
+        return (<BigUIntValue>result).valueOf().toNumber();
     }
 }

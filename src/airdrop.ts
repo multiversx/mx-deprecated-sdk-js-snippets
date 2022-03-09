@@ -1,37 +1,43 @@
-import { Balance, GasLimit, Transaction, TransactionPayload } from "@elrondnetwork/erdjs/out";
+import { Balance, GasLimit, IProvider, Transaction, TransactionPayload } from "@elrondnetwork/erdjs/out";
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
 import { ESDTTransferPayloadBuilder } from "./erdjsPatching/transactionBuilders";
 import { ErrNotImplemented } from "./errors";
-import { ITestSession } from "./interfaces";
+import { IBunchOfUsers, ITestSession } from "./interfaces";
 import { User } from "./users";
 
 export class AirdropService {
-    private readonly session: ITestSession;
+    private readonly users: IBunchOfUsers;
+    private readonly networkProvider: IProvider;
 
-    constructor(session: ITestSession) {
-        this.session = session;
+    constructor(users: IBunchOfUsers, networkProvider: IProvider) {
+        this.users = users;
+        this.networkProvider = networkProvider;
+    }
+
+    static createOnSession(session: ITestSession) {
+        return new AirdropService(session.users, session.proxy);
     }
 
     async sendToEachUser(amount: Balance) {
-        let whale = this.session.whale;
+        let whale = this.users.whale;
         let transactions = this.createTransactions(whale, amount);
 
         let promisesOfSignAndSend = transactions.map(async (transaction) => {
             await whale.signer.sign(transaction);
-            await transaction.send(this.session.proxy);
+            await transaction.send(this.networkProvider);
         });
 
         await Promise.all(promisesOfSignAndSend);
 
         let whaleExpectedNonce = whale.account.nonce;
-        let watcher = new AccountWatcher(whale.address, this.session.proxy);
+        let watcher = new AccountWatcher(whale.address, this.networkProvider);
         await watcher.awaitNonce(whaleExpectedNonce);
     }
 
     private createTransactions(whale: User, amount: Balance): Transaction[] {
         let transactions: Transaction[] = [];
 
-        for (const user of this.session.users) {
+        for (const user of this.users.getAllExceptWhale()) {
             let value = Balance.Zero();
             let data = new TransactionPayload();
             let gasLimit = GasLimit.forTransfer(data);

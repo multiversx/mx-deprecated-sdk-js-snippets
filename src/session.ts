@@ -1,10 +1,11 @@
 import { Address, IProvider, NetworkConfig, ProxyProvider, Token } from "@elrondnetwork/erdjs";
 import { readFileSync } from "fs";
+import { homedir } from "os";
 import path from "path";
 import { ErrBadSessionConfig } from "./errors";
-import { IStorage, ITestSession, ITestSessionConfig, IUser } from "./interfaces";
+import { IBunchOfUsers, IStorage, ITestSession, ITestSessionConfig, IUser } from "./interfaces";
 import { Storage } from "./storage/storage";
-import { User } from "./users";
+import { BunchOfUsers, User } from "./users";
 
 const TypeToken = "token";
 const TypeAddress = "address";
@@ -13,33 +14,22 @@ export class TestSession implements ITestSession {
     readonly name: string;
     readonly scope: string;
     readonly proxy: IProvider;
+    readonly users: IBunchOfUsers;
     readonly storage: IStorage;
-    readonly whale: IUser;
-    readonly users: IUser[] = [];
 
     constructor(args: {
         name: string,
         scope: string,
         proxy: IProvider,
+        users: IBunchOfUsers,
         storage: IStorage,
-        // TODO: Receive IBunchOfUsers
         config: ITestSessionConfig
     }) {
-        
-        // TODO: Remove checks (move them at load time)
-        if (!args.config.whalePem) {
-            throw new ErrBadSessionConfig(args.name, "missing 'whalePem'");
-        }
-        if (!args.config.accountsPem) {
-            throw new ErrBadSessionConfig(args.name, "missing 'accountsPem'");
-        }
-
         this.name = args.name;
         this.scope = args.scope;
         this.proxy = args.proxy;
+        this.users = args.users;
         this.storage = args.storage;
-        this.whale = User.fromPemFile(args.config.whalePem);
-        this.users = User.moreFromPemFile(args.config.accountsPem);
     }
 
     static async loadSession(folder: string, sessionName: string, scope: string): Promise<ITestSession> {
@@ -50,8 +40,14 @@ export class TestSession implements ITestSession {
         if (!config.proxyUrl) {
             throw new ErrBadSessionConfig(sessionName, "missing 'proxyUrl'");
         }
+        if (!config.whalePem) {
+            throw new ErrBadSessionConfig(sessionName, "missing 'whalePem'");
+        }
 
         let proxy = new ProxyProvider(config.proxyUrl);
+        let whalePem = resolvePath(folder, config.whalePem);
+        let othersPem = config.othersPem ? resolvePath(folder, config.whalePem) : undefined;
+        let users = new BunchOfUsers(whalePem, othersPem);
         let storageName = path.join(folder, `${sessionName}.sqlite`);
         let storage = await Storage.create(storageName);
 
@@ -59,6 +55,7 @@ export class TestSession implements ITestSession {
             name: sessionName,
             scope: scope,
             proxy: proxy,
+            users: users,
             storage: storage,
             config: config
         });
@@ -71,11 +68,15 @@ export class TestSession implements ITestSession {
     }
 
     async syncWhale(): Promise<void> {
-        await this.whale.sync(this.proxy);
+        await this.users.whale.sync(this.proxy);
     }
 
-    async syncUsers(): Promise<void> {
-        let promises = this.users.map(user => user.sync(this.proxy));
+    async syncAllUsers(): Promise<void> {
+        await this.syncUsers(this.users.getAll())
+    }
+
+    async syncUsers(users: IUser[]): Promise<void> {
+        let promises = users.map(user => user.sync(this.proxy));
         await Promise.all(promises);
     }
 
@@ -104,4 +105,14 @@ export class TestSession implements ITestSession {
         let tokens = payloads.map(item => new Token(item));
         return tokens;
     }
+}
+
+function resolvePath(...pathSegments: string[]): string {
+    let fixedSegments = pathSegments.map(segment => asUserPath(segment));
+    let resolvedPath = path.resolve(...fixedSegments);
+    return resolvedPath;
+}
+
+function asUserPath(userPath: string): string {
+    return (userPath || "").replace("~", homedir);
 }
