@@ -1,7 +1,6 @@
-import { Address, IInteractionChecker, Interaction, IProvider, ISigner, QueryResponseBundle, SmartContractResults, StrictChecker, TokenOfAccountOnNetwork, Transaction, TypedValue } from "@elrondnetwork/erdjs";
+import { AbiRegistry, Address, Balance, Code, CodeMetadata, DeployArguments, GasLimit, IInteractionChecker, Interaction, IProvider, SmartContract, SmartContractAbi, SmartContractResults, StrictChecker, TokenOfAccountOnNetwork, Transaction, TypedValue } from "@elrondnetwork/erdjs";
 import { TransactionOnNetwork } from "@elrondnetwork/erdjs/out/transactionOnNetwork";
 import { IAccountSnapshotWithinStorage, IStorage, ITestSession, IUser } from "./interfaces";
-import { prettifyObject } from "./pretty";
 
 
 export class DefaultInteractor {
@@ -9,22 +8,43 @@ export class DefaultInteractor {
     private readonly storage: IStorage;
     private readonly proxy: IProvider;
     private readonly checker: IInteractionChecker;
+    public readonly contract: SmartContract;
 
-    constructor(session: ITestSession) {
+    constructor(session: ITestSession, contract: SmartContract) {
         this.scope = session.scope;
         this.storage = session.storage;
         this.proxy = session.proxy;
         this.checker = new StrictChecker();
+        this.contract = contract;
     }
 
-    async doDeploy(deployer: IUser, deployTransaction: Transaction): Promise<void> {
-        deployTransaction.setNonce(deployer.account.getNonceThenIncrement());
+    async doDeploy(
+        deployer: IUser,
+        pathToWasm: string,
+        deployArguments: {
+            codeMetadata?: CodeMetadata;
+            initArguments?: TypedValue[];
+            value?: Balance;
+            gasLimit: GasLimit;
+        }): Promise<Address> {
+        let code = await Code.fromFile(pathToWasm);
 
-        await deployer.signer.sign(deployTransaction);
-        await deployTransaction.send(this.proxy);
-        await deployTransaction.awaitExecuted(this.proxy);
+        let transaction = this.contract.deploy({
+            code: code,
+            codeMetadata: deployArguments.codeMetadata,
+            initArguments: deployArguments.initArguments,
+            value: deployArguments.value,
+            gasLimit: deployArguments.gasLimit,
+        });
 
-        console.log(`DefaultInteractor.doDeploy(): transaction = ${deployTransaction.getHash()}`);
+        transaction.setNonce(deployer.account.getNonceThenIncrement());
+
+        await deployer.signer.sign(transaction);
+        await transaction.send(this.proxy);
+        await transaction.awaitExecuted(this.proxy);
+
+        console.log(`DefaultInteractor.doDeploy(): transaction = ${transaction.getHash()}, contract = ${this.contract.getAddress()}`);
+        return this.contract.getAddress();
     }
 
     async runQuery(user: IUser, interaction: Interaction, caller?: Address): Promise<{ firstValue: TypedValue, values: TypedValue[] }> {
@@ -146,4 +166,13 @@ export class DefaultInteractor {
             nonce: token.nonce.valueOf()
         };
     }
+}
+
+export async function createSmartContract(pathToAbi: string, address?: Address) {
+    let registry = await AbiRegistry.load({ files: [pathToAbi] });
+    // We only have single-interface ABIs anyway.
+    let contractInterface = registry.interfaces[0].name;
+    let abi = new SmartContractAbi(registry, [contractInterface]);
+    let contract = new SmartContract({ address: address, abi: abi });
+    return contract;
 }

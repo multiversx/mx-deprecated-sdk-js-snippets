@@ -7,13 +7,8 @@ import { User } from "../users";
 const ESDTContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u");
 
 export class ESDTInteractor extends DefaultInteractor {
-    private readonly session: ITestSession;
-    private readonly contract: SmartContract;
-
     private constructor(session: ITestSession, contract: SmartContract) {
-        super(session);
-        this.session = session;
-        this.contract = contract;
+        super(session, contract);
     }
 
     static async create(session: ITestSession): Promise<ESDTInteractor> {
