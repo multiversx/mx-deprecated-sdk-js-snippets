@@ -2,13 +2,14 @@ import { Address, IProvider, NetworkConfig, ProxyProvider, Token } from "@elrond
 import { readFileSync } from "fs";
 import { homedir } from "os";
 import path from "path";
-import { ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, IStorage, ITestSession, ITestSessionConfig, IUser } from "./interfaces";
+import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
+import { IBunchOfUsers, IMochaSuite, IMochaTest, IStorage, ITestSession, ITestSessionConfig, IUser } from "./interfaces";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers, User } from "./users";
 
 const TypeToken = "token";
 const TypeAddress = "address";
+const OneMinuteInMilliseconds = 60 * 1000;
 
 export class TestSession implements ITestSession {
     readonly name: string;
@@ -32,7 +33,17 @@ export class TestSession implements ITestSession {
         this.storage = args.storage;
     }
 
-    static async loadSession(folder: string, sessionName: string, scope: string): Promise<ITestSession> {
+    static async loadOnSuite(sessionName: string, mochaSuite: IMochaSuite): Promise<ITestSession> {
+        if (!mochaSuite.file) {
+            throw new ErrBadArgument("file of mocha suite isn't known");
+        }
+
+        let folder = path.dirname(mochaSuite.file);
+        let scope = mochaSuite.fullTitle();
+        return await TestSession.load(sessionName, scope, folder);
+    }
+
+    static async load(sessionName: string, scope: string, folder: string): Promise<ITestSession> {
         let configFile = path.join(folder, `${sessionName}.session.json`);
         let configJson = readFileSync(configFile, { encoding: "utf8" });
         let config = <ITestSessionConfig>JSON.parse(configJson);
@@ -63,6 +74,10 @@ export class TestSession implements ITestSession {
         return session;
     }
 
+    expectLongInteraction(mochaTest: IMochaTest, minutes: number = 5) {
+        mochaTest.timeout(minutes * OneMinuteInMilliseconds);
+    }
+
     async syncNetworkConfig(): Promise<void> {
         await NetworkConfig.getDefault().sync(this.proxy);
     }
@@ -72,7 +87,7 @@ export class TestSession implements ITestSession {
     }
 
     async syncAllUsers(): Promise<void> {
-        await this.syncUsers(this.users.getAll())
+        await this.syncUsers(this.users.getAll());
     }
 
     async syncUsers(users: IUser[]): Promise<void> {

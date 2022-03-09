@@ -1,1 +1,0 @@
-export const MOCHA_TIMEOUT_ONE_MINUTE = 60000;

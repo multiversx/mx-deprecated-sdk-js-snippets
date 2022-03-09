@@ -13,6 +13,7 @@ export interface ITestSession {
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
 
+    expectLongInteraction(mochaTest: IMochaTest, minutes?: number): void;
     syncNetworkConfig(): Promise<void>;
     syncWhale(): Promise<void>;
     syncAllUsers(): Promise<void>;
@@ -24,6 +25,15 @@ export interface ITestSession {
     saveToken(name: string, token: Token): Promise<void>;
     loadToken(name: string): Promise<Token>;
     getTokensOnFocus(): Promise<Token[]>;
+}
+
+export interface IMochaSuite {
+    file?: string | undefined;
+    fullTitle(): string;
+}
+
+export interface IMochaTest {
+    timeout(ms: string | number): void;
 }
 
 export interface IBunchOfUsers {

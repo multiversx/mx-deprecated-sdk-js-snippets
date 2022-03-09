@@ -36,3 +36,9 @@ export class ErrNotImplemented extends Err {
         super(`Not implemented: ${message}`);
     }
 }
+
+export class ErrBadArgument extends Err {
+    public constructor(message: string) {
+        super(`Bad argument: ${message}`);
+    }
+}
