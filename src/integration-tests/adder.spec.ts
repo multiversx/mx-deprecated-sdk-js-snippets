@@ -24,7 +24,7 @@ describe("adder snippet", async function () {
         session.expectLongInteraction(this);
 
         await session.syncUsers([whale]);
-        await AirdropService.createOnSession(session).sendToEachUser(Balance.egld(1));
+        await AirdropService.createOnSession(session).sendToEachUser(whale, Balance.egld(1));
     });
 
     it("setup", async function () {

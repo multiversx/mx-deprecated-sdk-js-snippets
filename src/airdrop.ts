@@ -2,8 +2,7 @@ import { Balance, GasLimit, IProvider, Transaction, TransactionPayload } from "@
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
 import { ESDTTransferPayloadBuilder } from "./erdjsPatching/transactionBuilders";
 import { ErrNotImplemented } from "./errors";
-import { IBunchOfUsers, ITestSession } from "./interfaces";
-import { User } from "./users";
+import { IBunchOfUsers, ITestSession, IUser } from "./interfaces";
 
 export class AirdropService {
     private readonly users: IBunchOfUsers;
@@ -18,23 +17,22 @@ export class AirdropService {
         return new AirdropService(session.users, session.proxy);
     }
 
-    async sendToEachUser(amount: Balance) {
-        let whale = this.users.whale;
-        let transactions = this.createTransactions(whale, amount);
+    async sendToEachUser(sender: IUser, amount: Balance) {
+        let transactions = this.createTransactions(sender, amount);
 
         let promisesOfSignAndSend = transactions.map(async (transaction) => {
-            await whale.signer.sign(transaction);
+            await sender.signer.sign(transaction);
             await transaction.send(this.networkProvider);
         });
 
         await Promise.all(promisesOfSignAndSend);
 
-        let whaleExpectedNonce = whale.account.nonce;
-        let watcher = new AccountWatcher(whale.address, this.networkProvider);
-        await watcher.awaitNonce(whaleExpectedNonce);
+        let senderExpectedNonce = sender.account.nonce;
+        let watcher = new AccountWatcher(sender.address, this.networkProvider);
+        await watcher.awaitNonce(senderExpectedNonce);
     }
 
-    private createTransactions(whale: User, amount: Balance): Transaction[] {
+    private createTransactions(sender: IUser, amount: Balance): Transaction[] {
         let transactions: Transaction[] = [];
 
         for (const user of this.users.getAllExceptWhale()) {
@@ -52,7 +50,7 @@ export class AirdropService {
             }
 
             transactions.push(new Transaction({
-                nonce: whale.account.getNonceThenIncrement(),
+                nonce: sender.account.getNonceThenIncrement(),
                 receiver: user.address,
                 value: value,
                 data: data,

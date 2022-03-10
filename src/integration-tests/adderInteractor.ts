@@ -1,9 +1,10 @@
 import { Address, BigUIntValue, Code, GasLimit, Interaction } from "@elrondnetwork/erdjs";
+import path from "path";
 import { createSmartContract, DefaultInteractor } from "../interactors";
 import { ITestSession, IUser } from "../interfaces";
 
-const PathToWasm = "./src/integration-tests/adder.wasm";
-const PathToAbi = "./src/integration-tests/adder.abi.json";
+const PathToWasm = path.resolve(__dirname, "adder.wasm");
+const PathToAbi = path.resolve(__dirname, "adder.abi.json");
 
 export class AdderInteractor extends DefaultInteractor {
     static async create(session: ITestSession, address?: Address): Promise<AdderInteractor> {

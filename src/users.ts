@@ -84,7 +84,12 @@ export class BunchOfUsers implements IBunchOfUsers {
     }
 
     getAllExceptWhale(): IUser[] {
-        return [...this.getFriends(), ...this.getOthers()];
+        return this.getAllExcept([this.whale]);
+    }
+
+    getAllExcept(some: IUser[]): IUser[] {
+        let result = this.getAll().filter(user => !some.includes(user));
+        return result;
     }
 }
 

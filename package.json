@@ -8,10 +8,11 @@
     "out/**/*"
   ],
   "scripts": {
-    "compile": "tsc -p tsconfig.json",
+    "compile": "tsc -p tsconfig.json && npm run copy-files",
     "pretest": "npm run compile",
     "prepare": "npm run compile",
-    "lint": "tslint --project ."
+    "lint": "tslint --project .",
+    "copy-files": "cp src/system/*.json out/system/"
   },
   "author": "ElrondNetwork",
   "license": "GPL-3.0-or-later",

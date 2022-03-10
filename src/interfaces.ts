@@ -56,6 +56,7 @@ export interface IBunchOfUsers {
     getOthers(): IUser[];
     getAll(): IUser[];
     getAllExceptWhale(): IUser[];
+    getAllExcept(some: IUser[]): IUser[];
 }
 
 export interface IUser {

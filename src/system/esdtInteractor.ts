@@ -1,10 +1,12 @@
 import { AbiRegistry, Address, Balance, BigUIntValue, BooleanType, BytesType, BytesValue, CompositeType, Interaction, SmartContract, SmartContractAbi, Token, U32Value, VariadicType, VariadicValue } from "@elrondnetwork/erdjs";
 import BigNumber from "bignumber.js";
+import path from "path";
 import { DefaultInteractor } from "../interactors";
 import { ITestSession } from "../interfaces";
 import { User } from "../users";
 
 const ESDTContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u");
+const PathToAbi = path.resolve(__dirname, "esdt.abi.json");
 
 export class ESDTInteractor extends DefaultInteractor {
     private constructor(session: ITestSession, contract: SmartContract) {
@@ -12,7 +14,7 @@ export class ESDTInteractor extends DefaultInteractor {
     }
 
     static async create(session: ITestSession): Promise<ESDTInteractor> {
-        let registry = await AbiRegistry.load({ files: ["./src/system/esdt.abi.json"] });
+        let registry = await AbiRegistry.load({ files: [PathToAbi] });
         let abi = new SmartContractAbi(registry, ["esdt"]);
         let contract = new SmartContract({ address: ESDTContractAddress, abi: abi });
         let interactor = new ESDTInteractor(session, contract);
@@ -31,8 +33,7 @@ export class ESDTInteractor extends DefaultInteractor {
                 new VariadicValue(propertiesType, [])
             ])
             .withValue(Balance.egld(new BigNumber("0.05")))
-            .withGasLimitComponents({ estimatedExecutionComponent: 60000000})
-            .withNonce(owner.account.getNonceThenIncrement());
+            .withGasLimitComponents({ estimatedExecutionComponent: 60000000});
 
         let { transactionOnNetwork } = await this.runInteraction(owner, interaction);
         let logs = transactionOnNetwork.getLogs();
