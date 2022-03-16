@@ -1,5 +1,5 @@
 # erdjs-snippets
 
-**Under development, not yet usable!**
+**Under development!**
 
 Base library for (mocha-style) Smart Contract interaction snippets. Based on erdjs. Runnable in VSCode.
