@@ -1,4 +1,4 @@
-name: Publish erdjs-snippets
+name: Publish
 
 on:
   workflow_dispatch:
@@ -12,11 +12,7 @@ jobs:
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
-      - run: npm ci
-      # - run: npm publish --access=public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-
+      
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -26,3 +22,10 @@ jobs:
 
           RELEASE_TAG=v$(node -p "require('./package.json').version")
           gh release create $RELEASE_TAG --prerelease --title="$RELEASE_TAG" --generate-notes --notes-file=notes.txt
+      
+      - run: npm ci
+      
+      - name: Publish to npmjs
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+        run: npm publish --access=public
