@@ -17,21 +17,21 @@
   "author": "ElrondNetwork",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "@elrondnetwork/erdjs": "9.1.0",
+    "@elrondnetwork/erdjs": "9.2.0",
+    "better-sqlite3": "7.5.0",
     "bignumber.js": "9.0.2",
     "reflect-metadata": "0.1.13",
-    "sqlite3": "5.0.2",
-    "typeorm": "0.2.41"
+    "typeorm": "0.2.45"
   },
   "devDependencies": {
     "@types/assert": "1.4.6",
     "@types/chai": "4.2.11",
     "@types/mocha": "9.1.0",
     "@types/node": "13.13.2",
-    "typescript": "4.1.2",
     "chai": "4.2.0",
     "mocha": "9.2.1",
     "ts-node": "9.1.1",
-    "tslint": "6.1.3"
+    "tslint": "6.1.3",
+    "typescript": "4.1.2"
   }
 }

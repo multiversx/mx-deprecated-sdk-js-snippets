@@ -59,7 +59,7 @@ export class TestSession implements ITestSession {
         let whalePem = resolvePath(folder, config.whalePem);
         let othersPem = config.othersPem ? resolvePath(folder, config.whalePem) : undefined;
         let users = new BunchOfUsers(whalePem, othersPem);
-        let storageName = path.join(folder, `${sessionName}.sqlite`);
+        let storageName = path.join(folder, `${sessionName}.session.sqlite`);
         let storage = await Storage.create(storageName);
 
         let session = new TestSession({

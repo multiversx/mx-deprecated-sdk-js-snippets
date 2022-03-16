@@ -96,7 +96,7 @@ export class DefaultInteractor {
                 returnMessage: immediateResult.getReturnMessage()
             };
 
-            console.error(output);
+            console.error("Contract error:", output);
         }
 
         let transfers = {

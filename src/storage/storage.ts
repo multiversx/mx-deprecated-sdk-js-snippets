@@ -24,7 +24,7 @@ export class Storage implements IStorage {
         }
 
         let connection = await createConnection({
-            type: "sqlite",
+            type: "better-sqlite3",
             database: file,
             name: file,
             entities: [BreadcrumbRecord, InteractionRecord, AccountSnapshotRecord],
@@ -64,7 +64,7 @@ export class Storage implements IStorage {
     }
 
     async loadBreadcrumbsByType(scope: string, type: string): Promise<any[]> {
-        let records = await this.connection.manager.find(BreadcrumbRecord, { scope: scope, type: type });
+        let records: BreadcrumbRecord[] = await this.connection.manager.find(BreadcrumbRecord, { scope: scope, type: type });
         let payloads = records.map(record => this.deserializeItem(record.payload));
         return payloads;
     }
@@ -92,7 +92,8 @@ export class Storage implements IStorage {
 
     async updateInteractionSetOutput(reference: IReferenceOfInteractionWithinStorage, output: any) {
         let interactionId = (<ReferenceOfInteractionWithinStorage>reference).id;
-        await this.connection.manager.update(InteractionRecord, interactionId, { output: output });
+        let outputJson = JSON.stringify(output);
+        await this.connection.manager.update(InteractionRecord, interactionId, { output: outputJson });
     }
 
     async storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotWithinStorage): Promise<void> {

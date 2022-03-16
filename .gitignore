@@ -1,5 +1,4 @@
 .idea
 out
 node_modules/
-*.sqlite
-package-lock.json
+*.session.sqlite
