@@ -1,9 +1,7 @@
 import { Balance } from "@elrondnetwork/erdjs";
-import { AdderInteractor } from "./adderInteractor";
-import { AirdropService } from "../airdrop";
-import { ITestSession, IUser } from "../interfaces";
-import { TestSession } from "../session";
+import { AirdropService, ITestSession, IUser, TestSession } from "@elrondnetwork/erdjs-snippets";
 import { assert } from "chai";
+import { AdderInteractor } from "./adderInteractor";
 
 describe("adder snippet", async function () {
     this.bail(true);

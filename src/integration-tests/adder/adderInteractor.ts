@@ -1,7 +1,7 @@
 import { Address, BigUIntValue, Code, GasLimit, Interaction } from "@elrondnetwork/erdjs";
 import path from "path";
-import { createSmartContract, DefaultInteractor } from "../interactors";
-import { ITestSession, IUser } from "../interfaces";
+import { createSmartContract, DefaultInteractor } from "../../interactors";
+import { ITestSession, IUser } from "../../interfaces";
 
 const PathToWasm = path.resolve(__dirname, "adder.wasm");
 const PathToAbi = path.resolve(__dirname, "adder.abi.json");
