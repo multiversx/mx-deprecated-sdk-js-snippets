@@ -3,7 +3,7 @@ import { TransactionOnNetwork } from "@elrondnetwork/erdjs/out/transactionOnNetw
 import { IAccountSnapshotWithinStorage, IStorage, ITestSession, IUser } from "./interfaces";
 
 
-export class DefaultInteractor {
+export class InteractionsTracker {
     private readonly scope: string;
     private readonly storage: IStorage;
     private readonly proxy: IProvider;

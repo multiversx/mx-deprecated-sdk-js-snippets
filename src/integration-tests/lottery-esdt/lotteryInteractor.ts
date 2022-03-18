@@ -1,12 +1,11 @@
 import { Address, Balance, BigUIntType, BigUIntValue, BytesValue, Code, EnumValue, GasLimit, Interaction, OptionalType, OptionalValue, OptionValue, Struct, Token, TokenIdentifierValue, U32Type, U32Value } from "@elrondnetwork/erdjs";
 import path from "path";
-import { createSmartContract, DefaultInteractor } from "../../interactors";
 import { ITestSession, IUser } from "../../interfaces";
 
 const PathToWasm = path.resolve(__dirname, "lottery-esdt.wasm");
 const PathToAbi = path.resolve(__dirname, "lottery-esdt.abi.json");
 
-export class LotteryInteractor extends DefaultInteractor {
+export class LotteryInteractor {
     static async create(session: ITestSession, address?: Address) {
         let contract = await createSmartContract(PathToAbi, address);
         let interactor = new LotteryInteractor(session, contract);
