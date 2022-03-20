@@ -49,9 +49,10 @@ describe("adder snippet", async function () {
         let interactor = await createInteractor(session, contractAddress);
 
         let sumBefore = await interactor.getSum();
-        let { returnCode, sum } = await interactor.add(owner, 3);
+        let returnCode = await interactor.add(owner, 3);
+        let sumAfter = await interactor.getSum();
         assert.isTrue(returnCode.isSuccess());
-        assert.equal(sum, sumBefore + 3);
+        assert.equal(sumAfter, sumBefore + 3);
     });
 
     it("getSum", async function () {

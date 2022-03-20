@@ -55,7 +55,7 @@ export class AdderInteractor {
         return { address, returnCode };
     }
 
-    async add(caller: IUser, value: number): Promise<{ returnCode: ReturnCode, sum: number }> {
+    async add(caller: IUser, value: number): Promise<ReturnCode> {
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods
             .add([new BigUIntValue(value)])
@@ -69,11 +69,8 @@ export class AdderInteractor {
         await caller.signer.sign(transaction);
 
         // Let's perform the interaction via the controller
-        let { bundle: { returnCode, firstValue } } = await this.controller.execute(interaction, transaction);
-
-        // Now let's interpret the results, if necessary.
-        let sum = firstValue!.valueOf();
-        return { returnCode, sum: sum };
+        let { bundle: { returnCode } } = await this.controller.execute(interaction, transaction);
+        return returnCode;
     }
 
     async getSum(): Promise<number> {
