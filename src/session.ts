@@ -44,7 +44,8 @@ export class TestSession implements ITestSession {
     }
 
     static async load(sessionName: string, scope: string, folder: string): Promise<ITestSession> {
-        let configFile = this.getSessionConfigFile(sessionName, folder);
+        let configFile = this.findSessionConfigFile(sessionName, folder);
+        let folderOfConfigFile = path.dirname(configFile);
         let configJson = readFileSync(configFile, { encoding: "utf8" });
         let config = <ITestSessionConfig>JSON.parse(configJson);
         
@@ -56,10 +57,10 @@ export class TestSession implements ITestSession {
         }
 
         let proxy = new ProxyProvider(config.proxyUrl);
-        let whalePem = resolvePath(folder, config.whalePem);
-        let othersPem = config.othersPem ? resolvePath(folder, config.whalePem) : undefined;
+        let whalePem = resolvePath(config.whalePem);
+        let othersPem = config.othersPem ? resolvePath(config.whalePem) : undefined;
         let users = new BunchOfUsers(whalePem, othersPem);
-        let storageName = path.join(folder, `${sessionName}.session.sqlite`);
+        let storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
         let storage = await Storage.create(storageName);
 
         let session = new TestSession({
@@ -74,7 +75,7 @@ export class TestSession implements ITestSession {
         return session;
     }
 
-    private static getSessionConfigFile(sessionName: string, folder: string) {
+    private static findSessionConfigFile(sessionName: string, folder: string) {
         let configFile = resolvePath(folder, `${sessionName}.session.json`);
         if (existsSync(configFile)) {
             return configFile;
