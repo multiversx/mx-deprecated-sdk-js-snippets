@@ -2,6 +2,7 @@ import { Account, Address, IProvider, ISigner, parseUserKeys, TokenOfAccountOnNe
 import { PathLike, readFileSync } from "fs";
 import path from "path";
 import { IBunchOfUsers, IUser } from "./interfaces";
+import { resolvePath } from "./utils";
 
 export class User implements IUser {
     readonly address: Address;
@@ -56,7 +57,7 @@ export class BunchOfUsers implements IBunchOfUsers {
         this.whale = User.fromPemFile(whalePem);
         this.others = othersPem ? User.moreFromPemFile(othersPem) : [];
 
-        let friendsFolder = path.resolve(__dirname, "..", "wallets", "friends");
+        let friendsFolder = resolvePath("~", "elrondsdk", "testwallets", "latest", "users");
         this.alice = User.fromPemFile(path.resolve(friendsFolder, "alice.pem"));
         this.bob = User.fromPemFile(path.resolve(friendsFolder, "bob.pem"));
         this.carol = User.fromPemFile(path.resolve(friendsFolder, "carol.pem"));

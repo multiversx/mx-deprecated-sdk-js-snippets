@@ -1,7 +1,9 @@
 import { Balance } from "@elrondnetwork/erdjs";
-import { AirdropService, ITestSession, IUser, TestSession } from "@elrondnetwork/erdjs-snippets";
 import { assert } from "chai";
-import { AdderInteractor } from "./adderInteractor";
+import { AirdropService } from "../../airdrop";
+import { ITestSession, IUser } from "../../interfaces";
+import { TestSession } from "../../session";
+import { createInteractor } from "./adderInteractor";
 
 describe("adder snippet", async function () {
     this.bail(true);
@@ -30,9 +32,12 @@ describe("adder snippet", async function () {
 
         await session.syncUsers([owner]);
 
-        let interactor = await AdderInteractor.create(session);
-        let contractAddress = await interactor.deploy(owner, 42);
-        await session.saveAddress("contractAddress", contractAddress);
+        let interactor = await createInteractor(session);
+        let { address, returnCode } = await interactor.deploy(owner, 42);
+        
+        assert.isTrue(returnCode.isSuccess());
+
+        await session.saveAddress("contractAddress", address);
     });
 
     it("add", async function () {
@@ -41,15 +46,18 @@ describe("adder snippet", async function () {
         await session.syncUsers([owner]);
 
         let contractAddress = await session.loadAddress("contractAddress");
-        let interactor = await AdderInteractor.create(session, contractAddress);
+        let interactor = await createInteractor(session, contractAddress);
 
-        await interactor.add(owner, 3);
+        let sumBefore = await interactor.getSum();
+        let { returnCode, sum } = await interactor.add(owner, 3);
+        assert.isTrue(returnCode.isSuccess());
+        assert.equal(sum, sumBefore + 3);
     });
 
     it("getSum", async function () {
         let contractAddress = await session.loadAddress("contractAddress");
-        let interactor = await AdderInteractor.create(session, contractAddress);
-        let result = await interactor.getSum(owner);
+        let interactor = await createInteractor(session, contractAddress);
+        let result = await interactor.getSum();
         assert.isTrue(result > 0);
     });
 });

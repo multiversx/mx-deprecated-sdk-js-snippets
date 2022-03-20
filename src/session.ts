@@ -1,11 +1,11 @@
 import { Address, IProvider, NetworkConfig, ProxyProvider, Token } from "@elrondnetwork/erdjs";
-import { readFileSync } from "fs";
-import { homedir } from "os";
+import { existsSync, readFileSync } from "fs";
 import path from "path";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
 import { IBunchOfUsers, IMochaSuite, IMochaTest, IStorage, ITestSession, ITestSessionConfig, IUser } from "./interfaces";
 import { Storage } from "./storage/storage";
-import { BunchOfUsers, User } from "./users";
+import { BunchOfUsers } from "./users";
+import { resolvePath } from "./utils";
 
 const TypeToken = "token";
 const TypeAddress = "address";
@@ -44,7 +44,7 @@ export class TestSession implements ITestSession {
     }
 
     static async load(sessionName: string, scope: string, folder: string): Promise<ITestSession> {
-        let configFile = path.join(folder, `${sessionName}.session.json`);
+        let configFile = this.getSessionConfigFile(sessionName, folder);
         let configJson = readFileSync(configFile, { encoding: "utf8" });
         let config = <ITestSessionConfig>JSON.parse(configJson);
         
@@ -72,6 +72,21 @@ export class TestSession implements ITestSession {
         });
 
         return session;
+    }
+
+    private static getSessionConfigFile(sessionName: string, folder: string) {
+        let configFile = resolvePath(folder, `${sessionName}.session.json`);
+        if (existsSync(configFile)) {
+            return configFile;
+        }
+
+        // Fallback to parent folder
+        configFile = resolvePath(folder, "..", `${sessionName}.session.json`);
+        if (existsSync(configFile)) {
+            return configFile;
+        }
+
+        throw new ErrBadSessionConfig(sessionName, "file not found");
     }
 
     expectLongInteraction(mochaTest: IMochaTest, minutes: number = 5) {
@@ -123,12 +138,3 @@ export class TestSession implements ITestSession {
     }
 }
 
-function resolvePath(...pathSegments: string[]): string {
-    let fixedSegments = pathSegments.map(segment => asUserPath(segment));
-    let resolvedPath = path.resolve(...fixedSegments);
-    return resolvedPath;
-}
-
-function asUserPath(userPath: string): string {
-    return (userPath || "").replace("~", homedir);
-}
