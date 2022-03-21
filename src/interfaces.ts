@@ -1,7 +1,7 @@
 import { Account, Address, Balance, IProvider, ISigner, Nonce, Token, TokenOfAccountOnNetwork, TransactionHash } from "@elrondnetwork/erdjs";
 
 export interface ITestSessionConfig {
-    readonly proxyUrl: string;
+    readonly providerUrl: string;
     readonly whalePem: string;
     readonly othersPem: string;
 }
@@ -9,7 +9,7 @@ export interface ITestSessionConfig {
 export interface ITestSession {
     readonly name: string;
     readonly scope: string;
-    readonly proxy: IProvider;
+    readonly provider: IProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
 
@@ -17,7 +17,7 @@ export interface ITestSession {
     syncNetworkConfig(): Promise<void>;
     syncWhale(): Promise<void>;
     syncAllUsers(): Promise<void>;
-    syncUsers(users: IUser[]): Promise<void>;
+    syncUsers(users: ITestUser[]): Promise<void>;
 
     saveAddress(name: string, address: Address): Promise<void>;
     loadAddress(name: string): Promise<Address>;
@@ -37,35 +37,35 @@ export interface IMochaTest {
 }
 
 export interface IBunchOfUsers {
-    readonly whale: IUser;
+    readonly whale: ITestUser;
 
-    readonly alice: IUser;
-    readonly bob: IUser;
-    readonly carol: IUser;
-    readonly dan: IUser;
-    readonly eve: IUser;
-    readonly frank: IUser;
-    readonly grace: IUser;
-    readonly heidi: IUser;
-    readonly ivan: IUser;
-    readonly judy: IUser;
-    readonly mallory: IUser;
-    readonly mike: IUser;
+    readonly alice: ITestUser;
+    readonly bob: ITestUser;
+    readonly carol: ITestUser;
+    readonly dan: ITestUser;
+    readonly eve: ITestUser;
+    readonly frank: ITestUser;
+    readonly grace: ITestUser;
+    readonly heidi: ITestUser;
+    readonly ivan: ITestUser;
+    readonly judy: ITestUser;
+    readonly mallory: ITestUser;
+    readonly mike: ITestUser;
 
-    getFriends(): IUser[];
-    getOthers(): IUser[];
-    getAll(): IUser[];
-    getAllExceptWhale(): IUser[];
-    getAllExcept(some: IUser[]): IUser[];
+    getFriends(): ITestUser[];
+    getOthers(): ITestUser[];
+    getAll(): ITestUser[];
+    getAllExceptWhale(): ITestUser[];
+    getAllExcept(some: ITestUser[]): ITestUser[];
 }
 
-export interface IUser {
+export interface ITestUser {
     readonly address: Address;
     readonly account: Account;
     readonly signer: ISigner;
     readonly accountTokens: TokenOfAccountOnNetwork[];
 
-    sync(proxy: IProvider): Promise<void>;
+    sync(provider: IProvider): Promise<void>;
 }
 
 /**

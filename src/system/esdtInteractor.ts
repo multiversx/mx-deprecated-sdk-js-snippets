@@ -1,8 +1,7 @@
 import { AbiRegistry, Address, Balance, BigUIntValue, BooleanType, BytesType, BytesValue, CompositeType, DefaultSmartContractController, Interaction, ISmartContractController, SmartContract, SmartContractAbi, Token, U32Value, VariadicType, VariadicValue } from "@elrondnetwork/erdjs";
 import BigNumber from "bignumber.js";
 import path from "path";
-import { ITestSession } from "../interfaces";
-import { User } from "../users";
+import { ITestSession, ITestUser } from "../interfaces";
 
 const ESDTContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u");
 const PathToAbi = path.resolve(__dirname, "esdt.abi.json");
@@ -21,12 +20,12 @@ export class ESDTInteractor {
         let registry = await AbiRegistry.load({ files: [PathToAbi] });
         let abi = new SmartContractAbi(registry, ["esdt"]);
         let contract = new SmartContract({ address: ESDTContractAddress, abi: abi });
-        let controller = new DefaultSmartContractController(abi, session.proxy);
+        let controller = new DefaultSmartContractController(abi, session.provider);
         let interactor = new ESDTInteractor(contract, controller);
         return interactor;
     }
 
-    async issueToken(owner: User, token: Token): Promise<void> {
+    async issueToken(owner: ITestUser, token: Token): Promise<void> {
         let propertiesType = new VariadicType(new CompositeType(new BytesType(), new BooleanType()));
 
         let interaction = <Interaction>this.contract.methods

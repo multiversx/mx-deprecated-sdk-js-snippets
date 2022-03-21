@@ -1,8 +1,8 @@
-import { Balance, ReturnCode, Token, TokenType } from "@elrondnetwork/erdjs";
+import { Balance, IProvider, ReturnCode, Token, TokenType } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
 import { AirdropService } from "../../airdrop";
 import { createTokenAmount } from "../../erdjsPatching/amounts";
-import { ITestSession, IUser } from "../../interfaces";
+import { ITestSession, ITestUser } from "../../interfaces";
 import { TestSession } from "../../session";
 import { ESDTInteractor } from "../../system/esdtInteractor";
 import { createInteractor } from "./lotteryInteractor";
@@ -14,11 +14,13 @@ describe("lottery snippet", async function () {
 
     let suite = this;
     let session: ITestSession;
-    let whale: IUser;
-    let owner: IUser;
+    let provider: IProvider;
+    let whale: ITestUser;
+    let owner: ITestUser;
 
     this.beforeAll(async function () {
         session = await TestSession.loadOnSuite("default", suite);
+        provider = session.provider;
         whale = session.users.whale;
         owner = session.users.alice;
         await session.syncNetworkConfig();
@@ -56,7 +58,7 @@ describe("lottery snippet", async function () {
 
         await session.syncUsers([owner]);
 
-        let interactor = await createInteractor(session);
+        let interactor = await createInteractor(provider);
         let { address, returnCode } = await interactor.deploy(owner);
 
         assert.isTrue(returnCode.isSuccess());
@@ -71,7 +73,7 @@ describe("lottery snippet", async function () {
 
         let contractAddress = await session.loadAddress("contractAddress");
         let lotteryToken = await session.loadToken("lotteryToken");
-        let interactor = await createInteractor(session, contractAddress);
+        let interactor = await createInteractor(provider, contractAddress);
         let returnCode = await interactor.start(owner, LotteryName, lotteryToken, 1);
         assert.isTrue(returnCode.isSuccess());
     });
@@ -79,7 +81,7 @@ describe("lottery snippet", async function () {
     it("get lottery info and status", async function () {
         let contractAddress = await session.loadAddress("contractAddress");
         let lotteryToken = await session.loadToken("lotteryToken");
-        let interactor = await createInteractor(session, contractAddress);
+        let interactor = await createInteractor(provider, contractAddress);
         let lotteryInfo = await interactor.getLotteryInfo(LotteryName);
         let lotteryStatus = await interactor.getStatus(LotteryName);
         console.log("Info:", lotteryInfo);
@@ -97,7 +99,7 @@ describe("lottery snippet", async function () {
 
         let contractAddress = await session.loadAddress("contractAddress");
         let lotteryToken = await session.loadToken("lotteryToken");
-        let interactor = await createInteractor(session, contractAddress);
+        let interactor = await createInteractor(provider, contractAddress);
 
         let buyAmount = createTokenAmount(lotteryToken, "1");
         let buyPromises = session.users.getFriends().map(friend => interactor.buyTicket(friend, LotteryName, buyAmount));

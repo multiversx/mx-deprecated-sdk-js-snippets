@@ -2,7 +2,7 @@ import { Address, IProvider, NetworkConfig, ProxyProvider, Token } from "@elrond
 import { existsSync, readFileSync } from "fs";
 import path from "path";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, IMochaSuite, IMochaTest, IStorage, ITestSession, ITestSessionConfig, IUser } from "./interfaces";
+import { IBunchOfUsers, IMochaSuite, IMochaTest, IStorage, ITestSession, ITestSessionConfig, ITestUser } from "./interfaces";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
 import { resolvePath } from "./utils";
@@ -14,21 +14,21 @@ const OneMinuteInMilliseconds = 60 * 1000;
 export class TestSession implements ITestSession {
     readonly name: string;
     readonly scope: string;
-    readonly proxy: IProvider;
+    readonly provider: IProvider;
     readonly users: IBunchOfUsers;
     readonly storage: IStorage;
 
     constructor(args: {
         name: string,
         scope: string,
-        proxy: IProvider,
+        provider: IProvider,
         users: IBunchOfUsers,
         storage: IStorage,
         config: ITestSessionConfig
     }) {
         this.name = args.name;
         this.scope = args.scope;
-        this.proxy = args.proxy;
+        this.provider = args.provider;
         this.users = args.users;
         this.storage = args.storage;
     }
@@ -49,14 +49,14 @@ export class TestSession implements ITestSession {
         let configJson = readFileSync(configFile, { encoding: "utf8" });
         let config = <ITestSessionConfig>JSON.parse(configJson);
         
-        if (!config.proxyUrl) {
-            throw new ErrBadSessionConfig(sessionName, "missing 'proxyUrl'");
+        if (!config.providerUrl) {
+            throw new ErrBadSessionConfig(sessionName, "missing 'providerUrl'");
         }
         if (!config.whalePem) {
             throw new ErrBadSessionConfig(sessionName, "missing 'whalePem'");
         }
 
-        let proxy = new ProxyProvider(config.proxyUrl);
+        let provider = new ProxyProvider(config.providerUrl);
         let whalePem = resolvePath(config.whalePem);
         let othersPem = config.othersPem ? resolvePath(config.whalePem) : undefined;
         let users = new BunchOfUsers(whalePem, othersPem);
@@ -66,7 +66,7 @@ export class TestSession implements ITestSession {
         let session = new TestSession({
             name: sessionName,
             scope: scope,
-            proxy: proxy,
+            provider: provider,
             users: users,
             storage: storage,
             config: config
@@ -95,19 +95,19 @@ export class TestSession implements ITestSession {
     }
 
     async syncNetworkConfig(): Promise<void> {
-        await NetworkConfig.getDefault().sync(this.proxy);
+        await NetworkConfig.getDefault().sync(this.provider);
     }
 
     async syncWhale(): Promise<void> {
-        await this.users.whale.sync(this.proxy);
+        await this.users.whale.sync(this.provider);
     }
 
     async syncAllUsers(): Promise<void> {
         await this.syncUsers(this.users.getAll());
     }
 
-    async syncUsers(users: IUser[]): Promise<void> {
-        let promises = users.map(user => user.sync(this.proxy));
+    async syncUsers(users: ITestUser[]): Promise<void> {
+        let promises = users.map(user => user.sync(this.provider));
         await Promise.all(promises);
     }
 
