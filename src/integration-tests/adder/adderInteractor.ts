@@ -39,7 +39,8 @@ export class AdderInteractor {
             gasLimit: new GasLimit(20000000)
         });
 
-        // Set the transaction nonce. Also, locally increment the nonce of the deployer (optional).
+        // Set the transaction nonce. The account nonce must be synchronized beforehand.
+        // Also, locally increment the nonce of the deployer (optional).
         transaction.setNonce(deployer.account.getNonceThenIncrement());
 
         // Let's sign the transaction. For dApps, use a wallet provider instead.

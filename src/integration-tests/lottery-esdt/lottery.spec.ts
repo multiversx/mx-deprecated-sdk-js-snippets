@@ -1,11 +1,11 @@
-import { Balance, Token, TokenType } from "@elrondnetwork/erdjs";
+import { Balance, ReturnCode, Token, TokenType } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
 import { AirdropService } from "../../airdrop";
 import { createTokenAmount } from "../../erdjsPatching/amounts";
 import { ITestSession, IUser } from "../../interfaces";
 import { TestSession } from "../../session";
 import { ESDTInteractor } from "../../system/esdtInteractor";
-import { LotteryInteractor } from "./lotteryInteractor";
+import { createInteractor } from "./lotteryInteractor";
 
 describe("lottery snippet", async function () {
     this.bail(true);
@@ -56,9 +56,12 @@ describe("lottery snippet", async function () {
 
         await session.syncUsers([owner]);
 
-        let interactor = await LotteryInteractor.create(session);
-        let contractAddress = await interactor.deploy(owner);
-        await session.saveAddress("contractAddress", contractAddress);
+        let interactor = await createInteractor(session);
+        let { address, returnCode } = await interactor.deploy(owner);
+
+        assert.isTrue(returnCode.isSuccess());
+
+        await session.saveAddress("contractAddress", address);
     });
 
     it("start lottery", async function () {
@@ -68,16 +71,17 @@ describe("lottery snippet", async function () {
 
         let contractAddress = await session.loadAddress("contractAddress");
         let lotteryToken = await session.loadToken("lotteryToken");
-        let interactor = await LotteryInteractor.create(session, contractAddress);
-        await interactor.start(owner, LotteryName, lotteryToken, 1);
+        let interactor = await createInteractor(session, contractAddress);
+        let returnCode = await interactor.start(owner, LotteryName, lotteryToken, 1);
+        assert.isTrue(returnCode.isSuccess());
     });
 
     it("get lottery info and status", async function () {
         let contractAddress = await session.loadAddress("contractAddress");
         let lotteryToken = await session.loadToken("lotteryToken");
-        let interactor = await LotteryInteractor.create(session, contractAddress);
-        let lotteryInfo = await interactor.getLotteryInfo(owner, LotteryName);
-        let lotteryStatus = await interactor.getStatus(owner, LotteryName);
+        let interactor = await createInteractor(session, contractAddress);
+        let lotteryInfo = await interactor.getLotteryInfo(LotteryName);
+        let lotteryStatus = await interactor.getStatus(LotteryName);
         console.log("Info:", lotteryInfo);
         console.log("Prize pool:", lotteryInfo.prize_pool.toString());
         console.log("Status:", lotteryStatus);
@@ -93,10 +97,14 @@ describe("lottery snippet", async function () {
 
         let contractAddress = await session.loadAddress("contractAddress");
         let lotteryToken = await session.loadToken("lotteryToken");
-        let interactor = await LotteryInteractor.create(session, contractAddress);
-        
+        let interactor = await createInteractor(session, contractAddress);
+
         let buyAmount = createTokenAmount(lotteryToken, "1");
         let buyPromises = session.users.getFriends().map(friend => interactor.buyTicket(friend, LotteryName, buyAmount));
-        await Promise.all(buyPromises);
+        let returnCodes: ReturnCode[] = await Promise.all(buyPromises);
+        
+        for (const returnCode of returnCodes) {
+            assert.isTrue(returnCode.isSuccess());
+        }
     });
 });
