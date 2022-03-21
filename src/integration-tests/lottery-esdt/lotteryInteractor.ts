@@ -1,19 +1,23 @@
-import { AbiRegistry, Address, Balance, BigUIntType, BigUIntValue, BytesValue, Code, CodeMetadata, DefaultSmartContractController, EnumValue, GasLimit, Interaction, ISmartContractController, OptionalType, OptionalValue, OptionValue, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TokenIdentifierValue, U32Type, U32Value } from "@elrondnetwork/erdjs";
+// lotteryInteractor.ts
+/**
+ * The code in this file is partially usable as production code, as well.
+ * Note: in production code, make sure you do not depend on {@link ITestUser}.
+ * Note: in production code, make sure you DO NOT reference the package "erdjs-snippets".
+ * Note: in dApps, make sure you use a proper wallet provider to sign the transaction.
+ * @module
+ */
+import { AbiRegistry, Address, Balance, BigUIntType, BigUIntValue, BytesValue, Code, CodeMetadata, DefaultSmartContractController, EnumValue, GasLimit, Interaction, IProvider, ISmartContractController, OptionalType, OptionalValue, OptionValue, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TokenIdentifierValue, U32Value } from "@elrondnetwork/erdjs";
 import path from "path";
-import { ITestSession, IUser } from "../../interfaces";
+import { ITestUser } from "../../interfaces";
 
 const PathToWasm = path.resolve(__dirname, "lottery-esdt.wasm");
 const PathToAbi = path.resolve(__dirname, "lottery-esdt.abi.json");
 
-/**
- * Creates a contract interactor for a test session. The code within this function is usable in production, as well.
- * Make sure you do not depend on the test session, though.
- */
- export async function createInteractor(session: ITestSession, address?: Address): Promise<LotteryInteractor> {
+export async function createInteractor(provider: IProvider, address?: Address): Promise<LotteryInteractor> {
     let registry = await AbiRegistry.load({ files: [PathToAbi] });
     let abi = new SmartContractAbi(registry, ["Lottery"]);
     let contract = new SmartContract({ address: address, abi: abi });
-    let controller = new DefaultSmartContractController(abi, session.proxy);
+    let controller = new DefaultSmartContractController(abi, provider);
     let interactor = new LotteryInteractor(contract, controller);
     return interactor;
 }
@@ -27,7 +31,7 @@ export class LotteryInteractor {
         this.controller = controller;
     }
     
-    async deploy(deployer: IUser): Promise<{ address: Address, returnCode: ReturnCode }> {
+    async deploy(deployer: ITestUser): Promise<{ address: Address, returnCode: ReturnCode }> {
          // Load the bytecode from a file.
          let code = await Code.fromFile(PathToWasm);
 
@@ -56,7 +60,7 @@ export class LotteryInteractor {
         return { address, returnCode };
     }
 
-    async start(owner: IUser, lotteryName: string, token: Token, price: number): Promise<ReturnCode> {
+    async start(owner: ITestUser, lotteryName: string, token: Token, price: number): Promise<ReturnCode> {
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods
             .start([
@@ -84,7 +88,7 @@ export class LotteryInteractor {
         return returnCode;
     }
 
-    async buyTicket(user: IUser, lotteryName: string, amount: Balance): Promise<ReturnCode> {
+    async buyTicket(user: ITestUser, lotteryName: string, amount: Balance): Promise<ReturnCode> {
         console.log(`buyTicket: address = ${user.address}, amount = ${amount.toCurrencyString()}`);
 
         // Prepare the interaction

@@ -1,10 +1,10 @@
 import { Account, Address, IProvider, ISigner, parseUserKeys, TokenOfAccountOnNetwork, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs";
 import { PathLike, readFileSync } from "fs";
 import path from "path";
-import { IBunchOfUsers, IUser } from "./interfaces";
+import { IBunchOfUsers, ITestUser as ITestUser } from "./interfaces";
 import { resolvePath } from "./utils";
 
-export class User implements IUser {
+export class TestUser implements ITestUser {
     readonly address: Address;
     readonly account: Account;
     readonly signer: ISigner;
@@ -17,78 +17,78 @@ export class User implements IUser {
         this.signer = new UserSigner(secretKey);
     }
 
-    static fromPemFile(file: PathLike): User {
+    static fromPemFile(file: PathLike): TestUser {
         let text = readFileSync(file, { encoding: "utf8" });
         let secretKey = UserSecretKey.fromPem(text);
-        let user = new User(secretKey);
+        let user = new TestUser(secretKey);
         return user;
     }
 
-    static moreFromPemFile(file: PathLike): User[] {
+    static moreFromPemFile(file: PathLike): TestUser[] {
         let text = readFileSync(file, { encoding: "utf8" });
         let secretKeys: UserSecretKey[] = parseUserKeys(text);
-        let users = secretKeys.map(key => new User(key));
+        let users = secretKeys.map(key => new TestUser(key));
         return users;
     }
 
-    async sync(proxy: IProvider): Promise<void> {
-        await this.account.sync(proxy);
+    async sync(provider: IProvider): Promise<void> {
+        await this.account.sync(provider);
     }
 }
 
 export class BunchOfUsers implements IBunchOfUsers {
-    readonly whale: IUser;
-    private readonly others: IUser[];
+    readonly whale: ITestUser;
+    private readonly others: ITestUser[];
 
-    readonly alice: IUser;
-    readonly bob: IUser;
-    readonly carol: IUser;
-    readonly dan: IUser;
-    readonly eve: IUser;
-    readonly frank: IUser;
-    readonly grace: IUser;
-    readonly heidi: IUser;
-    readonly ivan: IUser;
-    readonly judy: IUser;
-    readonly mallory: IUser;
-    readonly mike: IUser;
+    readonly alice: ITestUser;
+    readonly bob: ITestUser;
+    readonly carol: ITestUser;
+    readonly dan: ITestUser;
+    readonly eve: ITestUser;
+    readonly frank: ITestUser;
+    readonly grace: ITestUser;
+    readonly heidi: ITestUser;
+    readonly ivan: ITestUser;
+    readonly judy: ITestUser;
+    readonly mallory: ITestUser;
+    readonly mike: ITestUser;
 
     constructor(whalePem: string, othersPem?: string) {
-        this.whale = User.fromPemFile(whalePem);
-        this.others = othersPem ? User.moreFromPemFile(othersPem) : [];
+        this.whale = TestUser.fromPemFile(whalePem);
+        this.others = othersPem ? TestUser.moreFromPemFile(othersPem) : [];
 
         let friendsFolder = resolvePath("~", "elrondsdk", "testwallets", "latest", "users");
-        this.alice = User.fromPemFile(path.resolve(friendsFolder, "alice.pem"));
-        this.bob = User.fromPemFile(path.resolve(friendsFolder, "bob.pem"));
-        this.carol = User.fromPemFile(path.resolve(friendsFolder, "carol.pem"));
-        this.dan = User.fromPemFile(path.resolve(friendsFolder, "dan.pem"));
-        this.eve = User.fromPemFile(path.resolve(friendsFolder, "eve.pem"));
-        this.frank = User.fromPemFile(path.resolve(friendsFolder, "frank.pem"));
-        this.grace = User.fromPemFile(path.resolve(friendsFolder, "grace.pem"));
-        this.heidi = User.fromPemFile(path.resolve(friendsFolder, "heidi.pem"));
-        this.ivan = User.fromPemFile(path.resolve(friendsFolder, "ivan.pem"));
-        this.judy = User.fromPemFile(path.resolve(friendsFolder, "judy.pem"));
-        this.mallory = User.fromPemFile(path.resolve(friendsFolder, "mallory.pem"));
-        this.mike = User.fromPemFile(path.resolve(friendsFolder, "mike.pem"));
+        this.alice = TestUser.fromPemFile(path.resolve(friendsFolder, "alice.pem"));
+        this.bob = TestUser.fromPemFile(path.resolve(friendsFolder, "bob.pem"));
+        this.carol = TestUser.fromPemFile(path.resolve(friendsFolder, "carol.pem"));
+        this.dan = TestUser.fromPemFile(path.resolve(friendsFolder, "dan.pem"));
+        this.eve = TestUser.fromPemFile(path.resolve(friendsFolder, "eve.pem"));
+        this.frank = TestUser.fromPemFile(path.resolve(friendsFolder, "frank.pem"));
+        this.grace = TestUser.fromPemFile(path.resolve(friendsFolder, "grace.pem"));
+        this.heidi = TestUser.fromPemFile(path.resolve(friendsFolder, "heidi.pem"));
+        this.ivan = TestUser.fromPemFile(path.resolve(friendsFolder, "ivan.pem"));
+        this.judy = TestUser.fromPemFile(path.resolve(friendsFolder, "judy.pem"));
+        this.mallory = TestUser.fromPemFile(path.resolve(friendsFolder, "mallory.pem"));
+        this.mike = TestUser.fromPemFile(path.resolve(friendsFolder, "mike.pem"));
     }
 
-    getFriends(): IUser[] {
+    getFriends(): ITestUser[] {
         return [this.alice, this.bob, this.carol, this.dan, this.eve, this.frank, this.grace, this.heidi, this.ivan, this.judy, this.mallory, this.mike];
     }
 
-    getOthers(): IUser[] {
+    getOthers(): ITestUser[] {
         return this.others;
     }
 
-    getAll(): IUser[] {
+    getAll(): ITestUser[] {
         return [this.whale, ...this.getFriends(), ...this.getOthers()];
     }
 
-    getAllExceptWhale(): IUser[] {
+    getAllExceptWhale(): ITestUser[] {
         return this.getAllExcept([this.whale]);
     }
 
-    getAllExcept(some: IUser[]): IUser[] {
+    getAllExcept(some: ITestUser[]): ITestUser[] {
         let result = this.getAll().filter(user => !some.includes(user));
         return result;
     }

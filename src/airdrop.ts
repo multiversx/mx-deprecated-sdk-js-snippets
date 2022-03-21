@@ -2,7 +2,7 @@ import { Balance, GasLimit, IProvider, Transaction, TransactionPayload } from "@
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
 import { ESDTTransferPayloadBuilder } from "./erdjsPatching/transactionBuilders";
 import { ErrNotImplemented } from "./errors";
-import { IBunchOfUsers, ITestSession, IUser } from "./interfaces";
+import { IBunchOfUsers, ITestSession, ITestUser } from "./interfaces";
 
 export class AirdropService {
     private readonly users: IBunchOfUsers;
@@ -14,10 +14,10 @@ export class AirdropService {
     }
 
     static createOnSession(session: ITestSession) {
-        return new AirdropService(session.users, session.proxy);
+        return new AirdropService(session.users, session.provider);
     }
 
-    async sendToEachUser(sender: IUser, amount: Balance) {
+    async sendToEachUser(sender: ITestUser, amount: Balance) {
         let transactions = this.createTransactions(sender, amount);
 
         let promisesOfSignAndSend = transactions.map(async (transaction) => {
@@ -32,7 +32,7 @@ export class AirdropService {
         await watcher.awaitNonce(senderExpectedNonce);
     }
 
-    private createTransactions(sender: IUser, amount: Balance): Transaction[] {
+    private createTransactions(sender: ITestUser, amount: Balance): Transaction[] {
         let transactions: Transaction[] = [];
 
         for (const user of this.users.getAllExceptWhale()) {
