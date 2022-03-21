@@ -1,11 +1,11 @@
 import { Address, IProvider, NetworkConfig, ProxyProvider, Token } from "@elrondnetwork/erdjs";
-import { readFileSync } from "fs";
-import { homedir } from "os";
+import { existsSync, readFileSync } from "fs";
 import path from "path";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
 import { IBunchOfUsers, IMochaSuite, IMochaTest, IStorage, ITestSession, ITestSessionConfig, IUser } from "./interfaces";
 import { Storage } from "./storage/storage";
-import { BunchOfUsers, User } from "./users";
+import { BunchOfUsers } from "./users";
+import { resolvePath } from "./utils";
 
 const TypeToken = "token";
 const TypeAddress = "address";
@@ -44,7 +44,8 @@ export class TestSession implements ITestSession {
     }
 
     static async load(sessionName: string, scope: string, folder: string): Promise<ITestSession> {
-        let configFile = path.join(folder, `${sessionName}.session.json`);
+        let configFile = this.findSessionConfigFile(sessionName, folder);
+        let folderOfConfigFile = path.dirname(configFile);
         let configJson = readFileSync(configFile, { encoding: "utf8" });
         let config = <ITestSessionConfig>JSON.parse(configJson);
         
@@ -56,10 +57,10 @@ export class TestSession implements ITestSession {
         }
 
         let proxy = new ProxyProvider(config.proxyUrl);
-        let whalePem = resolvePath(folder, config.whalePem);
-        let othersPem = config.othersPem ? resolvePath(folder, config.whalePem) : undefined;
+        let whalePem = resolvePath(config.whalePem);
+        let othersPem = config.othersPem ? resolvePath(config.whalePem) : undefined;
         let users = new BunchOfUsers(whalePem, othersPem);
-        let storageName = path.join(folder, `${sessionName}.session.sqlite`);
+        let storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
         let storage = await Storage.create(storageName);
 
         let session = new TestSession({
@@ -72,6 +73,21 @@ export class TestSession implements ITestSession {
         });
 
         return session;
+    }
+
+    private static findSessionConfigFile(sessionName: string, folder: string) {
+        let configFile = resolvePath(folder, `${sessionName}.session.json`);
+        if (existsSync(configFile)) {
+            return configFile;
+        }
+
+        // Fallback to parent folder
+        configFile = resolvePath(folder, "..", `${sessionName}.session.json`);
+        if (existsSync(configFile)) {
+            return configFile;
+        }
+
+        throw new ErrBadSessionConfig(sessionName, "file not found");
     }
 
     expectLongInteraction(mochaTest: IMochaTest, minutes: number = 5) {
@@ -123,12 +139,3 @@ export class TestSession implements ITestSession {
     }
 }
 
-function resolvePath(...pathSegments: string[]): string {
-    let fixedSegments = pathSegments.map(segment => asUserPath(segment));
-    let resolvedPath = path.resolve(...fixedSegments);
-    return resolvedPath;
-}
-
-function asUserPath(userPath: string): string {
-    return (userPath || "").replace("~", homedir);
-}

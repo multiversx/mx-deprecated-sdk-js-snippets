@@ -1,23 +1,28 @@
-import { AbiRegistry, Address, Balance, BigUIntValue, BooleanType, BytesType, BytesValue, CompositeType, Interaction, SmartContract, SmartContractAbi, Token, U32Value, VariadicType, VariadicValue } from "@elrondnetwork/erdjs";
+import { AbiRegistry, Address, Balance, BigUIntValue, BooleanType, BytesType, BytesValue, CompositeType, DefaultSmartContractController, Interaction, ISmartContractController, SmartContract, SmartContractAbi, Token, U32Value, VariadicType, VariadicValue } from "@elrondnetwork/erdjs";
 import BigNumber from "bignumber.js";
 import path from "path";
-import { DefaultInteractor } from "../interactors";
 import { ITestSession } from "../interfaces";
 import { User } from "../users";
 
 const ESDTContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u");
 const PathToAbi = path.resolve(__dirname, "esdt.abi.json");
+const IssuePriceInEgld = "0.05";
 
-export class ESDTInteractor extends DefaultInteractor {
-    private constructor(session: ITestSession, contract: SmartContract) {
-        super(session, contract);
+export class ESDTInteractor {
+    private readonly contract: SmartContract;
+    private readonly controller: ISmartContractController;
+
+    private constructor(contract: SmartContract, controller: ISmartContractController) {
+        this.contract = contract;
+        this.controller = controller;
     }
 
     static async create(session: ITestSession): Promise<ESDTInteractor> {
         let registry = await AbiRegistry.load({ files: [PathToAbi] });
         let abi = new SmartContractAbi(registry, ["esdt"]);
         let contract = new SmartContract({ address: ESDTContractAddress, abi: abi });
-        let interactor = new ESDTInteractor(session, contract);
+        let controller = new DefaultSmartContractController(abi, session.proxy);
+        let interactor = new ESDTInteractor(contract, controller);
         return interactor;
     }
 
@@ -32,17 +37,21 @@ export class ESDTInteractor extends DefaultInteractor {
                 new U32Value(token.decimals),
                 new VariadicValue(propertiesType, [])
             ])
-            .withValue(Balance.egld(new BigNumber("0.05")))
-            .withGasLimitComponents({ estimatedExecutionComponent: 60000000});
+            .withValue(Balance.egld(new BigNumber(IssuePriceInEgld)))
+            .withGasLimitComponents({ estimatedExecutionComponent: 60000000})
+            .withNonce(owner.account.getNonceThenIncrement());
 
-        let { transactionOnNetwork } = await this.runInteraction(owner, interaction);
-        let logs = transactionOnNetwork.getLogs();
-        let event = logs.findEventByIdentifier("issue");
+        let transaction = interaction.buildTransaction();
+        await owner.signer.sign(transaction);
+
+        let { transactionOnNetwork } = await this.controller.execute(interaction, transaction);
+        let logs = transactionOnNetwork.logs;
+        let event = logs.requireEventByIdentifier("issue");
         let identifier = event.topics[0].toString();
 
         // (Hack) here we also mutate the token, since now we know the full identifier.
         token.identifier = identifier;
 
-        console.info(`Issued ESDT token: ${identifier}.`);
+        console.info(`ESDTInteractor.issue [end]: token = ${identifier}`);
     }
 }
