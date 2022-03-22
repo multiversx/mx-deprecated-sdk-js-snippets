@@ -55,8 +55,12 @@ export interface IBunchOfUsers {
     getFriends(): ITestUser[];
     getOthers(): ITestUser[];
     getAll(): ITestUser[];
-    getAllExceptWhale(): ITestUser[];
     getAllExcept(some: ITestUser[]): ITestUser[];
+
+    getAddressesOfFriends(): Address[];
+    getAddressesOfOthers(): Address[];
+    getAddressesOfAll(): Address[];
+    getAddressesOfAllExcept(some: ITestUser[]): Address[];
 }
 
 export interface ITestUser {

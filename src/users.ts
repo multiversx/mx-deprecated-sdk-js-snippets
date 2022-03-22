@@ -84,13 +84,24 @@ export class BunchOfUsers implements IBunchOfUsers {
         return [this.whale, ...this.getFriends(), ...this.getOthers()];
     }
 
-    getAllExceptWhale(): ITestUser[] {
-        return this.getAllExcept([this.whale]);
-    }
-
     getAllExcept(some: ITestUser[]): ITestUser[] {
         let result = this.getAll().filter(user => !some.includes(user));
         return result;
     }
-}
 
+    getAddressesOfFriends(): Address[] {
+        return this.getFriends().map(user => user.address);
+    }
+
+    getAddressesOfOthers(): Address[] {
+        return this.getOthers().map(user => user.address);
+    }
+
+    getAddressesOfAll(): Address[] {
+        return this.getAll().map(user => user.address);
+    }
+
+    getAddressesOfAllExcept(some: ITestUser[]): Address[] {
+        return this.getAllExcept(some).map(user => user.address);
+    }
+}

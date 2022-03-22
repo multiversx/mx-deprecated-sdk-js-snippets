@@ -6,7 +6,7 @@
  * Note: in dApps, make sure you use a proper wallet provider to sign the transaction.
  * @module
  */
-import { AbiRegistry, Address, Balance, BigUIntType, BigUIntValue, BytesValue, Code, CodeMetadata, DefaultSmartContractController, EnumValue, GasLimit, Interaction, IProvider, ISmartContractController, OptionalType, OptionalValue, OptionValue, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TokenIdentifierValue, U32Value } from "@elrondnetwork/erdjs";
+import { AbiRegistry, Address, Balance, BigUIntValue, BytesValue, Code, CodeMetadata, createListOfAddresses, DefaultSmartContractController, EnumValue, GasLimit, Interaction, IProvider, ISmartContractController, OptionalValue, OptionValue, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TokenIdentifierValue, U32Value, VariadicValue } from "@elrondnetwork/erdjs";
 import path from "path";
 import { ITestUser } from "../../interfaces";
 
@@ -60,21 +60,21 @@ export class LotteryInteractor {
         return { address, returnCode };
     }
 
-    async start(owner: ITestUser, lotteryName: string, token: Token, price: number): Promise<ReturnCode> {
+    async start(owner: ITestUser, lotteryName: string, token: Token, price: number, whitelist: Address[]): Promise<ReturnCode> {
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods
             .start([
                 BytesValue.fromUTF8(lotteryName),
-                new TokenIdentifierValue(Buffer.from(token.identifier)),
+                new TokenIdentifierValue(token.identifier),
                 new BigUIntValue(price),
                 OptionValue.newMissing(),
                 OptionValue.newMissing(),
                 OptionValue.newProvided(new U32Value(1)),
                 OptionValue.newMissing(),
-                OptionValue.newMissing(),
-                new OptionalValue(new OptionalType(new BigUIntType()))
+                OptionValue.newProvided(createListOfAddresses(whitelist)),
+                OptionalValue.newMissing()
             ])
-            .withGasLimit(new GasLimit(10000000))
+            .withGasLimit(new GasLimit(20000000))
             .withNonce(owner.account.getNonceThenIncrement());
 
         // Let's build the transaction object.
@@ -111,7 +111,7 @@ export class LotteryInteractor {
          return returnCode;
     }
 
-    async getLotteryInfo(lotteryName: string): Promise<any> {
+    async getLotteryInfo(lotteryName: string): Promise<Struct> {
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods.getLotteryInfo([
             BytesValue.fromUTF8(lotteryName)
@@ -122,7 +122,21 @@ export class LotteryInteractor {
 
         // Now let's interpret the results.
         let firstValueAsStruct = <Struct>firstValue;
-        return firstValueAsStruct.valueOf();
+        return firstValueAsStruct;
+    }
+
+    async getWhitelist(lotteryName: string): Promise<Address[]> {
+        // Prepare the interaction
+        let interaction = <Interaction>this.contract.methods.getLotteryWhitelist([
+            BytesValue.fromUTF8(lotteryName)
+        ]);
+
+        // Let's perform the interaction via the controller.
+        let { firstValue } = await this.controller.query(interaction);
+
+        // Now let's interpret the results.
+        let firstValueAsVariadic = <VariadicValue>firstValue;
+        return firstValueAsVariadic.valueOf();
     }
 
     async getStatus(lotteryName: string): Promise<string> {
