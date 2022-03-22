@@ -74,7 +74,8 @@ describe("lottery snippet", async function () {
         let contractAddress = await session.loadAddress("contractAddress");
         let lotteryToken = await session.loadToken("lotteryToken");
         let interactor = await createInteractor(provider, contractAddress);
-        let returnCode = await interactor.start(owner, LotteryName, lotteryToken, 1);
+        let whitelist = session.users.getAddressesOfFriends();
+        let returnCode = await interactor.start(owner, LotteryName, lotteryToken, 1, whitelist);
         assert.isTrue(returnCode.isSuccess());
     });
 
@@ -84,12 +85,21 @@ describe("lottery snippet", async function () {
         let interactor = await createInteractor(provider, contractAddress);
         let lotteryInfo = await interactor.getLotteryInfo(LotteryName);
         let lotteryStatus = await interactor.getStatus(LotteryName);
-        console.log("Info:", lotteryInfo);
-        console.log("Prize pool:", lotteryInfo.prize_pool.toString());
+        console.log("Info:", lotteryInfo.valueOf());
+        console.log("Prize pool:", lotteryInfo.getFieldValue("prize_pool").toString());
         console.log("Status:", lotteryStatus);
 
-        assert.equal(lotteryInfo.token_identifier.toString(), lotteryToken.identifier);
+        assert.equal(lotteryInfo.getFieldValue("token_identifier"), lotteryToken.identifier);
         assert.equal(lotteryStatus, "Running");
+    });
+
+    it("get whitelist", async function () {
+        let contractAddress = await session.loadAddress("contractAddress");
+        let interactor = await createInteractor(provider, contractAddress);
+        let whitelist = await interactor.getWhitelist(LotteryName);
+        console.log("Whitelist:", whitelist);
+        
+        assert.deepEqual(whitelist, session.users.getAddressesOfFriends());
     });
 
     it("friends buy tickets", async function () {

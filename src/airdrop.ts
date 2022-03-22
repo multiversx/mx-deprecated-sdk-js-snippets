@@ -35,7 +35,7 @@ export class AirdropService {
     private createTransactions(sender: ITestUser, amount: Balance): Transaction[] {
         let transactions: Transaction[] = [];
 
-        for (const user of this.users.getAllExceptWhale()) {
+        for (const userAddress of this.users.getAddressesOfAllExcept([sender])) {
             let value = Balance.Zero();
             let data = new TransactionPayload();
             let gasLimit = GasLimit.forTransfer(data);
@@ -51,7 +51,7 @@ export class AirdropService {
 
             transactions.push(new Transaction({
                 nonce: sender.account.getNonceThenIncrement(),
-                receiver: user.address,
+                receiver: userAddress,
                 value: value,
                 data: data,
                 gasLimit: gasLimit
