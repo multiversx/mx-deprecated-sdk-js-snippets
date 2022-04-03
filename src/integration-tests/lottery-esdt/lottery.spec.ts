@@ -19,10 +19,10 @@ describe("lottery snippet", async function () {
     let owner: ITestUser;
 
     this.beforeAll(async function () {
-        session = await TestSession.loadOnSuite("default", suite);
+        session = await TestSession.loadOnSuite("devnet", suite);
         provider = session.provider;
         whale = session.users.whale;
-        owner = session.users.alice;
+        owner = session.users.whale;
         await session.syncNetworkConfig();
     });
 
@@ -92,7 +92,7 @@ describe("lottery snippet", async function () {
         assert.equal(lotteryInfo.getFieldValue("token_identifier"), lotteryToken.identifier);
         assert.equal(lotteryStatus, "Running");
     });
-
+    
     it("get whitelist", async function () {
         let contractAddress = await session.loadAddress("contractAddress");
         let interactor = await createInteractor(provider, contractAddress);

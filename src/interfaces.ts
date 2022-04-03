@@ -36,6 +36,11 @@ export interface IMochaTest {
     timeout(ms: string | number): void;
 }
 
+export interface IUsersConfig {
+    readonly whalePem: string;
+    readonly othersPem: string;
+}
+
 export interface IBunchOfUsers {
     readonly whale: ITestUser;
 

@@ -15,10 +15,10 @@ describe("adder snippet", async function () {
     let owner: ITestUser;
 
     this.beforeAll(async function () {
-        session = await TestSession.loadOnSuite("default", suite);
+        session = await TestSession.loadOnSuite("devnet", suite);
         provider = session.provider;
         whale = session.users.whale;
-        owner = session.users.alice;
+        owner = session.users.whale;
         await session.syncNetworkConfig();
     });
 
