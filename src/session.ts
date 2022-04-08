@@ -2,7 +2,7 @@ import { Address, IProvider, NetworkConfig, ProxyProvider, Token } from "@elrond
 import { existsSync, readFileSync } from "fs";
 import path from "path";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, IMochaSuite, IMochaTest, IStorage, ITestSession, ITestSessionConfig, ITestUser } from "./interfaces";
+import { IBunchOfUsers, IMochaSuite, IMochaTest, IStorage, ITestSession, ITestSessionConfig, ITestUser } from "./interface";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
 import { resolvePath } from "./utils";

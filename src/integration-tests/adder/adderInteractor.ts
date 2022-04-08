@@ -8,7 +8,7 @@
  */
 import path from "path";
 import { AbiRegistry, Address, BigUIntValue, Code, CodeMetadata, DefaultSmartContractController, GasLimit, Interaction, IProvider, ISmartContractController, ReturnCode, SmartContract, SmartContractAbi } from "@elrondnetwork/erdjs";
-import { ITestUser } from "../../interfaces";
+import { ITestUser } from "../../interface";
 
 const PathToWasm = path.resolve(__dirname, "adder.wasm");
 const PathToAbi = path.resolve(__dirname, "adder.abi.json");

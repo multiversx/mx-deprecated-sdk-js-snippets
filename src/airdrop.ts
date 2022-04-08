@@ -2,7 +2,7 @@ import { Balance, GasLimit, IProvider, Transaction, TransactionPayload } from "@
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
 import { ESDTTransferPayloadBuilder } from "./erdjsPatching/transactionBuilders";
 import { ErrNotImplemented } from "./errors";
-import { IBunchOfUsers, ITestSession, ITestUser } from "./interfaces";
+import { IBunchOfUsers, ITestSession, ITestUser } from "./interface";
 
 export class AirdropService {
     private readonly users: IBunchOfUsers;

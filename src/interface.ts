@@ -1,4 +1,5 @@
-import { Account, Address, Balance, IProvider, ISigner, Nonce, Token, TokenOfAccountOnNetwork, TransactionHash } from "@elrondnetwork/erdjs";
+import { Account, Address, Balance, IProvider, Nonce, Token, TokenOfAccountOnNetwork, TransactionHash } from "@elrondnetwork/erdjs";
+import { ISigner } from "./interfaceOfWalletCore";
 
 export interface ITestSessionConfig {
     readonly providerUrl: string;

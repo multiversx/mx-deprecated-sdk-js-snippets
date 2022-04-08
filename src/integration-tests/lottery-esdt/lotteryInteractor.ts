@@ -8,7 +8,7 @@
  */
 import { AbiRegistry, Address, Balance, BigUIntValue, BytesValue, Code, CodeMetadata, createListOfAddresses, DefaultSmartContractController, EnumValue, GasLimit, Interaction, IProvider, ISmartContractController, OptionalValue, OptionValue, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TokenIdentifierValue, U32Value, VariadicValue } from "@elrondnetwork/erdjs";
 import path from "path";
-import { ITestUser } from "../../interfaces";
+import { ITestUser } from "../../interface";
 
 const PathToWasm = path.resolve(__dirname, "lottery-esdt.wasm");
 const PathToAbi = path.resolve(__dirname, "lottery-esdt.abi.json");

@@ -17,7 +17,9 @@
   "author": "ElrondNetwork",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "@elrondnetwork/erdjs": "^10.0.0-alpha.4",
+    "@elrondnetwork/erdjs": "^10.0.0-alpha.5",
+    "@elrondnetwork/erdjs-network-providers": "^0.1.2",
+    "@elrondnetwork/erdjs-walletcore": "^1.0.0",
     "better-sqlite3": "7.5.0",
     "bignumber.js": "9.0.2",
     "reflect-metadata": "0.1.13",

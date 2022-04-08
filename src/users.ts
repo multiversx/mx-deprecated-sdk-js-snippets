@@ -1,7 +1,9 @@
-import { Account, Address, IProvider, ISigner, parseUserKeys, TokenOfAccountOnNetwork, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs";
+import { Account, Address, IProvider, TokenOfAccountOnNetwork } from "@elrondnetwork/erdjs";
+import { parseUserKeys, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs-walletcore";
 import { PathLike, readFileSync } from "fs";
 import path from "path";
-import { IBunchOfUsers, ITestUser as ITestUser } from "./interfaces";
+import { IBunchOfUsers, ITestUser as ITestUser } from "./interface";
+import { ISigner } from "./interfaceOfWalletCore";
 import { resolvePath } from "./utils";
 
 export class TestUser implements ITestUser {
@@ -12,7 +14,7 @@ export class TestUser implements ITestUser {
 
     constructor(secretKey: UserSecretKey) {
         let publicKey = secretKey.generatePublicKey();
-        this.address = publicKey.toAddress();
+        this.address = new Address(publicKey.toAddress().bech32());
         this.account = new Account(this.address);
         this.signer = new UserSigner(secretKey);
     }

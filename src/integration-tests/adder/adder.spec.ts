@@ -1,7 +1,7 @@
 import { Balance, IProvider } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
 import { AirdropService } from "../../airdrop";
-import { ITestSession, ITestUser } from "../../interfaces";
+import { ITestSession, ITestUser } from "../../interface";
 import { TestSession } from "../../session";
 import { createInteractor } from "./adderInteractor";
 

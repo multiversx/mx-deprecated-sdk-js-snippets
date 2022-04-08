@@ -2,7 +2,7 @@ import { Balance, IProvider, ReturnCode, Token, TokenType } from "@elrondnetwork
 import { assert } from "chai";
 import { AirdropService } from "../../airdrop";
 import { createTokenAmount } from "../../erdjsPatching/amounts";
-import { ITestSession, ITestUser } from "../../interfaces";
+import { ITestSession, ITestUser } from "../../interface";
 import { TestSession } from "../../session";
 import { ESDTInteractor } from "../../system/esdtInteractor";
 import { createInteractor } from "./lotteryInteractor";

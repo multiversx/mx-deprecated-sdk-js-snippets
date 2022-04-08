@@ -1,7 +1,7 @@
 import { AbiRegistry, Address, Balance, BigUIntValue, BooleanType, BytesType, BytesValue, CompositeType, DefaultSmartContractController, Interaction, ISmartContractController, SmartContract, SmartContractAbi, Token, U32Value, VariadicType, VariadicValue } from "@elrondnetwork/erdjs";
 import BigNumber from "bignumber.js";
 import path from "path";
-import { ITestSession, ITestUser } from "../interfaces";
+import { ITestSession, ITestUser } from "../interface";
 
 const ESDTContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u");
 const PathToAbi = path.resolve(__dirname, "esdt.abi.json");
