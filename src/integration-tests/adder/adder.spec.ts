@@ -1,7 +1,8 @@
-import { Balance, IProvider } from "@elrondnetwork/erdjs";
+import { Balance } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
-import { AirdropService } from "../../airdrop";
+import { createAirdropService } from "../../airdrop";
 import { ITestSession, ITestUser } from "../../interface";
+import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
 import { createInteractor } from "./adderInteractor";
 
@@ -10,13 +11,13 @@ describe("adder snippet", async function () {
 
     let suite = this;
     let session: ITestSession;
-    let provider: IProvider;
+    let provider: INetworkProvider;
     let whale: ITestUser;
     let owner: ITestUser;
 
     this.beforeAll(async function () {
         session = await TestSession.loadOnSuite("devnet", suite);
-        provider = session.provider;
+        provider = session.networkProvider;
         whale = session.users.whale;
         owner = session.users.whale;
         await session.syncNetworkConfig();
@@ -26,7 +27,7 @@ describe("adder snippet", async function () {
         session.expectLongInteraction(this);
 
         await session.syncUsers([whale]);
-        await AirdropService.createOnSession(session).sendToEachUser(whale, Balance.egld(1));
+        await createAirdropService(session).sendToEachUser(whale, Balance.egld(1));
     });
 
     it("setup", async function () {
@@ -34,7 +35,7 @@ describe("adder snippet", async function () {
 
         await session.syncUsers([owner]);
 
-        let interactor = await createInteractor(provider);
+        let interactor = await createInteractor(session);
         let { address, returnCode } = await interactor.deploy(owner, 42);
         
         assert.isTrue(returnCode.isSuccess());
@@ -48,7 +49,7 @@ describe("adder snippet", async function () {
         await session.syncUsers([owner]);
 
         let contractAddress = await session.loadAddress("contractAddress");
-        let interactor = await createInteractor(provider, contractAddress);
+        let interactor = await createInteractor(session, contractAddress);
 
         let sumBefore = await interactor.getSum();
         let returnCode = await interactor.add(owner, 3);
@@ -59,7 +60,7 @@ describe("adder snippet", async function () {
 
     it("getSum", async function () {
         let contractAddress = await session.loadAddress("contractAddress");
-        let interactor = await createInteractor(provider, contractAddress);
+        let interactor = await createInteractor(session, contractAddress);
         let result = await interactor.getSum();
         assert.isTrue(result > 0);
     });

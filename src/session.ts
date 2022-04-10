@@ -16,7 +16,7 @@ const OneMinuteInMilliseconds = 60 * 1000;
 export class TestSession implements ITestSession {
     readonly name: string;
     readonly scope: string;
-    readonly provider: INetworkProvider;
+    readonly networkProvider: INetworkProvider;
     readonly users: IBunchOfUsers;
     readonly storage: IStorage;
     private networkConfig: NetworkConfig = new NetworkConfig();
@@ -31,7 +31,7 @@ export class TestSession implements ITestSession {
     }) {
         this.name = args.name;
         this.scope = args.scope;
-        this.provider = args.provider;
+        this.networkProvider = args.provider;
         this.users = args.users;
         this.storage = args.storage;
     }
@@ -98,7 +98,7 @@ export class TestSession implements ITestSession {
     }
 
     async syncNetworkConfig(): Promise<void> {
-        this.networkConfig = await this.provider.getNetworkConfig();
+        this.networkConfig = await this.networkProvider.getNetworkConfig();
     }
 
     getNetworkConfig(): NetworkConfig {
@@ -106,7 +106,7 @@ export class TestSession implements ITestSession {
     }
 
     async syncWhale(): Promise<void> {
-        await this.users.whale.sync(this.provider);
+        await this.users.whale.sync(this.networkProvider);
     }
 
     async syncAllUsers(): Promise<void> {
@@ -114,7 +114,7 @@ export class TestSession implements ITestSession {
     }
 
     async syncUsers(users: ITestUser[]): Promise<void> {
-        let promises = users.map(user => user.sync(this.provider));
+        let promises = users.map(user => user.sync(this.networkProvider));
         await Promise.all(promises);
     }
 

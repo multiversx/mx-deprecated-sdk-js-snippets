@@ -1,19 +1,21 @@
 
 
-import { AccountOnNetwork, Address, AsyncTimer, Err, IProvider, Nonce } from "@elrondnetwork/erdjs";
+import { AsyncTimer, Err, IBech32Address, Nonce } from "@elrondnetwork/erdjs";
+import { AccountOnNetwork } from "@elrondnetwork/erdjs-network-providers";
+import { INetworkProvider } from "../interfaceOfNetwork";
 
 export class AccountWatcher {
     static DefaultPollingInterval: number = 6000;
     static DefaultTimeout: number = AccountWatcher.DefaultPollingInterval * 15;
 
-    private readonly address: Address;
-    private readonly fetcher: IProvider;
+    private readonly address: IBech32Address;
+    private readonly fetcher: INetworkProvider;
     private readonly pollingInterval: number;
     private readonly timeout: number;
 
     constructor(
-        address: Address,
-        fetcher: IProvider,
+        address: IBech32Address,
+        fetcher: INetworkProvider,
         pollingInterval: number = AccountWatcher.DefaultPollingInterval,
         timeout: number = AccountWatcher.DefaultTimeout
     ) {

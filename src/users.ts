@@ -1,4 +1,4 @@
-import { Account, Address } from "@elrondnetwork/erdjs";
+import { Account, IBech32Address } from "@elrondnetwork/erdjs";
 import { parseUserKeys, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs-walletcore";
 import { PathLike, readFileSync } from "fs";
 import path from "path";
@@ -8,13 +8,13 @@ import { ISigner } from "./interfaceOfWalletCore";
 import { resolvePath } from "./utils";
 
 export class TestUser implements ITestUser {
-    readonly address: Address;
+    readonly address: IBech32Address;
     readonly account: Account;
     readonly signer: ISigner;
 
     constructor(secretKey: UserSecretKey) {
         let publicKey = secretKey.generatePublicKey();
-        this.address = new Address(publicKey.toAddress().bech32());
+        this.address = publicKey.toAddress();
         this.account = new Account(this.address);
         this.signer = new UserSigner(secretKey);
     }
@@ -92,19 +92,19 @@ export class BunchOfUsers implements IBunchOfUsers {
         return result;
     }
 
-    getAddressesOfFriends(): Address[] {
+    getAddressesOfFriends(): IBech32Address[] {
         return this.getFriends().map(user => user.address);
     }
 
-    getAddressesOfOthers(): Address[] {
+    getAddressesOfOthers(): IBech32Address[] {
         return this.getOthers().map(user => user.address);
     }
 
-    getAddressesOfAll(): Address[] {
+    getAddressesOfAll(): IBech32Address[] {
         return this.getAll().map(user => user.address);
     }
 
-    getAddressesOfAllExcept(some: ITestUser[]): Address[] {
+    getAddressesOfAllExcept(some: ITestUser[]): IBech32Address[] {
         return this.getAllExcept(some).map(user => user.address);
     }
 }

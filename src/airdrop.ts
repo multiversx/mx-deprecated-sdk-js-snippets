@@ -1,20 +1,29 @@
-import { Balance, GasLimit, IProvider, Transaction, TransactionPayload } from "@elrondnetwork/erdjs/out";
+import { Balance, Transaction, TransactionPayload } from "@elrondnetwork/erdjs";
+import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
 import { ESDTTransferPayloadBuilder } from "./erdjsPatching/transactionBuilders";
 import { ErrNotImplemented } from "./errors";
+import { computeGasLimit } from "./gasLimit";
 import { IBunchOfUsers, ITestSession, ITestUser } from "./interface";
+import { INetworkProvider } from "./interfaceOfNetwork";
+
+export function createAirdropService(session: ITestSession): AirdropService {
+    let users = session.users;
+    let networkProvider = session.networkProvider;
+    let networkConfig = session.getNetworkConfig();
+    let service = new AirdropService(users, networkProvider, networkConfig);
+    return service;
+}
 
 export class AirdropService {
     private readonly users: IBunchOfUsers;
-    private readonly networkProvider: IProvider;
+    private readonly networkProvider: INetworkProvider;
+    private readonly networkConfig: NetworkConfig;
 
-    constructor(users: IBunchOfUsers, networkProvider: IProvider) {
+    constructor(users: IBunchOfUsers, networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
         this.users = users;
         this.networkProvider = networkProvider;
-    }
-
-    static createOnSession(session: ITestSession) {
-        return new AirdropService(session.users, session.provider);
+        this.networkConfig = networkConfig;
     }
 
     async sendToEachUser(sender: ITestUser, amount: Balance) {
@@ -22,7 +31,7 @@ export class AirdropService {
 
         let promisesOfSignAndSend = transactions.map(async (transaction) => {
             await sender.signer.sign(transaction);
-            await transaction.send(this.networkProvider);
+            await this.networkProvider.sendTransaction(transaction);
         });
 
         await Promise.all(promisesOfSignAndSend);
@@ -38,13 +47,13 @@ export class AirdropService {
         for (const userAddress of this.users.getAddressesOfAllExcept([sender])) {
             let value = Balance.Zero();
             let data = new TransactionPayload();
-            let gasLimit = GasLimit.forTransfer(data);
+            let gasLimit = computeGasLimit(this.networkConfig);
 
             if (amount.token.isEgld()) {
                 value = amount;
             } else if (amount.token.isFungible()) {
                 data = new ESDTTransferPayloadBuilder().setAmount(amount).build();
-                gasLimit = GasLimit.forTransfer(data).add(new GasLimit(300000));
+                gasLimit = computeGasLimit(this.networkConfig, data.length(), 300000);
             } else {
                 throw new ErrNotImplemented("transfer of other tokens");
             }
@@ -54,7 +63,8 @@ export class AirdropService {
                 receiver: userAddress,
                 value: value,
                 data: data,
-                gasLimit: gasLimit
+                gasLimit: gasLimit,
+                chainID: this.networkConfig.ChainID
             }));
         }
 

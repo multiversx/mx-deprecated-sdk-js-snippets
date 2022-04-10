@@ -1,4 +1,4 @@
-import { Account, Address, Balance, Nonce, Token, TransactionHash } from "@elrondnetwork/erdjs";
+import { Account, Balance, IBech32Address, Nonce, Token, TransactionHash } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
@@ -12,7 +12,7 @@ export interface ITestSessionConfig {
 export interface ITestSession {
     readonly name: string;
     readonly scope: string;
-    readonly provider: INetworkProvider;
+    readonly networkProvider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
 
@@ -23,8 +23,8 @@ export interface ITestSession {
     syncAllUsers(): Promise<void>;
     syncUsers(users: ITestUser[]): Promise<void>;
 
-    saveAddress(name: string, address: Address): Promise<void>;
-    loadAddress(name: string): Promise<Address>;
+    saveAddress(name: string, address: IBech32Address): Promise<void>;
+    loadAddress(name: string): Promise<IBech32Address>;
 
     saveToken(name: string, token: Token): Promise<void>;
     loadToken(name: string): Promise<Token>;
@@ -66,14 +66,14 @@ export interface IBunchOfUsers {
     getAll(): ITestUser[];
     getAllExcept(some: ITestUser[]): ITestUser[];
 
-    getAddressesOfFriends(): Address[];
-    getAddressesOfOthers(): Address[];
-    getAddressesOfAll(): Address[];
-    getAddressesOfAllExcept(some: ITestUser[]): Address[];
+    getAddressesOfFriends(): IBech32Address[];
+    getAddressesOfOthers(): IBech32Address[];
+    getAddressesOfAll(): IBech32Address[];
+    getAddressesOfAllExcept(some: ITestUser[]): IBech32Address[];
 }
 
 export interface ITestUser {
-    readonly address: Address;
+    readonly address: IBech32Address;
     readonly account: Account;
     readonly signer: ISigner;
 
@@ -105,8 +105,8 @@ export interface IStorage {
 
 export interface IInteractionWithinStorage {
     action: string;
-    userAddress: Address;
-    contractAddress: Address;
+    userAddress: IBech32Address;
+    contractAddress: IBech32Address;
     transactionHash: TransactionHash;
     timestamp: string;
     round: number;
@@ -122,7 +122,7 @@ export interface IReferenceOfInteractionWithinStorage { }
 
 export interface IAccountSnapshotWithinStorage {
     timestamp: string;
-    address: Address;
+    address: IBech32Address;
     nonce: Nonce;
     balance: Balance;
     tokens: any;
