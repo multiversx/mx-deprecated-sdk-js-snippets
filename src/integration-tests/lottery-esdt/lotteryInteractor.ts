@@ -6,34 +6,33 @@
  * Note: in dApps, make sure you use a proper wallet provider to sign the transaction.
  * @module
  */
-import { AbiRegistry, Address, Balance, BigUIntValue, BytesValue, Code, CodeMetadata, createListOfAddresses, DefaultSmartContractController, EnumValue, GasLimit, Interaction, IProvider, ISmartContractController, OptionalValue, OptionValue, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TokenIdentifierValue, U32Value, VariadicValue } from "@elrondnetwork/erdjs";
+import { Address, Balance, BigUIntValue, BytesValue, Code, CodeMetadata, createListOfAddresses, EnumValue, GasLimit, Interaction, OptionalValue, OptionValue, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TokenIdentifierValue, U32Value, VariadicValue } from "@elrondnetwork/erdjs";
 import path from "path";
+import { loadAbiRegistry, loadCode } from "../../contracts";
 import { ITestUser } from "../../interface";
+import { INetworkProvider } from "../../interfaceOfNetwork";
 
 const PathToWasm = path.resolve(__dirname, "lottery-esdt.wasm");
 const PathToAbi = path.resolve(__dirname, "lottery-esdt.abi.json");
 
-export async function createInteractor(provider: IProvider, address?: Address): Promise<LotteryInteractor> {
-    let registry = await AbiRegistry.load({ files: [PathToAbi] });
+export async function createInteractor(provider: INetworkProvider, address?: Address): Promise<LotteryInteractor> {
+    let registry = await loadAbiRegistry(PathToAbi);
     let abi = new SmartContractAbi(registry, ["Lottery"]);
     let contract = new SmartContract({ address: address, abi: abi });
-    let controller = new DefaultSmartContractController(abi, provider);
-    let interactor = new LotteryInteractor(contract, controller);
+    let interactor = new LotteryInteractor(contract);
     return interactor;
 }
 
 export class LotteryInteractor {
     private readonly contract: SmartContract;
-    private readonly controller: ISmartContractController;
 
-    constructor(contract: SmartContract, controller: ISmartContractController) {
+    constructor(contract: SmartContract) {
         this.contract = contract;
-        this.controller = controller;
     }
     
     async deploy(deployer: ITestUser): Promise<{ address: Address, returnCode: ReturnCode }> {
          // Load the bytecode from a file.
-         let code = await Code.fromFile(PathToWasm);
+         let code = await loadCode(PathToWasm);
 
          // Prepare the deploy transaction.
          let transaction = this.contract.deploy({

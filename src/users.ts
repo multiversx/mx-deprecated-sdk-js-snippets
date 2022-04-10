@@ -1,8 +1,9 @@
-import { Account, Address, IProvider, TokenOfAccountOnNetwork } from "@elrondnetwork/erdjs";
+import { Account, Address } from "@elrondnetwork/erdjs";
 import { parseUserKeys, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs-walletcore";
 import { PathLike, readFileSync } from "fs";
 import path from "path";
 import { IBunchOfUsers, ITestUser as ITestUser } from "./interface";
+import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
 import { resolvePath } from "./utils";
 
@@ -10,7 +11,6 @@ export class TestUser implements ITestUser {
     readonly address: Address;
     readonly account: Account;
     readonly signer: ISigner;
-    accountTokens: TokenOfAccountOnNetwork[] = [];
 
     constructor(secretKey: UserSecretKey) {
         let publicKey = secretKey.generatePublicKey();
@@ -33,8 +33,9 @@ export class TestUser implements ITestUser {
         return users;
     }
 
-    async sync(provider: IProvider): Promise<void> {
-        await this.account.sync(provider);
+    async sync(provider: INetworkProvider): Promise<void> {
+        let accountOnNetwork = await provider.getAccount(this.address);
+        this.account.update(accountOnNetwork);
     }
 }
 

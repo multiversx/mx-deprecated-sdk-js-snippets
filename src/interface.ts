@@ -1,4 +1,6 @@
-import { Account, Address, Balance, IProvider, Nonce, Token, TokenOfAccountOnNetwork, TransactionHash } from "@elrondnetwork/erdjs";
+import { Account, Address, Balance, Nonce, Token, TransactionHash } from "@elrondnetwork/erdjs";
+import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
+import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
 
 export interface ITestSessionConfig {
@@ -10,12 +12,13 @@ export interface ITestSessionConfig {
 export interface ITestSession {
     readonly name: string;
     readonly scope: string;
-    readonly provider: IProvider;
+    readonly provider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
 
     expectLongInteraction(mochaTest: IMochaTest, minutes?: number): void;
     syncNetworkConfig(): Promise<void>;
+    getNetworkConfig(): NetworkConfig;
     syncWhale(): Promise<void>;
     syncAllUsers(): Promise<void>;
     syncUsers(users: ITestUser[]): Promise<void>;
@@ -73,9 +76,8 @@ export interface ITestUser {
     readonly address: Address;
     readonly account: Account;
     readonly signer: ISigner;
-    readonly accountTokens: TokenOfAccountOnNetwork[];
 
-    sync(provider: IProvider): Promise<void>;
+    sync(provider: INetworkProvider): Promise<void>;
 }
 
 /**

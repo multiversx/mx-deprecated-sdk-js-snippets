@@ -7,33 +7,32 @@
  * @module
  */
 import path from "path";
-import { AbiRegistry, Address, Balance, BigUIntValue, Code, CodeMetadata, DefaultSmartContractController, GasLimit, Interaction, IProvider, ISmartContractController, ReturnCode, SmartContract, SmartContractAbi, U64Value } from "@elrondnetwork/erdjs";
+import { Address, Balance, BigUIntValue, CodeMetadata, GasLimit, Interaction, ReturnCode, SmartContract, SmartContractAbi, U64Value } from "@elrondnetwork/erdjs";
 import { ITestUser } from "../../interface";
+import { loadAbiRegistry, loadCode } from "../../contracts";
+import { INetworkProvider } from "../../interfaceOfNetwork";
 
 const PathToWasm = path.resolve(__dirname, "counter.wasm");
 const PathToAbi = path.resolve(__dirname, "counter.abi.json");
 
-export async function createInteractor(provider: IProvider, address?: Address): Promise<CounterInteractor> {
-    let registry = await AbiRegistry.load({ files: [PathToAbi] });
+export async function createInteractor(provider: INetworkProvider, address?: Address): Promise<CounterInteractor> {
+    let registry = await loadAbiRegistry(PathToAbi);
     let abi = new SmartContractAbi(registry, ["Counter"]);
     let contract = new SmartContract({ address: address, abi: abi });
-    let controller = new DefaultSmartContractController(abi, provider);
-    let interactor = new CounterInteractor(contract, controller);
+    let interactor = new CounterInteractor(contract);
     return interactor;
 }
 
 export class CounterInteractor {
     private readonly contract: SmartContract;
-    private readonly controller: ISmartContractController;
 
-    constructor(contract: SmartContract, controller: ISmartContractController) {
+    constructor(contract: SmartContract) {
         this.contract = contract;
-        this.controller = controller;
     }
 
     async deploy(deployer: ITestUser, initialValue: number): Promise<{ address: Address, returnCode: ReturnCode }> {
         // Load the bytecode from a file.
-        let code = await Code.fromFile(PathToWasm);
+        let code = await loadCode(PathToWasm);
 
         // Prepare the deploy transaction.
         let transaction = this.contract.deploy({

@@ -1,8 +1,10 @@
-import { Address, IProvider, NetworkConfig, ProxyProvider, Token } from "@elrondnetwork/erdjs";
+import { Address, Token } from "@elrondnetwork/erdjs";
+import { NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
 import { existsSync, readFileSync } from "fs";
 import path from "path";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
 import { IBunchOfUsers, IMochaSuite, IMochaTest, IStorage, ITestSession, ITestSessionConfig, ITestUser } from "./interface";
+import { INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
 import { resolvePath } from "./utils";
@@ -14,14 +16,15 @@ const OneMinuteInMilliseconds = 60 * 1000;
 export class TestSession implements ITestSession {
     readonly name: string;
     readonly scope: string;
-    readonly provider: IProvider;
+    readonly provider: INetworkProvider;
     readonly users: IBunchOfUsers;
     readonly storage: IStorage;
+    private networkConfig: NetworkConfig = new NetworkConfig();
 
     constructor(args: {
         name: string,
         scope: string,
-        provider: IProvider,
+        provider: INetworkProvider,
         users: IBunchOfUsers,
         storage: IStorage,
         config: ITestSessionConfig
@@ -56,7 +59,7 @@ export class TestSession implements ITestSession {
             throw new ErrBadSessionConfig(sessionName, "missing 'whalePem'");
         }
 
-        let provider = new ProxyProvider(config.providerUrl);
+        let provider = new ProxyNetworkProvider(config.providerUrl);
         let whalePem = resolvePath(config.whalePem);
         let othersPem = config.othersPem ? resolvePath(config.whalePem) : undefined;
         let users = new BunchOfUsers(whalePem, othersPem);
@@ -95,7 +98,11 @@ export class TestSession implements ITestSession {
     }
 
     async syncNetworkConfig(): Promise<void> {
-        await NetworkConfig.getDefault().sync(this.provider);
+        this.networkConfig = await this.provider.getNetworkConfig();
+    }
+
+    getNetworkConfig(): NetworkConfig {
+        return this.networkConfig;
     }
 
     async syncWhale(): Promise<void> {
