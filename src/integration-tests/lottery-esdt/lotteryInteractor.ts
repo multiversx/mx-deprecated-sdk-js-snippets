@@ -7,7 +7,7 @@
  * @module
  */
 import path from "path";
-import { Address, Balance, BigUIntValue, BytesValue, Code, CodeMetadata, createListOfAddresses, EnumValue, GasLimit, IBech32Address, Interaction, OptionalValue, OptionValue, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TokenIdentifierValue, TransactionWatcher, U32Value, VariadicValue } from "@elrondnetwork/erdjs";
+import { Balance, CodeMetadata, EnumValue, GasLimit, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TransactionWatcher, VariadicValue } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { loadAbiRegistry, loadCode } from "../../contracts";
 import { ITestSession, ITestUser } from "../../interface";
@@ -16,7 +16,7 @@ import { INetworkProvider } from "../../interfaceOfNetwork";
 const PathToWasm = path.resolve(__dirname, "lottery-esdt.wasm");
 const PathToAbi = path.resolve(__dirname, "lottery-esdt.abi.json");
 
-export async function createInteractor(session: ITestSession, contractAddress?: IBech32Address): Promise<LotteryInteractor> {
+export async function createInteractor(session: ITestSession, contractAddress?: IAddress): Promise<LotteryInteractor> {
     let registry = await loadAbiRegistry(PathToAbi);
     let abi = new SmartContractAbi(registry, ["Lottery"]);
     let contract = new SmartContract({ address: contractAddress, abi: abi });
@@ -41,7 +41,7 @@ export class LotteryInteractor {
         this.resultsParser = new ResultsParser();
     }
 
-    async deploy(deployer: ITestUser): Promise<{ address: IBech32Address, returnCode: ReturnCode }> {
+    async deploy(deployer: ITestUser): Promise<{ address: IAddress, returnCode: ReturnCode }> {
         // Load the bytecode from a file.
         let code = await loadCode(PathToWasm);
 
@@ -75,7 +75,7 @@ export class LotteryInteractor {
         return { address, returnCode };
     }
 
-    async start(owner: ITestUser, lotteryName: string, token: Token, price: number, whitelist: IBech32Address[]): Promise<ReturnCode> {
+    async start(owner: ITestUser, lotteryName: string, token: Token, price: number, whitelist: IAddress[]): Promise<ReturnCode> {
         console.log(`LotteryInteractor.start(): lotteryName = ${lotteryName}`);
 
         // Prepare the interaction

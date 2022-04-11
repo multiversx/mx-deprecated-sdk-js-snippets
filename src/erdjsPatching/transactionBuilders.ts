@@ -16,7 +16,7 @@ export class ESDTTransferPayloadBuilder {
 
         let args: TypedValue[] = [
             // The token identifier
-            BytesValue.fromUTF8(this.amount!.token.identifier),
+            BytesValue.fromUTF8(this.amount!.token.getTokenIdentifier()),
             // The transfered amount
             new BigUIntValue(this.amount!.valueOf()),
         ];

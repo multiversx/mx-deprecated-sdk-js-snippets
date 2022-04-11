@@ -7,7 +7,7 @@
  * @module
  */
 import path from "path";
-import { BigUIntValue, CodeMetadata, GasLimit, IBech32Address, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher } from "@elrondnetwork/erdjs";
+import { BigUIntValue, CodeMetadata, GasLimit, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { ITestSession, ITestUser } from "../../interface";
 import { loadAbiRegistry, loadCode } from "../../contracts";
@@ -16,7 +16,7 @@ import { INetworkProvider } from "../../interfaceOfNetwork";
 const PathToWasm = path.resolve(__dirname, "adder.wasm");
 const PathToAbi = path.resolve(__dirname, "adder.abi.json");
 
-export async function createInteractor(session: ITestSession, contractAddress?: IBech32Address): Promise<AdderInteractor> {
+export async function createInteractor(session: ITestSession, contractAddress?: IAddress): Promise<AdderInteractor> {
     let registry = await loadAbiRegistry(PathToAbi);
     let abi = new SmartContractAbi(registry, ["Adder"]);
     let contract = new SmartContract({ address: contractAddress, abi: abi });
@@ -41,7 +41,7 @@ export class AdderInteractor {
         this.resultsParser = new ResultsParser();
     }
 
-    async deploy(deployer: ITestUser, initialValue: number): Promise<{ address: IBech32Address, returnCode: ReturnCode }> {
+    async deploy(deployer: ITestUser, initialValue: number): Promise<{ address: IAddress, returnCode: ReturnCode }> {
         // Load the bytecode.
         let code = await loadCode(PathToWasm);
 

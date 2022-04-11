@@ -43,6 +43,8 @@ export class AirdropService {
 
     private createTransactions(sender: ITestUser, amount: Balance): Transaction[] {
         let transactions: Transaction[] = [];
+        // Temporary workaround:
+        let isFungible = amount.getNonce().toNumber() == 0;
 
         for (const userAddress of this.users.getAddressesOfAllExcept([sender])) {
             let value = Balance.Zero();
@@ -51,7 +53,7 @@ export class AirdropService {
 
             if (amount.token.isEgld()) {
                 value = amount;
-            } else if (amount.token.isFungible()) {
+            } else if (isFungible) {
                 data = new ESDTTransferPayloadBuilder().setAmount(amount).build();
                 gasLimit = computeGasLimit(this.networkConfig, data.length(), 300000);
             } else {

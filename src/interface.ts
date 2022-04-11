@@ -1,4 +1,4 @@
-import { Account, Balance, IBech32Address, Nonce, Token, TransactionHash } from "@elrondnetwork/erdjs";
+import { Account, Balance, IAddress, Nonce, Token, TransactionHash } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
@@ -23,8 +23,8 @@ export interface ITestSession {
     syncAllUsers(): Promise<void>;
     syncUsers(users: ITestUser[]): Promise<void>;
 
-    saveAddress(name: string, address: IBech32Address): Promise<void>;
-    loadAddress(name: string): Promise<IBech32Address>;
+    saveAddress(name: string, address: IAddress): Promise<void>;
+    loadAddress(name: string): Promise<IAddress>;
 
     saveToken(name: string, token: Token): Promise<void>;
     loadToken(name: string): Promise<Token>;
@@ -66,14 +66,14 @@ export interface IBunchOfUsers {
     getAll(): ITestUser[];
     getAllExcept(some: ITestUser[]): ITestUser[];
 
-    getAddressesOfFriends(): IBech32Address[];
-    getAddressesOfOthers(): IBech32Address[];
-    getAddressesOfAll(): IBech32Address[];
-    getAddressesOfAllExcept(some: ITestUser[]): IBech32Address[];
+    getAddressesOfFriends(): IAddress[];
+    getAddressesOfOthers(): IAddress[];
+    getAddressesOfAll(): IAddress[];
+    getAddressesOfAllExcept(some: ITestUser[]): IAddress[];
 }
 
 export interface ITestUser {
-    readonly address: IBech32Address;
+    readonly address: IAddress;
     readonly account: Account;
     readonly signer: ISigner;
 
@@ -105,8 +105,8 @@ export interface IStorage {
 
 export interface IInteractionWithinStorage {
     action: string;
-    userAddress: IBech32Address;
-    contractAddress: IBech32Address;
+    userAddress: IAddress;
+    contractAddress: IAddress;
     transactionHash: TransactionHash;
     timestamp: string;
     round: number;
@@ -122,7 +122,7 @@ export interface IReferenceOfInteractionWithinStorage { }
 
 export interface IAccountSnapshotWithinStorage {
     timestamp: string;
-    address: IBech32Address;
+    address: IAddress;
     nonce: Nonce;
     balance: Balance;
     tokens: any;
