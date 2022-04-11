@@ -7,11 +7,11 @@
  * @module
  */
 import path from "path";
-import { Address, BigUIntValue, Code, CodeMetadata, GasLimit, IBech32Address, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher } from "@elrondnetwork/erdjs";
+import { BigUIntValue, CodeMetadata, GasLimit, IBech32Address, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher } from "@elrondnetwork/erdjs";
+import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { ITestSession, ITestUser } from "../../interface";
 import { loadAbiRegistry, loadCode } from "../../contracts";
 import { INetworkProvider } from "../../interfaceOfNetwork";
-import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 
 const PathToWasm = path.resolve(__dirname, "adder.wasm");
 const PathToAbi = path.resolve(__dirname, "adder.abi.json");
@@ -42,7 +42,7 @@ export class AdderInteractor {
     }
 
     async deploy(deployer: ITestUser, initialValue: number): Promise<{ address: IBech32Address, returnCode: ReturnCode }> {
-        // Load the bytecode from a file.
+        // Load the bytecode.
         let code = await loadCode(PathToWasm);
 
         // Prepare the deploy transaction.

@@ -1,10 +1,11 @@
-import { IProvider, Token, TokenType } from "@elrondnetwork/erdjs";
+import { Token, TokenType } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
-import { AirdropService } from "../../airdrop";
+import { createAirdropService } from "../../airdrop";
 import { createTokenAmount } from "../../erdjsPatching/amounts";
 import { ITestSession, ITestUser } from "../../interface";
+import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
-import { ESDTInteractor } from "../../system/esdtInteractor";
+import { createESDTInteractor } from "../../system/esdtInteractor";
 import { createInteractor } from "./counterInteractor";
 
 describe("counter snippet", async function () {
@@ -12,14 +13,14 @@ describe("counter snippet", async function () {
 
     let suite = this;
     let session: ITestSession;
-    let provider: IProvider;
+    let provider: INetworkProvider;
     let whale: ITestUser;
     let owner: ITestUser;
     let alice: ITestUser;
 
     this.beforeAll(async function () {
         session = await TestSession.loadOnSuite("devnet", suite);
-        provider = session.provider;
+        provider = session.networkProvider;
         whale = session.users.whale;
         owner = session.users.whale;
         alice = session.users.alice;
@@ -29,7 +30,7 @@ describe("counter snippet", async function () {
     it("issue counter token", async function () {
         session.expectLongInteraction(this);
 
-        let interactor = await ESDTInteractor.create(session);
+        let interactor = await createESDTInteractor(session);
         let token = new Token({ name: "COUNTER", ticker: "COUNTER", decimals: 0, supply: "100000000", type: TokenType.Fungible });
         await session.syncUsers([owner]);
         await interactor.issueToken(owner, token);
@@ -42,7 +43,7 @@ describe("counter snippet", async function () {
         let lotteryToken = await session.loadToken("counterToken");
         let amount = createTokenAmount(lotteryToken, "100");
         await session.syncUsers([owner]);
-        await AirdropService.createOnSession(session).sendToEachUser(owner, amount);
+        await createAirdropService(session).sendToEachUser(owner, amount);
     });
 
     it("setup", async function () {
@@ -50,7 +51,7 @@ describe("counter snippet", async function () {
 
         await session.syncUsers([owner]);
 
-        let interactor = await createInteractor(provider);
+        let interactor = await createInteractor(session);
         let { address, returnCode } = await interactor.deploy(owner, 42);
         
         assert.isTrue(returnCode.isSuccess());
@@ -65,7 +66,7 @@ describe("counter snippet", async function () {
 
         let contractAddress = await session.loadAddress("contractAddress");
         let counterToken = await session.loadToken("counterToken");
-        let interactor = await createInteractor(provider, contractAddress);
+        let interactor = await createInteractor(session, contractAddress);
 
         let amount = createTokenAmount(counterToken, "10");
         
@@ -83,7 +84,7 @@ describe("counter snippet", async function () {
 
         let contractAddress = await session.loadAddress("contractAddress");
         let counterToken = await session.loadToken("counterToken");
-        let interactor = await createInteractor(provider, contractAddress);
+        let interactor = await createInteractor(session, contractAddress);
 
         let amount = createTokenAmount(counterToken, "10");
 

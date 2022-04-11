@@ -7,39 +7,52 @@
  * @module
  */
 import path from "path";
-import { Address, Balance, BigUIntValue, CodeMetadata, GasLimit, Interaction, ReturnCode, SmartContract, SmartContractAbi, U64Value } from "@elrondnetwork/erdjs";
-import { ITestUser } from "../../interface";
+import { Balance, BigUIntValue, CodeMetadata, GasLimit, IBech32Address, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher, U64Value } from "@elrondnetwork/erdjs";
+import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
+import { ITestSession, ITestUser } from "../../interface";
 import { loadAbiRegistry, loadCode } from "../../contracts";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 
 const PathToWasm = path.resolve(__dirname, "counter.wasm");
 const PathToAbi = path.resolve(__dirname, "counter.abi.json");
 
-export async function createInteractor(provider: INetworkProvider, address?: Address): Promise<CounterInteractor> {
+export async function createInteractor(session: ITestSession, contractAddress?: IBech32Address): Promise<CounterInteractor> {
     let registry = await loadAbiRegistry(PathToAbi);
     let abi = new SmartContractAbi(registry, ["Counter"]);
-    let contract = new SmartContract({ address: address, abi: abi });
-    let interactor = new CounterInteractor(contract);
+    let contract = new SmartContract({ address: contractAddress, abi: abi });
+    let networkProvider = session.networkProvider;
+    let networkConfig = session.getNetworkConfig();
+    let interactor = new CounterInteractor(contract, networkProvider, networkConfig);
     return interactor;
 }
 
 export class CounterInteractor {
     private readonly contract: SmartContract;
+    private readonly networkProvider: INetworkProvider;
+    private readonly networkConfig: NetworkConfig;
+    private readonly transactionWatcher: TransactionWatcher;
+    private readonly resultsParser: ResultsParser;
 
-    constructor(contract: SmartContract) {
+    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
         this.contract = contract;
+        this.networkProvider = networkProvider;
+        this.networkConfig = networkConfig;
+        this.transactionWatcher = new TransactionWatcher(networkProvider);
+        this.resultsParser = new ResultsParser();
     }
 
-    async deploy(deployer: ITestUser, initialValue: number): Promise<{ address: Address, returnCode: ReturnCode }> {
-        // Load the bytecode from a file.
+    async deploy(deployer: ITestUser, initialValue: number): Promise<{ address: IBech32Address, returnCode: ReturnCode }> {
+        // Load the bytecode.
         let code = await loadCode(PathToWasm);
 
         // Prepare the deploy transaction.
+
         let transaction = this.contract.deploy({
             code: code,
             codeMetadata: new CodeMetadata(),
             initArguments: [new BigUIntValue(initialValue)],
-            gasLimit: new GasLimit(5000000)
+            gasLimit: new GasLimit(5000000),
+            chainID: this.networkConfig.ChainID
         });
 
         // Set the transaction nonce. The account nonce must be synchronized beforehand.
@@ -49,11 +62,15 @@ export class CounterInteractor {
         // Let's sign the transaction. For dApps, use a wallet provider instead.
         await deployer.signer.sign(transaction);
 
-        // After signing the deployment transaction, the contract address (deterministically computable) is available:
-        let address = this.contract.getAddress();
+        // The contract address is deterministically computable:
+        let address = SmartContract.computeAddress(transaction.getSender(), transaction.getNonce());
 
-        // Let's broadcast the transaction (and await for its execution), via the controller.
-        let { bundle: { returnCode } } = await this.controller.deploy(transaction);
+        // Let's broadcast the transaction and await its completion:
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+
+        // In the end, parse the results:
+        let { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
 
         console.log(`CounterInteractor.deploy(): contract = ${address}`);
         return { address, returnCode };
@@ -65,7 +82,8 @@ export class CounterInteractor {
             .increment([new U64Value(value)])
             .withSingleESDTTransfer(amount)
             .withGasLimit(new GasLimit(3000000))
-            .withNonce(caller.account.getNonceThenIncrement());
+            .withNonce(caller.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
 
         // Let's build the transaction object.
         let transaction = interaction.buildTransaction();
@@ -73,8 +91,12 @@ export class CounterInteractor {
         // Let's sign the transaction. For dApps, use a wallet provider instead.
         await caller.signer.sign(transaction);
 
-        // Let's perform the interaction via the controller
-        let { bundle: { returnCode } } = await this.controller.execute(interaction, transaction);
+        // Let's broadcast the transaction and await its completion:
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+
+        // In the end, parse the results:
+        let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());
         return returnCode;
     }
 
@@ -84,7 +106,8 @@ export class CounterInteractor {
             .increment([new U64Value(value)])
             .withMultiESDTNFTTransfer([amount], caller.address)
             .withGasLimit(new GasLimit(3000000))
-            .withNonce(caller.account.getNonceThenIncrement());
+            .withNonce(caller.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
 
         // Let's build the transaction object.
         let transaction = interaction.buildTransaction();
@@ -92,8 +115,12 @@ export class CounterInteractor {
         // Let's sign the transaction. For dApps, use a wallet provider instead.
         await caller.signer.sign(transaction);
 
-        // Let's perform the interaction via the controller
-        let { bundle: { returnCode } } = await this.controller.execute(interaction, transaction);
+        // Let's broadcast the transaction and await its completion:
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+
+        // In the end, parse the results:
+        let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());
         return returnCode;
     }
 }

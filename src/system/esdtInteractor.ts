@@ -37,18 +37,16 @@ export class ESDTInteractor {
     }
 
     async issueToken(owner: ITestUser, token: Token): Promise<void> {
-        let propertiesType = new VariadicType(new CompositeType(new BytesType(), new BooleanType()));
-
         let interaction = <Interaction>this.contract.methods
             .issue([
-                BytesValue.fromUTF8(token.name),
-                BytesValue.fromUTF8(token.ticker),
-                new BigUIntValue(new BigNumber(token.supply)),
-                new U32Value(token.decimals),
-                new VariadicValue(propertiesType, [])
+                token.name,
+                token.ticker,
+                token.supply,
+                token.decimals
             ])
             .withValue(Balance.egld(new BigNumber(IssuePriceInEgld)))
-            .withNonce(owner.account.getNonceThenIncrement());
+            .withNonce(owner.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
 
         let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
         interaction.withGasLimit(gasLimit);
