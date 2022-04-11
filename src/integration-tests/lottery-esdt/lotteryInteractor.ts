@@ -75,19 +75,20 @@ export class LotteryInteractor {
         return { address, returnCode };
     }
 
-    async start(owner: ITestUser, lotteryName: string, token: Token, price: number, whitelist: Address[]): Promise<ReturnCode> {
+    async start(owner: ITestUser, lotteryName: string, token: Token, price: number, whitelist: IBech32Address[]): Promise<ReturnCode> {
+        console.log(`LotteryInteractor.start(): lotteryName = ${lotteryName}`);
+
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods
             .start([
-                BytesValue.fromUTF8(lotteryName),
-                new TokenIdentifierValue(token.identifier),
-                new BigUIntValue(price),
-                OptionValue.newMissing(),
-                OptionValue.newMissing(),
-                OptionValue.newProvided(new U32Value(1)),
-                OptionValue.newMissing(),
-                OptionValue.newProvided(createListOfAddresses(whitelist)),
-                OptionalValue.newMissing()
+                lotteryName,
+                token.identifier,
+                price,
+                null,
+                null,
+                1,
+                null,
+                whitelist
             ])
             .withGasLimit(new GasLimit(20000000))
             .withNonce(owner.account.getNonceThenIncrement())
@@ -104,12 +105,13 @@ export class LotteryInteractor {
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
 
         // In the end, parse the results:
-        let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());
+        let { returnCode, returnMessage } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());
+        console.log(`LotteryInteractor.start(): lotteryName = ${lotteryName}, returnCode = ${returnCode}, returnMessage = ${returnMessage}`);
         return returnCode;
     }
 
     async buyTicket(user: ITestUser, lotteryName: string, amount: Balance): Promise<ReturnCode> {
-        console.log(`buyTicket: address = ${user.address}, amount = ${amount.toCurrencyString()}`);
+        console.log(`LotteryInteractor.buyTicket(): address = ${user.address}, amount = ${amount.toCurrencyString()}`);
 
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods
@@ -150,7 +152,7 @@ export class LotteryInteractor {
         return firstValueAsStruct;
     }
 
-    async getWhitelist(lotteryName: string): Promise<Address[]> {
+    async getWhitelist(lotteryName: string): Promise<string[]> {
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods.getLotteryWhitelist([lotteryName]);
         let query = interaction.check().buildQuery();
@@ -161,7 +163,7 @@ export class LotteryInteractor {
 
         // Now let's interpret the results.
         let firstValueAsVariadic = <VariadicValue>firstValue;
-        return firstValueAsVariadic.valueOf();
+        return firstValueAsVariadic.valueOf().map(item => item.toString());
     }
 
     async getStatus(lotteryName: string): Promise<string> {

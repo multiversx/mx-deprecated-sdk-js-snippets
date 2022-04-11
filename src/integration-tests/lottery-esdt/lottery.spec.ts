@@ -98,9 +98,10 @@ describe("lottery snippet", async function () {
         let contractAddress = await session.loadAddress("contractAddress");
         let interactor = await createInteractor(session, contractAddress);
         let whitelist = await interactor.getWhitelist(LotteryName);
-        console.log("Whitelist:", whitelist);
+        let expectedWhitelist = session.users.getAddressesOfFriends().map(address => address.bech32());
         
-        assert.deepEqual(whitelist, session.users.getAddressesOfFriends());
+        console.log("Whitelist:", whitelist);
+        assert.deepEqual(whitelist, expectedWhitelist);
     });
 
     it("friends buy tickets", async function () {
