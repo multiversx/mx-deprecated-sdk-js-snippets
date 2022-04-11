@@ -46,7 +46,6 @@ export class CounterInteractor {
         let code = await loadCode(PathToWasm);
 
         // Prepare the deploy transaction.
-
         let transaction = this.contract.deploy({
             code: code,
             codeMetadata: new CodeMetadata(),

@@ -6,41 +6,53 @@
  * Note: in dApps, make sure you use a proper wallet provider to sign the transaction.
  * @module
  */
-import { Address, Balance, BigUIntValue, BytesValue, Code, CodeMetadata, createListOfAddresses, EnumValue, GasLimit, Interaction, OptionalValue, OptionValue, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TokenIdentifierValue, U32Value, VariadicValue } from "@elrondnetwork/erdjs";
 import path from "path";
+import { Address, Balance, BigUIntValue, BytesValue, Code, CodeMetadata, createListOfAddresses, EnumValue, GasLimit, IBech32Address, Interaction, OptionalValue, OptionValue, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TokenIdentifierValue, TransactionWatcher, U32Value, VariadicValue } from "@elrondnetwork/erdjs";
+import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { loadAbiRegistry, loadCode } from "../../contracts";
-import { ITestUser } from "../../interface";
+import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 
 const PathToWasm = path.resolve(__dirname, "lottery-esdt.wasm");
 const PathToAbi = path.resolve(__dirname, "lottery-esdt.abi.json");
 
-export async function createInteractor(provider: INetworkProvider, address?: Address): Promise<LotteryInteractor> {
+export async function createInteractor(session: ITestSession, contractAddress?: IBech32Address): Promise<LotteryInteractor> {
     let registry = await loadAbiRegistry(PathToAbi);
     let abi = new SmartContractAbi(registry, ["Lottery"]);
-    let contract = new SmartContract({ address: address, abi: abi });
-    let interactor = new LotteryInteractor(contract);
+    let contract = new SmartContract({ address: contractAddress, abi: abi });
+    let networkProvider = session.networkProvider;
+    let networkConfig = session.getNetworkConfig();
+    let interactor = new LotteryInteractor(contract, networkProvider, networkConfig);
     return interactor;
 }
 
 export class LotteryInteractor {
     private readonly contract: SmartContract;
+    private readonly networkProvider: INetworkProvider;
+    private readonly networkConfig: NetworkConfig;
+    private readonly transactionWatcher: TransactionWatcher;
+    private readonly resultsParser: ResultsParser;
 
-    constructor(contract: SmartContract) {
+    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
         this.contract = contract;
+        this.networkProvider = networkProvider;
+        this.networkConfig = networkConfig;
+        this.transactionWatcher = new TransactionWatcher(networkProvider);
+        this.resultsParser = new ResultsParser();
     }
-    
-    async deploy(deployer: ITestUser): Promise<{ address: Address, returnCode: ReturnCode }> {
-         // Load the bytecode from a file.
-         let code = await loadCode(PathToWasm);
 
-         // Prepare the deploy transaction.
-         let transaction = this.contract.deploy({
-             code: code,
-             codeMetadata: new CodeMetadata(),
-             initArguments: [],
-             gasLimit: new GasLimit(60000000)
-         });
+    async deploy(deployer: ITestUser): Promise<{ address: IBech32Address, returnCode: ReturnCode }> {
+        // Load the bytecode from a file.
+        let code = await loadCode(PathToWasm);
+
+        // Prepare the deploy transaction.
+        let transaction = this.contract.deploy({
+            code: code,
+            codeMetadata: new CodeMetadata(),
+            initArguments: [],
+            gasLimit: new GasLimit(60000000),
+            chainID: this.networkConfig.ChainID
+        });
 
         // Set the transaction nonce. The account nonce must be synchronized beforehand.
         // Also, locally increment the nonce of the deployer (optional).
@@ -49,11 +61,15 @@ export class LotteryInteractor {
         // Let's sign the transaction. For dApps, use a wallet provider instead.
         await deployer.signer.sign(transaction);
 
-        // After signing the deployment transaction, the contract address (deterministically computable) is available:
-        let address = this.contract.getAddress();
+        // The contract address is deterministically computable:
+        let address = SmartContract.computeAddress(transaction.getSender(), transaction.getNonce());
 
-        // Let's broadcast the transaction (and await for its execution), via the controller.
-        let { bundle: { returnCode } } = await this.controller.deploy(transaction);
+        // Let's broadcast the transaction and await its completion:
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+
+        // In the end, parse the results:
+        let { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
 
         console.log(`LotteryInteractor.deploy(): contract = ${address}`);
         return { address, returnCode };
@@ -74,16 +90,21 @@ export class LotteryInteractor {
                 OptionalValue.newMissing()
             ])
             .withGasLimit(new GasLimit(20000000))
-            .withNonce(owner.account.getNonceThenIncrement());
+            .withNonce(owner.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
 
-        // Let's build the transaction object.
-        let transaction = interaction.buildTransaction();
+        // Let's check the interaction, then build the transaction object.
+        let transaction = interaction.check().buildTransaction();
 
         // Let's sign the transaction. For dApps, use a wallet provider instead.
         await owner.signer.sign(transaction);
 
-        // Let's perform the interaction via the controller
-        let { bundle: { returnCode } } = await this.controller.execute(interaction, transaction);
+        // Let's broadcast the transaction and await its completion:
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+
+        // In the end, parse the results:
+        let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());
         return returnCode;
     }
 
@@ -93,31 +114,36 @@ export class LotteryInteractor {
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods
             .buy_ticket([
-                BytesValue.fromUTF8(lotteryName)
+                lotteryName
             ])
             .withGasLimit(new GasLimit(50000000))
             .withSingleESDTTransfer(amount)
-            .withNonce(user.account.getNonceThenIncrement());
+            .withNonce(user.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
 
-         // Let's build the transaction object.
-         let transaction = interaction.buildTransaction();
+        // Let's check the interaction, then build the transaction object.
+        let transaction = interaction.check().buildTransaction();
 
-         // Let's sign the transaction. For dApps, use a wallet provider instead.
-         await user.signer.sign(transaction);
- 
-         // Let's perform the interaction via the controller
-         let { bundle: { returnCode } } = await this.controller.execute(interaction, transaction);
-         return returnCode;
+        // Let's sign the transaction. For dApps, use a wallet provider instead.
+        await user.signer.sign(transaction);
+
+        // Let's broadcast the transaction and await its completion:
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+
+        // In the end, parse the results:
+        let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());
+        return returnCode;
     }
 
     async getLotteryInfo(lotteryName: string): Promise<Struct> {
         // Prepare the interaction
-        let interaction = <Interaction>this.contract.methods.getLotteryInfo([
-            BytesValue.fromUTF8(lotteryName)
-        ]);
+        let interaction = <Interaction>this.contract.methods.getLotteryInfo([lotteryName]);
+        let query = interaction.check().buildQuery();
 
-        // Let's perform the interaction via the controller.
-        let { firstValue } = await this.controller.query(interaction);
+        // Let's run the query and parse the results:
+        let queryResponse = await this.networkProvider.queryContract(query);
+        let { firstValue } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
 
         // Now let's interpret the results.
         let firstValueAsStruct = <Struct>firstValue;
@@ -126,12 +152,12 @@ export class LotteryInteractor {
 
     async getWhitelist(lotteryName: string): Promise<Address[]> {
         // Prepare the interaction
-        let interaction = <Interaction>this.contract.methods.getLotteryWhitelist([
-            BytesValue.fromUTF8(lotteryName)
-        ]);
+        let interaction = <Interaction>this.contract.methods.getLotteryWhitelist([lotteryName]);
+        let query = interaction.check().buildQuery();
 
-        // Let's perform the interaction via the controller.
-        let { firstValue } = await this.controller.query(interaction);
+        // Let's run the query and parse the results:
+        let queryResponse = await this.networkProvider.queryContract(query);
+        let { firstValue } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
 
         // Now let's interpret the results.
         let firstValueAsVariadic = <VariadicValue>firstValue;
@@ -140,12 +166,12 @@ export class LotteryInteractor {
 
     async getStatus(lotteryName: string): Promise<string> {
         // Prepare the interaction
-        let interaction = <Interaction>this.contract.methods.status([
-            BytesValue.fromUTF8(lotteryName)
-        ]);
-        
-        // Let's perform the interaction via the controller.
-        let { firstValue } = await this.controller.query(interaction);
+        let interaction = <Interaction>this.contract.methods.status([lotteryName]);
+        let query = interaction.check().buildQuery();
+
+        // Let's run the query and parse the results:
+        let queryResponse = await this.networkProvider.queryContract(query);
+        let { firstValue } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
 
         // Now let's interpret the results.
         let firstValueAsEnum = <EnumValue>firstValue;
