@@ -47,6 +47,9 @@ export interface ITestSession {
     saveToken(name: string, token: Token): Promise<void>;
     loadToken(name: string): Promise<Token>;
     getTokensOnFocus(): Promise<Token[]>;
+
+    saveBreadcrumb(name: string, breadcrumb: any): Promise<void>;
+    loadBreadcrumb(name: string): Promise<any>;
 }
 
 export interface IMochaSuite {

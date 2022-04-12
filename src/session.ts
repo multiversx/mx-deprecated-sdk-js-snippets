@@ -11,6 +11,7 @@ import { resolvePath } from "./utils";
 
 const TypeToken = "token";
 const TypeAddress = "address";
+const TypeArbitraryBreadcrumb = "breadcrumb";
 const OneMinuteInMilliseconds = 60 * 1000;
 
 export class TestSession implements ITestSession {
@@ -144,6 +145,15 @@ export class TestSession implements ITestSession {
         let payloads = await this.storage.loadBreadcrumbsByType(this.scope, TypeToken);
         let tokens = payloads.map(item => new Token(item));
         return tokens;
+    }
+
+    async saveBreadcrumb(name: string, breadcrumb: any): Promise<void> {
+        await this.storage.storeBreadcrumb(this.scope, TypeArbitraryBreadcrumb, name, breadcrumb);
+    }
+
+    async loadBreadcrumb(name: string): Promise<any> {
+        let payload = await this.storage.loadBreadcrumb(this.scope, name);
+        return payload;
     }
 }
 
