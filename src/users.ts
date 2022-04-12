@@ -1,36 +1,27 @@
 import { Account, IAddress } from "@elrondnetwork/erdjs";
 import { parseUserKeys, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs-walletcore";
-import { PathLike, readFileSync } from "fs";
-import path from "path";
-import { IBunchOfUsers, ITestUser as ITestUser } from "./interface";
+import { PathLike, readFileSync, readdirSync } from "fs";
+import { ErrMissingUserOrGroup } from "./errors";
+import { IBunchOfUsers, ITestUser as ITestUser, IUsersConfig } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
 import { resolvePath } from "./utils";
 
 export class TestUser implements ITestUser {
+    readonly name: string;
+    readonly group: string;
     readonly address: IAddress;
     readonly account: Account;
     readonly signer: ISigner;
 
-    constructor(secretKey: UserSecretKey) {
+    constructor(name: string, group: string, secretKey: UserSecretKey) {
         let publicKey = secretKey.generatePublicKey();
+
+        this.name = name;
+        this.group = group;
         this.address = publicKey.toAddress();
         this.account = new Account(this.address);
         this.signer = new UserSigner(secretKey);
-    }
-
-    static fromPemFile(file: PathLike): TestUser {
-        let text = readFileSync(file, { encoding: "utf8" });
-        let secretKey = UserSecretKey.fromPem(text);
-        let user = new TestUser(secretKey);
-        return user;
-    }
-
-    static moreFromPemFile(file: PathLike): TestUser[] {
-        let text = readFileSync(file, { encoding: "utf8" });
-        let secretKeys: UserSecretKey[] = parseUserKeys(text);
-        let users = secretKeys.map(key => new TestUser(key));
-        return users;
     }
 
     async sync(provider: INetworkProvider): Promise<void> {
@@ -40,71 +31,80 @@ export class TestUser implements ITestUser {
 }
 
 export class BunchOfUsers implements IBunchOfUsers {
-    readonly whale: ITestUser;
-    private readonly others: ITestUser[];
+    readonly individuals: Map<string, ITestUser> = new Map<string, ITestUser>();
+    readonly groups: Map<string, ITestUser[]> = new Map<string, ITestUser[]>();
 
-    readonly alice: ITestUser;
-    readonly bob: ITestUser;
-    readonly carol: ITestUser;
-    readonly dan: ITestUser;
-    readonly eve: ITestUser;
-    readonly frank: ITestUser;
-    readonly grace: ITestUser;
-    readonly heidi: ITestUser;
-    readonly ivan: ITestUser;
-    readonly judy: ITestUser;
-    readonly mallory: ITestUser;
-    readonly mike: ITestUser;
+    constructor(config: IUsersConfig) {
+        // Load individuals
+        for (const individual of config.individuals) {
+            let key = loadKeyFromPemFile(individual.pem);
+            let user = new TestUser(individual.name, "", key);
 
-    constructor(whalePem: string, othersPem?: string) {
-        this.whale = TestUser.fromPemFile(whalePem);
-        this.others = othersPem ? TestUser.moreFromPemFile(othersPem) : [];
+            this.individuals.set(individual.name, user);
+        }
 
-        let friendsFolder = resolvePath("~", "elrondsdk", "testwallets", "latest", "users");
-        this.alice = TestUser.fromPemFile(path.resolve(friendsFolder, "alice.pem"));
-        this.bob = TestUser.fromPemFile(path.resolve(friendsFolder, "bob.pem"));
-        this.carol = TestUser.fromPemFile(path.resolve(friendsFolder, "carol.pem"));
-        this.dan = TestUser.fromPemFile(path.resolve(friendsFolder, "dan.pem"));
-        this.eve = TestUser.fromPemFile(path.resolve(friendsFolder, "eve.pem"));
-        this.frank = TestUser.fromPemFile(path.resolve(friendsFolder, "frank.pem"));
-        this.grace = TestUser.fromPemFile(path.resolve(friendsFolder, "grace.pem"));
-        this.heidi = TestUser.fromPemFile(path.resolve(friendsFolder, "heidi.pem"));
-        this.ivan = TestUser.fromPemFile(path.resolve(friendsFolder, "ivan.pem"));
-        this.judy = TestUser.fromPemFile(path.resolve(friendsFolder, "judy.pem"));
-        this.mallory = TestUser.fromPemFile(path.resolve(friendsFolder, "mallory.pem"));
-        this.mike = TestUser.fromPemFile(path.resolve(friendsFolder, "mike.pem"));
+        // Load groups
+        for (const group of config.groups) {
+            // From a single file
+            if (group.pem) {
+                let keys = loadMoreKeysFromPemFile(group.pem);
+                let users = keys.map(key => new TestUser("", group.name, key));
+
+                this.groups.set(group.name, users);
+                continue;
+            }
+
+            // From a folder
+            if (group.folder) {
+                let files = readdirSync(resolvePath(group.folder));
+                let users: ITestUser[] = [];
+
+                for (const file of files) {
+                    if (!file.endsWith(".pem")) {
+                        continue;
+                    }
+                    
+                    let keys = loadMoreKeysFromPemFile(resolvePath(group.folder, file));
+                    let users = keys.map(key => new TestUser("", group.name, key));
+
+                    users.push(...users);
+                }
+
+                this.groups.set(group.name, users);
+                continue;
+            }
+        }
     }
 
-    getFriends(): ITestUser[] {
-        return [this.alice, this.bob, this.carol, this.dan, this.eve, this.frank, this.grace, this.heidi, this.ivan, this.judy, this.mallory, this.mike];
+    getUser(name: string): ITestUser {
+        let user = this.individuals.get(name);
+        if (user) {
+            return user;
+        }
+
+        throw new ErrMissingUserOrGroup(name);
     }
 
-    getOthers(): ITestUser[] {
-        return this.others;
-    }
+    getGroup(name: string): ITestUser[] {
+        let group = this.groups.get(name);
+        if (group) {
+            return group;
+        }
 
-    getAll(): ITestUser[] {
-        return [this.whale, ...this.getFriends(), ...this.getOthers()];
+        throw new ErrMissingUserOrGroup(name);
     }
+}
 
-    getAllExcept(some: ITestUser[]): ITestUser[] {
-        let result = this.getAll().filter(user => !some.includes(user));
-        return result;
-    }
+function loadKeyFromPemFile(file: PathLike): UserSecretKey {
+    file = resolvePath(file);
+    let text = readFileSync(file, { encoding: "utf8" });
+    let secretKey = UserSecretKey.fromPem(text);
+    return secretKey;
+}
 
-    getAddressesOfFriends(): IAddress[] {
-        return this.getFriends().map(user => user.address);
-    }
-
-    getAddressesOfOthers(): IAddress[] {
-        return this.getOthers().map(user => user.address);
-    }
-
-    getAddressesOfAll(): IAddress[] {
-        return this.getAll().map(user => user.address);
-    }
-
-    getAddressesOfAllExcept(some: ITestUser[]): IAddress[] {
-        return this.getAllExcept(some).map(user => user.address);
-    }
+function loadMoreKeysFromPemFile(file: PathLike): UserSecretKey[] {
+    file = resolvePath(file);
+    let text = readFileSync(file, { encoding: "utf8" });
+    let secretKeys: UserSecretKey[] = parseUserKeys(text);
+    return secretKeys;
 }

@@ -1,9 +1,9 @@
 import { Address, Token } from "@elrondnetwork/erdjs";
-import { NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
-import { existsSync, readFileSync } from "fs";
+import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
+import { existsSync, PathLike, readFileSync } from "fs";
 import path from "path";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, IMochaSuite, IMochaTest, IStorage, ITestSession, ITestSessionConfig, ITestUser } from "./interface";
+import { IBunchOfUsers, IMochaSuite, IMochaTest, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
@@ -48,23 +48,14 @@ export class TestSession implements ITestSession {
 
     static async load(sessionName: string, scope: string, folder: string): Promise<ITestSession> {
         let configFile = this.findSessionConfigFile(sessionName, folder);
-        let folderOfConfigFile = path.dirname(configFile);
+        let folderOfConfigFile = path.dirname(configFile.toString());
         let configJson = readFileSync(configFile, { encoding: "utf8" });
         let config = <ITestSessionConfig>JSON.parse(configJson);
-        
-        if (!config.providerUrl) {
-            throw new ErrBadSessionConfig(sessionName, "missing 'providerUrl'");
-        }
-        if (!config.whalePem) {
-            throw new ErrBadSessionConfig(sessionName, "missing 'whalePem'");
-        }
 
-        let provider = new ProxyNetworkProvider(config.providerUrl);
-        let whalePem = resolvePath(config.whalePem);
-        let othersPem = config.othersPem ? resolvePath(config.whalePem) : undefined;
-        let users = new BunchOfUsers(whalePem, othersPem);
+        let provider = this.createNetworkProvider(sessionName, config.networkProvider);
+        let users = new BunchOfUsers(config.users);
         let storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
-        let storage = await Storage.create(storageName);
+        let storage = await Storage.create(storageName.toString());
 
         let session = new TestSession({
             name: sessionName,
@@ -78,7 +69,25 @@ export class TestSession implements ITestSession {
         return session;
     }
 
-    private static findSessionConfigFile(sessionName: string, folder: string) {
+    private static createNetworkProvider(sessionName: string, config: INetworkProviderConfig): INetworkProvider {
+        if (!config.url) {
+            throw new ErrBadSessionConfig(sessionName, "missing networkProvider.url");
+        }
+        if (!config.type) {
+            throw new ErrBadSessionConfig(sessionName, "missing networkProvider.type");
+        }
+
+        if (config.type == ProxyNetworkProvider.name) {
+            return new ProxyNetworkProvider(config.url);
+        }
+        if (config.type == ApiNetworkProvider.name) {
+            return new ApiNetworkProvider(config.url);
+        }
+
+        throw new ErrBadSessionConfig(sessionName, "bad networkProvider.type");
+    }
+
+    private static findSessionConfigFile(sessionName: string, folder: string): PathLike {
         let configFile = resolvePath(folder, `${sessionName}.session.json`);
         if (existsSync(configFile)) {
             return configFile;
@@ -103,14 +112,6 @@ export class TestSession implements ITestSession {
 
     getNetworkConfig(): NetworkConfig {
         return this.networkConfig;
-    }
-
-    async syncWhale(): Promise<void> {
-        await this.users.whale.sync(this.networkProvider);
-    }
-
-    async syncAllUsers(): Promise<void> {
-        await this.syncUsers(this.users.getAll());
     }
 
     async syncUsers(users: ITestUser[]): Promise<void> {

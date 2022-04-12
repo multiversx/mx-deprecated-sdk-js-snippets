@@ -4,30 +4,27 @@ import { AccountWatcher } from "./erdjsPatching/accountWatcher";
 import { ESDTTransferPayloadBuilder } from "./erdjsPatching/transactionBuilders";
 import { ErrNotImplemented } from "./errors";
 import { computeGasLimit } from "./gasLimit";
-import { IBunchOfUsers, ITestSession, ITestUser } from "./interface";
+import { ITestSession, ITestUser } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 
 export function createAirdropService(session: ITestSession): AirdropService {
-    let users = session.users;
     let networkProvider = session.networkProvider;
     let networkConfig = session.getNetworkConfig();
-    let service = new AirdropService(users, networkProvider, networkConfig);
+    let service = new AirdropService(networkProvider, networkConfig);
     return service;
 }
 
 export class AirdropService {
-    private readonly users: IBunchOfUsers;
     private readonly networkProvider: INetworkProvider;
     private readonly networkConfig: NetworkConfig;
 
-    constructor(users: IBunchOfUsers, networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
-        this.users = users;
+    constructor(networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;
     }
 
-    async sendToEachUser(sender: ITestUser, amount: Balance) {
-        let transactions = this.createTransactions(sender, amount);
+    async sendToEachUser(sender: ITestUser, receivers: ITestUser[], amount: Balance) {
+        let transactions = this.createTransactions(sender, receivers, amount);
 
         let promisesOfSignAndSend = transactions.map(async (transaction) => {
             await sender.signer.sign(transaction);
@@ -41,12 +38,16 @@ export class AirdropService {
         await watcher.awaitNonce(senderExpectedNonce);
     }
 
-    private createTransactions(sender: ITestUser, amount: Balance): Transaction[] {
+    private createTransactions(sender: ITestUser, receivers: ITestUser[], amount: Balance): Transaction[] {
         let transactions: Transaction[] = [];
         // Temporary workaround:
         let isFungible = amount.getNonce().toNumber() == 0;
 
-        for (const userAddress of this.users.getAddressesOfAllExcept([sender])) {
+        for (const receiver of receivers) {
+            if (sender.address.bech32() == receiver.address.bech32()) {
+                continue;
+            }
+
             let value = Balance.Zero();
             let data = new TransactionPayload();
             let gasLimit = computeGasLimit(this.networkConfig);
@@ -62,7 +63,7 @@ export class AirdropService {
 
             transactions.push(new Transaction({
                 nonce: sender.account.getNonceThenIncrement(),
-                receiver: userAddress,
+                receiver: receiver.address,
                 value: value,
                 data: data,
                 gasLimit: gasLimit,

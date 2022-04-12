@@ -14,12 +14,14 @@ describe("adder snippet", async function () {
     let provider: INetworkProvider;
     let whale: ITestUser;
     let owner: ITestUser;
+    let quartet: ITestUser[];
 
     this.beforeAll(async function () {
         session = await TestSession.loadOnSuite("devnet", suite);
         provider = session.networkProvider;
-        whale = session.users.whale;
-        owner = session.users.whale;
+        whale = session.users.getUser("whale");
+        owner = session.users.getUser("whale");
+        quartet = session.users.getGroup("quartet");
         await session.syncNetworkConfig();
     });
 
@@ -27,7 +29,7 @@ describe("adder snippet", async function () {
         session.expectLongInteraction(this);
 
         await session.syncUsers([whale]);
-        await createAirdropService(session).sendToEachUser(whale, Balance.egld(1));
+        await createAirdropService(session).sendToEachUser(whale, quartet, Balance.egld(0.1));
     });
 
     it("setup", async function () {
@@ -37,7 +39,7 @@ describe("adder snippet", async function () {
 
         let interactor = await createInteractor(session);
         let { address, returnCode } = await interactor.deploy(owner, 42);
-        
+
         assert.isTrue(returnCode.isSuccess());
 
         await session.saveAddress("contractAddress", address);

@@ -21,9 +21,9 @@ describe("counter snippet", async function () {
     this.beforeAll(async function () {
         session = await TestSession.loadOnSuite("devnet", suite);
         provider = session.networkProvider;
-        whale = session.users.whale;
-        owner = session.users.whale;
-        alice = session.users.alice;
+        whale = session.users.getUser("whale");
+        owner = session.users.getUser("whale");
+        alice = session.users.getUser("alice");
         await session.syncNetworkConfig();
     });
 
@@ -43,7 +43,7 @@ describe("counter snippet", async function () {
         let lotteryToken = await session.loadToken("counterToken");
         let amount = createTokenAmount(lotteryToken, "100");
         await session.syncUsers([owner]);
-        await createAirdropService(session).sendToEachUser(owner, amount);
+        await createAirdropService(session).sendToEachUser(owner, [alice], amount);
     });
 
     it("setup", async function () {
@@ -53,7 +53,7 @@ describe("counter snippet", async function () {
 
         let interactor = await createInteractor(session);
         let { address, returnCode } = await interactor.deploy(owner, 42);
-        
+
         assert.isTrue(returnCode.isSuccess());
 
         await session.saveAddress("contractAddress", address);
@@ -69,7 +69,7 @@ describe("counter snippet", async function () {
         let interactor = await createInteractor(session, contractAddress);
 
         let amount = createTokenAmount(counterToken, "10");
-        
+
         // Intra-shard
         interactor.incrementWithSingleESDTTransfer(owner, 1, amount);
 

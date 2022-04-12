@@ -4,9 +4,29 @@ import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
 
 export interface ITestSessionConfig {
-    readonly providerUrl: string;
-    readonly whalePem: string;
-    readonly othersPem: string;
+    readonly networkProvider: INetworkProviderConfig;
+    readonly users: IUsersConfig;
+}
+
+export interface INetworkProviderConfig {
+    readonly type: string;
+    readonly url: string;
+}
+
+export interface IUsersConfig {
+    readonly individuals: IUserConfig[];
+    readonly groups: IGroupOfUsersConfig[];
+}
+
+export interface IUserConfig {
+    readonly name: string;
+    readonly pem: string;
+}
+
+export interface IGroupOfUsersConfig {
+    readonly name: string;
+    readonly pem?: string;
+    readonly folder?: string;
 }
 
 export interface ITestSession {
@@ -19,8 +39,6 @@ export interface ITestSession {
     expectLongInteraction(mochaTest: IMochaTest, minutes?: number): void;
     syncNetworkConfig(): Promise<void>;
     getNetworkConfig(): NetworkConfig;
-    syncWhale(): Promise<void>;
-    syncAllUsers(): Promise<void>;
     syncUsers(users: ITestUser[]): Promise<void>;
 
     saveAddress(name: string, address: IAddress): Promise<void>;
@@ -46,33 +64,13 @@ export interface IUsersConfig {
 }
 
 export interface IBunchOfUsers {
-    readonly whale: ITestUser;
-
-    readonly alice: ITestUser;
-    readonly bob: ITestUser;
-    readonly carol: ITestUser;
-    readonly dan: ITestUser;
-    readonly eve: ITestUser;
-    readonly frank: ITestUser;
-    readonly grace: ITestUser;
-    readonly heidi: ITestUser;
-    readonly ivan: ITestUser;
-    readonly judy: ITestUser;
-    readonly mallory: ITestUser;
-    readonly mike: ITestUser;
-
-    getFriends(): ITestUser[];
-    getOthers(): ITestUser[];
-    getAll(): ITestUser[];
-    getAllExcept(some: ITestUser[]): ITestUser[];
-
-    getAddressesOfFriends(): IAddress[];
-    getAddressesOfOthers(): IAddress[];
-    getAddressesOfAll(): IAddress[];
-    getAddressesOfAllExcept(some: ITestUser[]): IAddress[];
+    getUser(name: string): ITestUser;
+    getGroup(name: string): ITestUser[];
 }
 
 export interface ITestUser {
+    readonly name: string;
+    readonly group: string;
     readonly address: IAddress;
     readonly account: Account;
     readonly signer: ISigner;
