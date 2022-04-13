@@ -1,4 +1,4 @@
-import { Address, AddressValue, ArgSerializer, BigUIntValue, BytesValue, IAddress, TokenPayment, TransactionPayload, TypedValue, U64Value } from "@elrondnetwork/erdjs";
+import { Address, AddressValue, ArgSerializer, BigUIntValue, BytesValue, IAddress, TokenPayment, TransactionPayload, TypedValue, U16Value, U64Value } from "@elrondnetwork/erdjs";
 
 export class ESDTTransferPayloadBuilder {
     payment = TokenPayment.fungibleFromAmount("", "0");
@@ -50,6 +50,45 @@ export class ESDTNFTTransferPayloadBuilder {
 
         let { argumentsString } = new ArgSerializer().valuesToString(args);
         let data = `ESDTNFTTransfer@${argumentsString}`;
+        return new TransactionPayload(data);
+    }
+}
+
+export class MultiESDTNFTTransferPayloadBuilder {
+    payments: TokenPayment[] = [];
+    destination: IAddress = new Address("");
+
+    setPayment(payments: TokenPayment[]): MultiESDTNFTTransferPayloadBuilder {
+        this.payments = payments;
+        return this;
+    }
+
+    setDestination(destination: IAddress): MultiESDTNFTTransferPayloadBuilder {
+        this.destination = destination;
+        return this;
+    }
+
+    build(): TransactionPayload {
+        let args: TypedValue[] = [
+            // The destination address
+            new AddressValue(this.destination),
+            // Number of tokens
+            new U16Value(this.payments.length)
+        ];
+
+        for (const payment of this.payments) {
+            args.push(...[
+                // The token identifier
+                BytesValue.fromUTF8(payment.tokenIdentifier),
+                // The nonce of the token
+                new U64Value(payment.nonce),
+                // The transfered quantity
+                new BigUIntValue(payment.valueOf())
+            ]);
+        }
+
+        let { argumentsString } = new ArgSerializer().valuesToString(args);
+        let data = `MultiESDTNFTTransfer@${argumentsString}`;
         return new TransactionPayload(data);
     }
 }
