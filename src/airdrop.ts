@@ -1,28 +1,34 @@
-import { Balance, GasLimit, IProvider, Transaction, TransactionPayload } from "@elrondnetwork/erdjs/out";
+import { ITransactionValue, TokenPayment, Transaction, TransactionPayload } from "@elrondnetwork/erdjs";
+import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
 import { ESDTTransferPayloadBuilder } from "./erdjsPatching/transactionBuilders";
 import { ErrNotImplemented } from "./errors";
-import { IBunchOfUsers, ITestSession, ITestUser } from "./interfaces";
+import { computeGasLimit } from "./gasLimit";
+import { ITestSession, ITestUser } from "./interface";
+import { INetworkProvider } from "./interfaceOfNetwork";
+
+export function createAirdropService(session: ITestSession): AirdropService {
+    let networkProvider = session.networkProvider;
+    let networkConfig = session.getNetworkConfig();
+    let service = new AirdropService(networkProvider, networkConfig);
+    return service;
+}
 
 export class AirdropService {
-    private readonly users: IBunchOfUsers;
-    private readonly networkProvider: IProvider;
+    private readonly networkProvider: INetworkProvider;
+    private readonly networkConfig: NetworkConfig;
 
-    constructor(users: IBunchOfUsers, networkProvider: IProvider) {
-        this.users = users;
+    constructor(networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
         this.networkProvider = networkProvider;
+        this.networkConfig = networkConfig;
     }
 
-    static createOnSession(session: ITestSession) {
-        return new AirdropService(session.users, session.provider);
-    }
-
-    async sendToEachUser(sender: ITestUser, amount: Balance) {
-        let transactions = this.createTransactions(sender, amount);
+    async sendToEachUser(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment) {
+        let transactions = this.createTransactions(sender, receivers, payment);
 
         let promisesOfSignAndSend = transactions.map(async (transaction) => {
             await sender.signer.sign(transaction);
-            await transaction.send(this.networkProvider);
+            await this.networkProvider.sendTransaction(transaction);
         });
 
         await Promise.all(promisesOfSignAndSend);
@@ -32,29 +38,34 @@ export class AirdropService {
         await watcher.awaitNonce(senderExpectedNonce);
     }
 
-    private createTransactions(sender: ITestUser, amount: Balance): Transaction[] {
+    private createTransactions(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment): Transaction[] {
         let transactions: Transaction[] = [];
 
-        for (const userAddress of this.users.getAddressesOfAllExcept([sender])) {
-            let value = Balance.Zero();
-            let data = new TransactionPayload();
-            let gasLimit = GasLimit.forTransfer(data);
+        for (const receiver of receivers) {
+            if (sender.address.bech32() == receiver.address.bech32()) {
+                continue;
+            }
 
-            if (amount.token.isEgld()) {
-                value = amount;
-            } else if (amount.token.isFungible()) {
-                data = new ESDTTransferPayloadBuilder().setAmount(amount).build();
-                gasLimit = GasLimit.forTransfer(data).add(new GasLimit(300000));
+            let value: ITransactionValue = 0;
+            let data = new TransactionPayload();
+            let gasLimit = computeGasLimit(this.networkConfig);
+
+            if (payment.isEgld()) {
+                value = payment.toString();
+            } else if (payment.isFungible()) {
+                data = new ESDTTransferPayloadBuilder().setPayment(payment).build();
+                gasLimit = computeGasLimit(this.networkConfig, data.length(), 300000);
             } else {
                 throw new ErrNotImplemented("transfer of other tokens");
             }
 
             transactions.push(new Transaction({
                 nonce: sender.account.getNonceThenIncrement(),
-                receiver: userAddress,
+                receiver: receiver.address,
                 value: value,
                 data: data,
-                gasLimit: gasLimit
+                gasLimit: gasLimit,
+                chainID: this.networkConfig.ChainID
             }));
         }
 

@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import { Connection, createConnection } from "typeorm";
-import { IAccountSnapshotWithinStorage, IInteractionWithinStorage, IReferenceOfInteractionWithinStorage, IStorage } from "../interfaces";
+import { IAccountSnapshotWithinStorage, IInteractionWithinStorage, IReferenceOfInteractionWithinStorage, IStorage } from "../interface";
 import { AccountSnapshotRecord, BreadcrumbRecord, InteractionRecord, ReferenceOfInteractionWithinStorage } from "./records";
 
 export class Storage implements IStorage {

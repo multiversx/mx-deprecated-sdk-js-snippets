@@ -1,7 +1,14 @@
-name: Publish
+name: Publish (alpha / beta)
 
 on:
   workflow_dispatch:
+    inputs:
+      channel:
+        type: choice
+        description: NPM channel
+        options: 
+        - alpha
+        - beta
 
 jobs:
   publish-npm:
@@ -13,8 +20,6 @@ jobs:
           node-version: 16
           registry-url: https://registry.npmjs.org/
       
-      - run: npm ci
-
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -23,9 +28,11 @@ jobs:
           echo "" >> notes.txt
 
           RELEASE_TAG=v$(node -p "require('./package.json').version")
-          gh release create $RELEASE_TAG --target=$GITHUB_SHA --title="$RELEASE_TAG" --generate-notes --notes-file=notes.txt
+          gh release create --prerelease $RELEASE_TAG --target=$GITHUB_SHA --title="$RELEASE_TAG" --generate-notes --notes-file=notes.txt
+
+      - run: npm ci
       
       - name: Publish to npmjs
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-        run: npm publish --access=public
+        run: npm publish --access=public --tag=${{ github.event.inputs.channel }}

@@ -1,30 +1,54 @@
-import { Account, Address, Balance, IProvider, ISigner, Nonce, Token, TokenOfAccountOnNetwork, TransactionHash } from "@elrondnetwork/erdjs";
+import { Account, IAccountBalance, IAddress, TransactionHash } from "@elrondnetwork/erdjs";
+import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
+import { INetworkProvider } from "./interfaceOfNetwork";
+import { ISigner } from "./interfaceOfWalletCore";
 
 export interface ITestSessionConfig {
-    readonly providerUrl: string;
-    readonly whalePem: string;
-    readonly othersPem: string;
+    readonly networkProvider: INetworkProviderConfig;
+    readonly users: IUsersConfig;
+}
+
+export interface INetworkProviderConfig {
+    readonly type: string;
+    readonly url: string;
+}
+
+export interface IUsersConfig {
+    readonly individuals: IUserConfig[];
+    readonly groups: IGroupOfUsersConfig[];
+}
+
+export interface IUserConfig {
+    readonly name: string;
+    readonly pem: string;
+}
+
+export interface IGroupOfUsersConfig {
+    readonly name: string;
+    readonly pem?: string;
+    readonly folder?: string;
 }
 
 export interface ITestSession {
     readonly name: string;
     readonly scope: string;
-    readonly provider: IProvider;
+    readonly networkProvider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
 
     expectLongInteraction(mochaTest: IMochaTest, minutes?: number): void;
     syncNetworkConfig(): Promise<void>;
-    syncWhale(): Promise<void>;
-    syncAllUsers(): Promise<void>;
+    getNetworkConfig(): NetworkConfig;
     syncUsers(users: ITestUser[]): Promise<void>;
 
-    saveAddress(name: string, address: Address): Promise<void>;
-    loadAddress(name: string): Promise<Address>;
+    saveAddress(name: string, address: IAddress): Promise<void>;
+    loadAddress(name: string): Promise<IAddress>;
 
-    saveToken(name: string, token: Token): Promise<void>;
-    loadToken(name: string): Promise<Token>;
-    getTokensOnFocus(): Promise<Token[]>;
+    saveToken(name: string, token: IToken): Promise<void>;
+    loadToken(name: string): Promise<IToken>;
+
+    saveBreadcrumb(name: string, breadcrumb: any): Promise<void>;
+    loadBreadcrumb(name: string): Promise<any>;
 }
 
 export interface IMochaSuite {
@@ -36,40 +60,24 @@ export interface IMochaTest {
     timeout(ms: string | number): void;
 }
 
+export interface IUsersConfig {
+    readonly whalePem: string;
+    readonly othersPem: string;
+}
+
 export interface IBunchOfUsers {
-    readonly whale: ITestUser;
-
-    readonly alice: ITestUser;
-    readonly bob: ITestUser;
-    readonly carol: ITestUser;
-    readonly dan: ITestUser;
-    readonly eve: ITestUser;
-    readonly frank: ITestUser;
-    readonly grace: ITestUser;
-    readonly heidi: ITestUser;
-    readonly ivan: ITestUser;
-    readonly judy: ITestUser;
-    readonly mallory: ITestUser;
-    readonly mike: ITestUser;
-
-    getFriends(): ITestUser[];
-    getOthers(): ITestUser[];
-    getAll(): ITestUser[];
-    getAllExcept(some: ITestUser[]): ITestUser[];
-
-    getAddressesOfFriends(): Address[];
-    getAddressesOfOthers(): Address[];
-    getAddressesOfAll(): Address[];
-    getAddressesOfAllExcept(some: ITestUser[]): Address[];
+    getUser(name: string): ITestUser;
+    getGroup(name: string): ITestUser[];
 }
 
 export interface ITestUser {
-    readonly address: Address;
+    readonly name: string;
+    readonly group: string;
+    readonly address: IAddress;
     readonly account: Account;
     readonly signer: ISigner;
-    readonly accountTokens: TokenOfAccountOnNetwork[];
 
-    sync(provider: IProvider): Promise<void>;
+    sync(provider: INetworkProvider): Promise<void>;
 }
 
 /**
@@ -97,14 +105,14 @@ export interface IStorage {
 
 export interface IInteractionWithinStorage {
     action: string;
-    userAddress: Address;
-    contractAddress: Address;
+    userAddress: IAddress;
+    contractAddress: IAddress;
     transactionHash: TransactionHash;
     timestamp: string;
     round: number;
     epoch: number;
-    blockNonce: Nonce;
-    hyperblockNonce: Nonce;
+    blockNonce: number;
+    hyperblockNonce: number;
     input: any;
     transfers: any;
     output: any;
@@ -114,10 +122,12 @@ export interface IReferenceOfInteractionWithinStorage { }
 
 export interface IAccountSnapshotWithinStorage {
     timestamp: string;
-    address: Address;
-    nonce: Nonce;
-    balance: Balance;
+    address: IAddress;
+    nonce: number;
+    balance: IAccountBalance;
     tokens: any;
     takenBeforeInteraction?: IReferenceOfInteractionWithinStorage;
     takenAfterInteraction?: IReferenceOfInteractionWithinStorage;
 }
+
+export interface IToken { identifier: string, decimals: number; }

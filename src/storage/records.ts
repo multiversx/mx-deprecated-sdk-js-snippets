@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
-import { IReferenceOfInteractionWithinStorage } from "../interfaces";
+import { IReferenceOfInteractionWithinStorage } from "../interface";
 
 @Entity({ name: "breadcrumb" })
 export class BreadcrumbRecord {

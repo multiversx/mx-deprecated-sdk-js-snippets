@@ -42,3 +42,9 @@ export class ErrBadArgument extends Err {
         super(`Bad argument: ${message}`);
     }
 }
+
+export class ErrMissingUserOrGroup extends Err {
+    public constructor(name: string) {
+        super(`Missing user or group: ${name}`);
+    }
+}

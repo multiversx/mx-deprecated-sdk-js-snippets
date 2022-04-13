@@ -1,19 +1,21 @@
 
 
-import { AccountOnNetwork, Address, AsyncTimer, Err, IProvider, Nonce } from "@elrondnetwork/erdjs";
+import { AsyncTimer, Err, IAddress, INonce } from "@elrondnetwork/erdjs";
+import { AccountOnNetwork } from "@elrondnetwork/erdjs-network-providers";
+import { INetworkProvider } from "../interfaceOfNetwork";
 
 export class AccountWatcher {
     static DefaultPollingInterval: number = 6000;
     static DefaultTimeout: number = AccountWatcher.DefaultPollingInterval * 15;
 
-    private readonly address: Address;
-    private readonly fetcher: IProvider;
+    private readonly address: IAddress;
+    private readonly fetcher: INetworkProvider;
     private readonly pollingInterval: number;
     private readonly timeout: number;
 
     constructor(
-        address: Address,
-        fetcher: IProvider,
+        address: IAddress,
+        fetcher: INetworkProvider,
         pollingInterval: number = AccountWatcher.DefaultPollingInterval,
         timeout: number = AccountWatcher.DefaultTimeout
     ) {
@@ -23,31 +25,29 @@ export class AccountWatcher {
         this.timeout = timeout;
     }
 
-    public async awaitNonce(nonce: Nonce): Promise<void> {
+    public async awaitNonce(nonce: INonce): Promise<AccountOnNetwork> {
         let doFetch = async () => await this.fetcher.getAccount(this.address);
-        let errorProvider = () => new ErrExpectedAccountStateNotReached();
         let onFetched = (account: AccountOnNetwork) => console.log(`AccountWatcher.awaitNonce(${nonce.valueOf()}). Current: ${account.nonce.valueOf()}.`);
         let hasReachedNonce = (account: AccountOnNetwork) => account.nonce.valueOf() >= nonce.valueOf();
 
         return this.awaitConditionally<AccountOnNetwork>(
             hasReachedNonce,
             doFetch,
-            onFetched,
-            errorProvider
+            onFetched
         );
     }
 
-    public async awaitConditionally<TData>(
+    private async awaitConditionally<TData>(
         isSatisfied: (data: TData) => boolean,
         doFetch: () => Promise<TData>,
-        onFetched: (data: TData) => void,
-        createError: () => Err
-    ): Promise<void> {
+        onFetched: (data: TData) => void
+    ): Promise<TData> {
         let periodicTimer = new AsyncTimer("watcher:periodic");
         let timeoutTimer = new AsyncTimer("watcher:timeout");
 
         let stop = false;
         let fetchedData: TData | undefined = undefined;
+        let satisfied: boolean = false;
 
         let _ = timeoutTimer.start(this.timeout).finally(() => {
             timeoutTimer.stop();
@@ -55,14 +55,14 @@ export class AccountWatcher {
         });
 
         while (!stop) {
+            await periodicTimer.start(this.pollingInterval);
+
             try {
                 fetchedData = await doFetch();
-
-                if (onFetched) {
-                    onFetched(fetchedData);
-                }
-
-                if (isSatisfied(fetchedData) || stop) {
+                onFetched(fetchedData);
+                
+                satisfied = isSatisfied(fetchedData);
+                if (satisfied || stop) {
                     break;
                 }
             } catch (error) {
@@ -70,19 +70,17 @@ export class AccountWatcher {
                     throw error;
                 }
             }
-
-            await periodicTimer.start(this.pollingInterval);
         }
 
         if (!timeoutTimer.isStopped()) {
             timeoutTimer.stop();
         }
 
-        let notSatisfied = !fetchedData || !isSatisfied(fetchedData);
-        if (notSatisfied) {
-            let error = createError();
-            throw error;
+        if (!fetchedData || !satisfied) {
+            throw new ErrExpectedAccountStateNotReached();
         }
+
+        return fetchedData;
     }
 }
 

@@ -1,34 +1,38 @@
-import { Address, IProvider, NetworkConfig, ProxyProvider, Token } from "@elrondnetwork/erdjs";
-import { existsSync, readFileSync } from "fs";
 import path from "path";
+import { existsSync, PathLike, readFileSync } from "fs";
+import { Address } from "@elrondnetwork/erdjs";
+import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, IMochaSuite, IMochaTest, IStorage, ITestSession, ITestSessionConfig, ITestUser } from "./interfaces";
+import { IBunchOfUsers, IMochaSuite, IMochaTest, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
+import { INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
 import { resolvePath } from "./utils";
 
 const TypeToken = "token";
 const TypeAddress = "address";
+const TypeArbitraryBreadcrumb = "breadcrumb";
 const OneMinuteInMilliseconds = 60 * 1000;
 
 export class TestSession implements ITestSession {
     readonly name: string;
     readonly scope: string;
-    readonly provider: IProvider;
+    readonly networkProvider: INetworkProvider;
     readonly users: IBunchOfUsers;
     readonly storage: IStorage;
+    private networkConfig: NetworkConfig = new NetworkConfig();
 
     constructor(args: {
         name: string,
         scope: string,
-        provider: IProvider,
+        provider: INetworkProvider,
         users: IBunchOfUsers,
         storage: IStorage,
         config: ITestSessionConfig
     }) {
         this.name = args.name;
         this.scope = args.scope;
-        this.provider = args.provider;
+        this.networkProvider = args.provider;
         this.users = args.users;
         this.storage = args.storage;
     }
@@ -45,23 +49,14 @@ export class TestSession implements ITestSession {
 
     static async load(sessionName: string, scope: string, folder: string): Promise<ITestSession> {
         let configFile = this.findSessionConfigFile(sessionName, folder);
-        let folderOfConfigFile = path.dirname(configFile);
+        let folderOfConfigFile = path.dirname(configFile.toString());
         let configJson = readFileSync(configFile, { encoding: "utf8" });
         let config = <ITestSessionConfig>JSON.parse(configJson);
-        
-        if (!config.providerUrl) {
-            throw new ErrBadSessionConfig(sessionName, "missing 'providerUrl'");
-        }
-        if (!config.whalePem) {
-            throw new ErrBadSessionConfig(sessionName, "missing 'whalePem'");
-        }
 
-        let provider = new ProxyProvider(config.providerUrl);
-        let whalePem = resolvePath(config.whalePem);
-        let othersPem = config.othersPem ? resolvePath(config.whalePem) : undefined;
-        let users = new BunchOfUsers(whalePem, othersPem);
+        let provider = this.createNetworkProvider(sessionName, config.networkProvider);
+        let users = new BunchOfUsers(config.users);
         let storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
-        let storage = await Storage.create(storageName);
+        let storage = await Storage.create(storageName.toString());
 
         let session = new TestSession({
             name: sessionName,
@@ -75,7 +70,25 @@ export class TestSession implements ITestSession {
         return session;
     }
 
-    private static findSessionConfigFile(sessionName: string, folder: string) {
+    private static createNetworkProvider(sessionName: string, config: INetworkProviderConfig): INetworkProvider {
+        if (!config.url) {
+            throw new ErrBadSessionConfig(sessionName, "missing networkProvider.url");
+        }
+        if (!config.type) {
+            throw new ErrBadSessionConfig(sessionName, "missing networkProvider.type");
+        }
+
+        if (config.type == ProxyNetworkProvider.name) {
+            return new ProxyNetworkProvider(config.url);
+        }
+        if (config.type == ApiNetworkProvider.name) {
+            return new ApiNetworkProvider(config.url);
+        }
+
+        throw new ErrBadSessionConfig(sessionName, "bad networkProvider.type");
+    }
+
+    private static findSessionConfigFile(sessionName: string, folder: string): PathLike {
         let configFile = resolvePath(folder, `${sessionName}.session.json`);
         if (existsSync(configFile)) {
             return configFile;
@@ -95,19 +108,15 @@ export class TestSession implements ITestSession {
     }
 
     async syncNetworkConfig(): Promise<void> {
-        await NetworkConfig.getDefault().sync(this.provider);
+        this.networkConfig = await this.networkProvider.getNetworkConfig();
     }
 
-    async syncWhale(): Promise<void> {
-        await this.users.whale.sync(this.provider);
-    }
-
-    async syncAllUsers(): Promise<void> {
-        await this.syncUsers(this.users.getAll());
+    getNetworkConfig(): NetworkConfig {
+        return this.networkConfig;
     }
 
     async syncUsers(users: ITestUser[]): Promise<void> {
-        let promises = users.map(user => user.sync(this.provider));
+        let promises = users.map(user => user.sync(this.networkProvider));
         await Promise.all(promises);
     }
 
@@ -122,20 +131,23 @@ export class TestSession implements ITestSession {
         return address;
     }
 
-    async saveToken(name: string, token: Token): Promise<void> {
+    async saveToken(name: string, token: IToken): Promise<void> {
         await this.storage.storeBreadcrumb(this.scope, TypeToken, name, token);
     }
 
-    async loadToken(name: string): Promise<Token> {
+    async loadToken(name: string): Promise<IToken> {
         let payload = await this.storage.loadBreadcrumb(this.scope, name);
-        let token = new Token(payload);
+        let token = { identifier: payload.identifier, decimals: payload.decimals };
         return token;
     }
 
-    async getTokensOnFocus(): Promise<Token[]> {
-        let payloads = await this.storage.loadBreadcrumbsByType(this.scope, TypeToken);
-        let tokens = payloads.map(item => new Token(item));
-        return tokens;
+    async saveBreadcrumb(name: string, breadcrumb: any): Promise<void> {
+        await this.storage.storeBreadcrumb(this.scope, TypeArbitraryBreadcrumb, name, breadcrumb);
+    }
+
+    async loadBreadcrumb(name: string): Promise<any> {
+        let payload = await this.storage.loadBreadcrumb(this.scope, name);
+        return payload;
     }
 }
 
