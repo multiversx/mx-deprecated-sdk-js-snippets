@@ -63,11 +63,11 @@ export class AdderInteractor {
 
         // The contract address is deterministically computable:
         let address = SmartContract.computeAddress(transaction.getSender(), transaction.getNonce());
-        
+
         // Let's broadcast the transaction and await its completion:
         await this.networkProvider.sendTransaction(transaction);
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        
+
         // In the end, parse the results:
         let { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
 
