@@ -1,4 +1,4 @@
-import { Balance, Transaction, TransactionPayload } from "@elrondnetwork/erdjs";
+import { ITransactionValue, TokenPayment, Transaction, TransactionPayload } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
 import { ESDTTransferPayloadBuilder } from "./erdjsPatching/transactionBuilders";
@@ -23,8 +23,8 @@ export class AirdropService {
         this.networkConfig = networkConfig;
     }
 
-    async sendToEachUser(sender: ITestUser, receivers: ITestUser[], amount: Balance) {
-        let transactions = this.createTransactions(sender, receivers, amount);
+    async sendToEachUser(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment) {
+        let transactions = this.createTransactions(sender, receivers, payment);
 
         let promisesOfSignAndSend = transactions.map(async (transaction) => {
             await sender.signer.sign(transaction);
@@ -38,24 +38,22 @@ export class AirdropService {
         await watcher.awaitNonce(senderExpectedNonce);
     }
 
-    private createTransactions(sender: ITestUser, receivers: ITestUser[], amount: Balance): Transaction[] {
+    private createTransactions(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment): Transaction[] {
         let transactions: Transaction[] = [];
-        // Temporary workaround:
-        let isFungible = amount.getNonce().toNumber() == 0;
 
         for (const receiver of receivers) {
             if (sender.address.bech32() == receiver.address.bech32()) {
                 continue;
             }
 
-            let value = Balance.Zero();
+            let value: ITransactionValue = 0;
             let data = new TransactionPayload();
             let gasLimit = computeGasLimit(this.networkConfig);
 
-            if (amount.token.isEgld()) {
-                value = amount;
-            } else if (isFungible) {
-                data = new ESDTTransferPayloadBuilder().setAmount(amount).build();
+            if (payment.isEgld()) {
+                value = payment.toString();
+            } else if (payment.isFungible()) {
+                data = new ESDTTransferPayloadBuilder().setPayment(payment).build();
                 gasLimit = computeGasLimit(this.networkConfig, data.length(), 300000);
             } else {
                 throw new ErrNotImplemented("transfer of other tokens");

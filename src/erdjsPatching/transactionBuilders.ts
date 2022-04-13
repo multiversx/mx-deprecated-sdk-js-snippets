@@ -1,10 +1,10 @@
-import { ArgSerializer, Balance, BigUIntValue, BytesValue, guardValueIsSet, TransactionPayload, TypedValue } from "@elrondnetwork/erdjs";
+import { ArgSerializer, BigUIntValue, BytesValue, TokenPayment, TransactionPayload, TypedValue } from "@elrondnetwork/erdjs";
 
 export class ESDTTransferPayloadBuilder {
-    private amount: Balance | null = null;
+    payment = TokenPayment.fungibleFromAmount("", "0");
 
-    setAmount(amount: Balance): ESDTTransferPayloadBuilder {
-        this.amount = amount;
+    setPayment(payment: TokenPayment): ESDTTransferPayloadBuilder {
+        this.payment = payment;
         return this;
     }
 
@@ -12,13 +12,11 @@ export class ESDTTransferPayloadBuilder {
      * Builds the {@link TransactionPayload}.
      */
     build(): TransactionPayload {
-        guardValueIsSet("amount", this.amount);
-
         let args: TypedValue[] = [
             // The token identifier
-            BytesValue.fromUTF8(this.amount!.token.getTokenIdentifier()),
+            BytesValue.fromUTF8(this.payment.tokenIdentifier),
             // The transfered amount
-            new BigUIntValue(this.amount!.valueOf()),
+            new BigUIntValue(this.payment.valueOf()),
         ];
         let { argumentsString } = new ArgSerializer().valuesToString(args);
         let data = `ESDTTransfer@${argumentsString}`;

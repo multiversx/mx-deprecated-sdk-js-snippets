@@ -1,4 +1,4 @@
-import { Address, Balance, Nonce, TransactionHash } from "@elrondnetwork/erdjs";
+import { Address, TokenPayment, TransactionHash } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
 import { Storage } from "./storage";
 
@@ -48,8 +48,8 @@ describe("test storage", async function () {
             timestamp: "friday",
             round: 42,
             epoch: 1,
-            blockNonce: new Nonce(7),
-            hyperblockNonce: new Nonce(9),
+            blockNonce: 7,
+            hyperblockNonce: 9,
             input: { foo: "bar" },
             transfers: {},
             output: {}
@@ -73,8 +73,8 @@ describe("test storage", async function () {
         await storage.storeAccountSnapshot("foo", {
             timestamp: "friday",
             address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            nonce: new Nonce(42),
-            balance: Balance.egld(1),
+            nonce: 42,
+            balance: TokenPayment.egldFromAmount(1),
             tokens: { RIDE: 1000, MEX: 1000 }
         });
 
@@ -87,8 +87,8 @@ describe("test storage", async function () {
             timestamp: "friday",
             round: 42,
             epoch: 1,
-            blockNonce: new Nonce(7),
-            hyperblockNonce: new Nonce(9),
+            blockNonce: 7,
+            hyperblockNonce: 9,
             input: { foo: "bar" },
             transfers: {},
             output: { bar: "foo" }
@@ -97,8 +97,8 @@ describe("test storage", async function () {
         let snapshotBefore = {
             timestamp: "friday",
             address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            nonce: new Nonce(42),
-            balance: Balance.egld(1),
+            nonce: 42,
+            balance: TokenPayment.egldFromAmount(1),
             tokens: { RIDE: 1000, MEX: 1000 },
             takenBeforeInteraction: interactionReference
         };
@@ -106,8 +106,8 @@ describe("test storage", async function () {
         let snapshotAfter = {
             timestamp: "friday",
             address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            nonce: new Nonce(43),
-            balance: Balance.egld(2),
+            nonce: 43,
+            balance: TokenPayment.egldFromAmount(2),
             tokens: { RIDE: 500, MEX: 500 },
             takenAfterInteraction: interactionReference
         };

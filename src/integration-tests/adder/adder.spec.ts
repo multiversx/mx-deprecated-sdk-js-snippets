@@ -1,4 +1,4 @@
-import { Balance } from "@elrondnetwork/erdjs";
+import { TokenPayment } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
 import { createAirdropService } from "../../airdrop";
 import { ITestSession, ITestUser } from "../../interface";
@@ -29,7 +29,7 @@ describe("adder snippet", async function () {
         session.expectLongInteraction(this);
 
         await session.syncUsers([whale]);
-        await createAirdropService(session).sendToEachUser(whale, quartet, Balance.egld(0.1));
+        await createAirdropService(session).sendToEachUser(whale, quartet, TokenPayment.egldFromAmount(0.1));
     });
 
     it("setup", async function () {

@@ -1,7 +1,6 @@
-import { Token, TokenType } from "@elrondnetwork/erdjs";
+import { TokenPayment } from "@elrondnetwork/erdjs/out";
 import { assert } from "chai";
 import { createAirdropService } from "../../airdrop";
-import { createTokenAmount } from "../../erdjsPatching/amounts";
 import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
@@ -31,19 +30,18 @@ describe("counter snippet", async function () {
         session.expectLongInteraction(this);
 
         let interactor = await createESDTInteractor(session);
-        let token = new Token({ name: "COUNTER", ticker: "COUNTER", decimals: 0, supply: "100000000", type: TokenType.Fungible });
         await session.syncUsers([owner]);
-        await interactor.issueToken(owner, token);
+        let token = await interactor.issueFungibleToken(owner, { name: "COUNTER", ticker: "COUNTER", decimals: 0, supply: "100000000" });
         await session.saveToken("counterToken", token);
     });
 
     it("airdrop counter token", async function () {
         session.expectLongInteraction(this);
 
-        let lotteryToken = await session.loadToken("counterToken");
-        let amount = createTokenAmount(lotteryToken, "100");
+        let token = await session.loadToken("counterToken");
+        let payment = TokenPayment.fungibleFromAmount(token.identifier, "100", token.decimals);
         await session.syncUsers([owner]);
-        await createAirdropService(session).sendToEachUser(owner, [alice], amount);
+        await createAirdropService(session).sendToEachUser(owner, [alice], payment);
     });
 
     it("setup", async function () {
@@ -65,16 +63,16 @@ describe("counter snippet", async function () {
         await session.syncUsers([owner, alice]);
 
         let contractAddress = await session.loadAddress("contractAddress");
-        let counterToken = await session.loadToken("counterToken");
+        let token = await session.loadToken("counterToken");
         let interactor = await createInteractor(session, contractAddress);
 
-        let amount = createTokenAmount(counterToken, "10");
+        let payment = TokenPayment.fungibleFromAmount(token.identifier, "10", token.decimals);
 
         // Intra-shard
-        interactor.incrementWithSingleESDTTransfer(owner, 1, amount);
+        interactor.incrementWithSingleESDTTransfer(owner, 1, payment);
 
         // Cross-shard
-        interactor.incrementWithSingleESDTTransfer(alice, 1, amount);
+        interactor.incrementWithSingleESDTTransfer(alice, 1, payment);
     });
 
     it("increment with multi transfer", async function () {
@@ -83,15 +81,15 @@ describe("counter snippet", async function () {
         await session.syncUsers([owner, alice]);
 
         let contractAddress = await session.loadAddress("contractAddress");
-        let counterToken = await session.loadToken("counterToken");
+        let token = await session.loadToken("counterToken");
         let interactor = await createInteractor(session, contractAddress);
 
-        let amount = createTokenAmount(counterToken, "10");
+        let payment = TokenPayment.fungibleFromAmount(token.identifier, "10", token.decimals);
 
         // Intra-shard
-        interactor.incrementWithMultiTransfer(owner, 1, amount);
+        interactor.incrementWithMultiTransfer(owner, 1, payment);
 
         // Cross-shard
-        interactor.incrementWithSingleESDTTransfer(alice, 1, amount);
+        interactor.incrementWithSingleESDTTransfer(alice, 1, payment);
     });
 });

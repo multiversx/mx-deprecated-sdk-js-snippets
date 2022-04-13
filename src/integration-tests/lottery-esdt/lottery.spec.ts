@@ -1,7 +1,6 @@
-import { Balance, ReturnCode, Token, TokenType } from "@elrondnetwork/erdjs";
+import { ReturnCode, TokenPayment } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
 import { createAirdropService } from "../../airdrop";
-import { createTokenAmount } from "../../erdjsPatching/amounts";
 import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
@@ -32,18 +31,17 @@ describe("lottery snippet", async function () {
     it("airdrop EGLD", async function () {
         session.expectLongInteraction(this);
 
-        let amount = Balance.egld(0.1);
+        let payment = TokenPayment.egldFromAmount(0.1);
         await session.syncUsers([whale]);
-        await createAirdropService(session).sendToEachUser(whale, friends, amount);
+        await createAirdropService(session).sendToEachUser(whale, friends, payment);
     });
 
     it("issue lottery token", async function () {
         session.expectLongInteraction(this);
 
         let interactor = await createESDTInteractor(session);
-        let token = new Token({ name: "FOO", ticker: "FOO", decimals: 0, supply: "100000000", type: TokenType.Fungible });
         await session.syncUsers([owner]);
-        await interactor.issueToken(owner, token);
+        let token = await interactor.issueFungibleToken(owner, { name: "FOO", ticker: "FOO", decimals: 0, supply: "100000000" });
         await session.saveToken("lotteryToken", token);
     });
 
@@ -51,9 +49,9 @@ describe("lottery snippet", async function () {
         session.expectLongInteraction(this);
 
         let lotteryToken = await session.loadToken("lotteryToken");
-        let amount = createTokenAmount(lotteryToken, "10");
+        let payment = TokenPayment.fungibleFromAmount(lotteryToken.identifier, "10", lotteryToken.decimals);
         await session.syncUsers([owner]);
-        await createAirdropService(session).sendToEachUser(owner, friends, amount);
+        await createAirdropService(session).sendToEachUser(owner, friends, payment);
     });
 
     it("setup", async function () {
@@ -78,7 +76,7 @@ describe("lottery snippet", async function () {
         let lotteryToken = await session.loadToken("lotteryToken");
         let interactor = await createInteractor(session, contractAddress);
         let whitelist = friends.map(user => user.address);
-        let returnCode = await interactor.start(owner, LotteryName, lotteryToken, 1, whitelist);
+        let returnCode = await interactor.start(owner, LotteryName, lotteryToken.identifier, 1, whitelist);
         assert.isTrue(returnCode.isSuccess());
     });
 
@@ -115,8 +113,8 @@ describe("lottery snippet", async function () {
         let lotteryToken = await session.loadToken("lotteryToken");
         let interactor = await createInteractor(session, contractAddress);
 
-        let buyAmount = createTokenAmount(lotteryToken, "1");
-        let buyPromises = friends.map(friend => interactor.buyTicket(friend, LotteryName, buyAmount));
+        let payment = TokenPayment.fungibleFromAmount(lotteryToken.identifier, "1", lotteryToken.decimals);
+        let buyPromises = friends.map(friend => interactor.buyTicket(friend, LotteryName, payment));
         let returnCodes: ReturnCode[] = await Promise.all(buyPromises);
         
         for (const returnCode of returnCodes) {

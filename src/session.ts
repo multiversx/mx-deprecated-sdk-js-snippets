@@ -1,9 +1,9 @@
-import { Address, Token } from "@elrondnetwork/erdjs";
-import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
-import { existsSync, PathLike, readFileSync } from "fs";
 import path from "path";
+import { existsSync, PathLike, readFileSync } from "fs";
+import { Address } from "@elrondnetwork/erdjs";
+import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, IMochaSuite, IMochaTest, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser } from "./interface";
+import { IBunchOfUsers, IMochaSuite, IMochaTest, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
@@ -131,20 +131,14 @@ export class TestSession implements ITestSession {
         return address;
     }
 
-    async saveToken(name: string, token: Token): Promise<void> {
+    async saveToken(name: string, token: IToken): Promise<void> {
         await this.storage.storeBreadcrumb(this.scope, TypeToken, name, token);
     }
 
-    async loadToken(name: string): Promise<Token> {
+    async loadToken(name: string): Promise<IToken> {
         let payload = await this.storage.loadBreadcrumb(this.scope, name);
-        let token = new Token(payload);
+        let token = { identifier: payload.identifier, decimals: payload.decimals };
         return token;
-    }
-
-    async getTokensOnFocus(): Promise<Token[]> {
-        let payloads = await this.storage.loadBreadcrumbsByType(this.scope, TypeToken);
-        let tokens = payloads.map(item => new Token(item));
-        return tokens;
     }
 
     async saveBreadcrumb(name: string, breadcrumb: any): Promise<void> {

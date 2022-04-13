@@ -1,4 +1,4 @@
-import { Account, Balance, IAddress, Nonce, Token, TransactionHash } from "@elrondnetwork/erdjs";
+import { Account, IAccountBalance, IAddress, TransactionHash } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
@@ -44,9 +44,8 @@ export interface ITestSession {
     saveAddress(name: string, address: IAddress): Promise<void>;
     loadAddress(name: string): Promise<IAddress>;
 
-    saveToken(name: string, token: Token): Promise<void>;
-    loadToken(name: string): Promise<Token>;
-    getTokensOnFocus(): Promise<Token[]>;
+    saveToken(name: string, token: IToken): Promise<void>;
+    loadToken(name: string): Promise<IToken>;
 
     saveBreadcrumb(name: string, breadcrumb: any): Promise<void>;
     loadBreadcrumb(name: string): Promise<any>;
@@ -112,8 +111,8 @@ export interface IInteractionWithinStorage {
     timestamp: string;
     round: number;
     epoch: number;
-    blockNonce: Nonce;
-    hyperblockNonce: Nonce;
+    blockNonce: number;
+    hyperblockNonce: number;
     input: any;
     transfers: any;
     output: any;
@@ -124,9 +123,11 @@ export interface IReferenceOfInteractionWithinStorage { }
 export interface IAccountSnapshotWithinStorage {
     timestamp: string;
     address: IAddress;
-    nonce: Nonce;
-    balance: Balance;
+    nonce: number;
+    balance: IAccountBalance;
     tokens: any;
     takenBeforeInteraction?: IReferenceOfInteractionWithinStorage;
     takenAfterInteraction?: IReferenceOfInteractionWithinStorage;
 }
+
+export interface IToken { identifier: string, decimals: number; }

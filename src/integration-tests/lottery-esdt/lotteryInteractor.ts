@@ -7,7 +7,7 @@
  * @module
  */
 import path from "path";
-import { Balance, CodeMetadata, EnumValue, GasLimit, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, Struct, Token, TransactionWatcher, VariadicValue } from "@elrondnetwork/erdjs";
+import { CodeMetadata, EnumValue, GasLimit, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, Struct, TokenPayment, TransactionWatcher, VariadicValue } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { loadAbiRegistry, loadCode } from "../../contracts";
 import { ITestSession, ITestUser } from "../../interface";
@@ -75,14 +75,14 @@ export class LotteryInteractor {
         return { address, returnCode };
     }
 
-    async start(owner: ITestUser, lotteryName: string, token: Token, price: number, whitelist: IAddress[]): Promise<ReturnCode> {
+    async start(owner: ITestUser, lotteryName: string, tokenIdentifier: string, price: number, whitelist: IAddress[]): Promise<ReturnCode> {
         console.log(`LotteryInteractor.start(): lotteryName = ${lotteryName}`);
 
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods
             .start([
                 lotteryName,
-                token.identifier,
+                tokenIdentifier,
                 price,
                 null,
                 null,
@@ -110,8 +110,8 @@ export class LotteryInteractor {
         return returnCode;
     }
 
-    async buyTicket(user: ITestUser, lotteryName: string, amount: Balance): Promise<ReturnCode> {
-        console.log(`LotteryInteractor.buyTicket(): address = ${user.address}, amount = ${amount.toCurrencyString()}`);
+    async buyTicket(user: ITestUser, lotteryName: string, amount: TokenPayment): Promise<ReturnCode> {
+        console.log(`LotteryInteractor.buyTicket(): address = ${user.address}, amount = ${amount.toPrettyString()}`);
 
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods

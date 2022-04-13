@@ -1,15 +1,15 @@
-import { Address, Balance, BigUIntValue, BooleanType, BytesType, BytesValue, CompositeType, Interaction, ResultsParser, SmartContract, SmartContractAbi, Token, TransactionWatcher, U32Value, VariadicType, VariadicValue } from "@elrondnetwork/erdjs";
+import { Address, Interaction, ResultsParser, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import BigNumber from "bignumber.js";
 import path from "path";
 import { loadAbiRegistry } from "../contracts";
 import { computeGasLimitOnInteraction } from "../gasLimit";
-import { ITestSession, ITestUser } from "../interface";
+import { ITestSession, ITestUser, IToken } from "../interface";
 import { INetworkProvider } from "../interfaceOfNetwork";
 
 const ESDTContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u");
 const PathToAbi = path.resolve(__dirname, "esdt.abi.json");
-const IssuePriceInEgld = "0.05";
+const IssuePriceInEgld = new BigNumber("0.05");
 
 export async function createESDTInteractor(session: ITestSession) {
     let registry = await loadAbiRegistry(PathToAbi);
@@ -36,7 +36,7 @@ export class ESDTInteractor {
         this.resultsParser = new ResultsParser();
     }
 
-    async issueToken(owner: ITestUser, token: Token): Promise<void> {
+    async issueFungibleToken(owner: ITestUser, token: { name: string, ticker: string, supply: BigNumber.Value, decimals: number }): Promise<IToken> {
         let interaction = <Interaction>this.contract.methods
             .issue([
                 token.name,
@@ -44,7 +44,7 @@ export class ESDTInteractor {
                 token.supply,
                 token.decimals
             ])
-            .withValue(Balance.egld(new BigNumber(IssuePriceInEgld)))
+            .withValue(TokenPayment.egldFromAmount(IssuePriceInEgld))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
@@ -60,9 +60,7 @@ export class ESDTInteractor {
         let event = logs.findFirstOrNoneEvent("issue");
         let identifier = event!.topics[0].toString();
 
-        // (Hack) here we also mutate the token, since now we know the full identifier.
-        token.identifier = identifier;
-
         console.info(`ESDTInteractor.issue [end]: token = ${identifier}`);
+        return { identifier: identifier, decimals: token.decimals };
     }
 }

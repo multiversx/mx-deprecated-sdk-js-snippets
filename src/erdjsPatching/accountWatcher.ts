@@ -1,6 +1,6 @@
 
 
-import { AsyncTimer, Err, IAddress, Nonce } from "@elrondnetwork/erdjs";
+import { AsyncTimer, Err, IAddress, INonce } from "@elrondnetwork/erdjs";
 import { AccountOnNetwork } from "@elrondnetwork/erdjs-network-providers";
 import { INetworkProvider } from "../interfaceOfNetwork";
 
@@ -25,7 +25,7 @@ export class AccountWatcher {
         this.timeout = timeout;
     }
 
-    public async awaitNonce(nonce: Nonce): Promise<AccountOnNetwork> {
+    public async awaitNonce(nonce: INonce): Promise<AccountOnNetwork> {
         let doFetch = async () => await this.fetcher.getAccount(this.address);
         let onFetched = (account: AccountOnNetwork) => console.log(`AccountWatcher.awaitNonce(${nonce.valueOf()}). Current: ${account.nonce.valueOf()}.`);
         let hasReachedNonce = (account: AccountOnNetwork) => account.nonce.valueOf() >= nonce.valueOf();

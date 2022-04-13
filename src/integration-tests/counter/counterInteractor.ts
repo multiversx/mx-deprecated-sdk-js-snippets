@@ -7,7 +7,7 @@
  * @module
  */
 import path from "path";
-import { Balance, BigUIntValue, CodeMetadata, GasLimit, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher, U64Value } from "@elrondnetwork/erdjs";
+import { BigUIntValue, CodeMetadata, GasLimit, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher, U64Value } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { ITestSession, ITestUser } from "../../interface";
 import { loadAbiRegistry, loadCode } from "../../contracts";
@@ -75,11 +75,11 @@ export class CounterInteractor {
         return { address, returnCode };
     }
 
-    async incrementWithSingleESDTTransfer(caller: ITestUser, value: number, amount: Balance): Promise<ReturnCode> {
+    async incrementWithSingleESDTTransfer(caller: ITestUser, value: number, payment: TokenPayment): Promise<ReturnCode> {
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods
             .increment([new U64Value(value)])
-            .withSingleESDTTransfer(amount)
+            .withSingleESDTTransfer(payment)
             .withGasLimit(new GasLimit(3000000))
             .withNonce(caller.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
@@ -99,11 +99,11 @@ export class CounterInteractor {
         return returnCode;
     }
 
-    async incrementWithMultiTransfer(caller: ITestUser, value: number, amount: Balance): Promise<ReturnCode> {
+    async incrementWithMultiTransfer(caller: ITestUser, value: number, payment: TokenPayment): Promise<ReturnCode> {
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods
             .increment([new U64Value(value)])
-            .withMultiESDTNFTTransfer([amount], caller.address)
+            .withMultiESDTNFTTransfer([payment], caller.address)
             .withGasLimit(new GasLimit(3000000))
             .withNonce(caller.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
