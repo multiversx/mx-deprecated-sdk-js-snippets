@@ -41,7 +41,7 @@ describe("counter snippet", async function () {
         let token = await session.loadToken("counterToken");
         let payment = TokenPayment.fungibleFromAmount(token.identifier, "100", token.decimals);
         await session.syncUsers([owner]);
-        await createAirdropService(session).sendToEachUser(owner, [alice], payment);
+        await createAirdropService(session).sendToEachUser(owner, [alice], [payment]);
     });
 
     it("setup", async function () {

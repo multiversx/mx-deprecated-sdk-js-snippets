@@ -7,7 +7,7 @@
  * @module
  */
 import path from "path";
-import { BigUIntValue, CodeMetadata, GasLimit, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher, U64Value } from "@elrondnetwork/erdjs";
+import { BigUIntValue, CodeMetadata, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher, U64Value } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { ITestSession, ITestUser } from "../../interface";
 import { loadAbiRegistry, loadCode } from "../../contracts";
@@ -50,7 +50,7 @@ export class CounterInteractor {
             code: code,
             codeMetadata: new CodeMetadata(),
             initArguments: [new BigUIntValue(initialValue)],
-            gasLimit: new GasLimit(5000000),
+            gasLimit: 5000000,
             chainID: this.networkConfig.ChainID
         });
 
@@ -80,7 +80,7 @@ export class CounterInteractor {
         let interaction = <Interaction>this.contract.methods
             .increment([new U64Value(value)])
             .withSingleESDTTransfer(payment)
-            .withGasLimit(new GasLimit(3000000))
+            .withGasLimit(3000000)
             .withNonce(caller.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
@@ -104,7 +104,7 @@ export class CounterInteractor {
         let interaction = <Interaction>this.contract.methods
             .increment([new U64Value(value)])
             .withMultiESDTNFTTransfer([payment], caller.address)
-            .withGasLimit(new GasLimit(3000000))
+            .withGasLimit(3000000)
             .withNonce(caller.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 

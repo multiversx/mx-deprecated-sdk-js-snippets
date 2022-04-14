@@ -7,7 +7,7 @@
  * @module
  */
 import path from "path";
-import { BigUIntValue, CodeMetadata, GasLimit, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher } from "@elrondnetwork/erdjs";
+import { BigUIntValue, CodeMetadata, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { ITestSession, ITestUser } from "../../interface";
 import { loadAbiRegistry, loadCode } from "../../contracts";
@@ -50,7 +50,7 @@ export class AdderInteractor {
             code: code,
             codeMetadata: new CodeMetadata(),
             initArguments: [new BigUIntValue(initialValue)],
-            gasLimit: new GasLimit(20000000),
+            gasLimit: 20000000,
             chainID: this.networkConfig.ChainID
         });
 
@@ -63,11 +63,11 @@ export class AdderInteractor {
 
         // The contract address is deterministically computable:
         let address = SmartContract.computeAddress(transaction.getSender(), transaction.getNonce());
-        
+
         // Let's broadcast the transaction and await its completion:
         await this.networkProvider.sendTransaction(transaction);
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        
+
         // In the end, parse the results:
         let { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
 
@@ -79,7 +79,7 @@ export class AdderInteractor {
         // Prepare the interaction
         let interaction = <Interaction>this.contract.methods
             .add([value])
-            .withGasLimit(new GasLimit(10000000))
+            .withGasLimit(10000000)
             .withNonce(caller.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 

@@ -1,8 +1,6 @@
-import { ITransactionValue, TokenPayment, Transaction, TransactionPayload } from "@elrondnetwork/erdjs";
+import { TokenPayment, Transaction, ESDTNFTTransferPayloadBuilder, ESDTTransferPayloadBuilder, MultiESDTNFTTransferPayloadBuilder } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
-import { ESDTTransferPayloadBuilder } from "./erdjsPatching/transactionBuilders";
-import { ErrNotImplemented } from "./errors";
 import { computeGasLimit } from "./gasLimit";
 import { ITestSession, ITestUser } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
@@ -23,8 +21,10 @@ export class AirdropService {
         this.networkConfig = networkConfig;
     }
 
-    async sendToEachUser(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment) {
-        let transactions = this.createTransactions(sender, receivers, payment);
+    async sendToEachUser(sender: ITestUser, receivers: ITestUser[], payments: TokenPayment[]) {
+        // Remove the "sender" from the list of "receivers".
+        receivers = receivers.filter(user => user.address.bech32() != sender.address.bech32());
+        let transactions = this.createTransactions(sender, receivers, payments);
 
         let promisesOfSignAndSend = transactions.map(async (transaction) => {
             await sender.signer.sign(transaction);
@@ -38,31 +38,99 @@ export class AirdropService {
         await watcher.awaitNonce(senderExpectedNonce);
     }
 
-    private createTransactions(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment): Transaction[] {
+    private createTransactions(sender: ITestUser, receivers: ITestUser[], payments: TokenPayment[]): Transaction[] {
+        if (payments.length > 1) {
+            return this.createMultiTransferTransactions(sender, receivers, payments);
+        }
+
+        let payment = payments[0];
+
+        if (payment.isEgld()) {
+            return this.createEGLDTransferTransactions(sender, receivers, payment);
+        }
+
+        if (payment.isFungible()) {
+            return this.createSingleESDTTransferTransactions(sender, receivers, payment);
+        }
+
+        return this.createSingleESDTNFTTransferTransactions(sender, receivers, payment);
+    }
+
+    private createMultiTransferTransactions(sender: ITestUser, receivers: ITestUser[], payments: TokenPayment[]): Transaction[] {
         let transactions: Transaction[] = [];
 
         for (const receiver of receivers) {
-            if (sender.address.bech32() == receiver.address.bech32()) {
-                continue;
-            }
+            let data = new MultiESDTNFTTransferPayloadBuilder()
+                .setPayments(payments)
+                .setDestination(receiver.address)
+                .build();
 
-            let value: ITransactionValue = 0;
-            let data = new TransactionPayload();
-            let gasLimit = computeGasLimit(this.networkConfig);
+            let gasLimit = computeGasLimit(this.networkConfig, data.length(), 1000000 * payments.length);
 
-            if (payment.isEgld()) {
-                value = payment.toString();
-            } else if (payment.isFungible()) {
-                data = new ESDTTransferPayloadBuilder().setPayment(payment).build();
-                gasLimit = computeGasLimit(this.networkConfig, data.length(), 300000);
-            } else {
-                throw new ErrNotImplemented("transfer of other tokens");
-            }
+            transactions.push(new Transaction({
+                nonce: sender.account.getNonceThenIncrement(),
+                receiver: sender.address,
+                data: data,
+                gasLimit: gasLimit,
+                chainID: this.networkConfig.ChainID
+            }));
+        }
+
+        return transactions;
+    }
+
+    private createEGLDTransferTransactions(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment): Transaction[] {
+        let transactions: Transaction[] = [];
+
+        for (const receiver of receivers) {
+            transactions.push(new Transaction({
+                nonce: sender.account.getNonceThenIncrement(),
+                receiver: receiver.address,
+                value: payment.toString(),
+                gasLimit: computeGasLimit(this.networkConfig),
+                chainID: this.networkConfig.ChainID
+            }));
+        }
+
+        return transactions;
+    }
+
+    private createSingleESDTTransferTransactions(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment): Transaction[] {
+        let transactions: Transaction[] = [];
+
+        for (const receiver of receivers) {
+            let data = new ESDTTransferPayloadBuilder()
+                .setPayment(payment)
+                .build();
+
+            let gasLimit = computeGasLimit(this.networkConfig, data.length(), 300000);
 
             transactions.push(new Transaction({
                 nonce: sender.account.getNonceThenIncrement(),
                 receiver: receiver.address,
-                value: value,
+                data: data,
+                gasLimit: gasLimit,
+                chainID: this.networkConfig.ChainID
+            }));
+        }
+
+        return transactions;
+    }
+
+    private createSingleESDTNFTTransferTransactions(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment): Transaction[] {
+        let transactions: Transaction[] = [];
+
+        for (const receiver of receivers) {
+            let data = new ESDTNFTTransferPayloadBuilder()
+                .setPayment(payment)
+                .setDestination(receiver.address)
+                .build();
+
+            let gasLimit = computeGasLimit(this.networkConfig, data.length(), 1000000);
+
+            transactions.push(new Transaction({
+                nonce: sender.account.getNonceThenIncrement(),
+                receiver: sender.address,
                 data: data,
                 gasLimit: gasLimit,
                 chainID: this.networkConfig.ChainID

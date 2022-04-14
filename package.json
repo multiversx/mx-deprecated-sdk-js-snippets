@@ -1,6 +1,6 @@
 {
   "name": "@elrondnetwork/erdjs-snippets",
-  "version": "2.0.1-beta.1",
+  "version": "2.0.2",
   "description": "Base library for (mocha-style) Smart Contract interaction snippets. Based on erdjs. Runnable in VSCode.",
   "main": "out/index.js",
   "types": "out/index.d.js",
@@ -17,7 +17,7 @@
   "author": "ElrondNetwork",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "@elrondnetwork/erdjs": "10.0.1-beta.1",
+    "@elrondnetwork/erdjs": "10.1.0",
     "@elrondnetwork/erdjs-network-providers": "0.1.4",
     "@elrondnetwork/erdjs-walletcore": "^1.0.0",
     "better-sqlite3": "7.5.0",
