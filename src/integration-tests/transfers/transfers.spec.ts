@@ -26,6 +26,6 @@ describe("transfers snippet", async function () {
 
         let payment = TokenPayment.nonFungible("ERDJS-38f249", 1);
         await session.syncUsers([alice]);
-        await createAirdropService(session).sendToEachUser(alice, [bob], payment);
+        await createAirdropService(session).sendToEachUser(alice, [bob], [payment]);
     });
 });
