@@ -57,7 +57,7 @@ export class BunchOfUsers implements IBunchOfUsers {
             // From a folder
             if (group.folder) {
                 let files = readdirSync(resolvePath(group.folder));
-                let users: ITestUser[] = [];
+                let groupOfUsers: ITestUser[] = [];
 
                 for (const file of files) {
                     if (!file.endsWith(".pem")) {
@@ -67,10 +67,10 @@ export class BunchOfUsers implements IBunchOfUsers {
                     let keys = loadMoreKeysFromPemFile(resolvePath(group.folder, file));
                     let users = keys.map(key => new TestUser("", group.name, key));
 
-                    users.push(...users);
+                    groupOfUsers.push(...users);
                 }
 
-                this.groups.set(group.name, users);
+                this.groups.set(group.name, groupOfUsers);
                 continue;
             }
         }
