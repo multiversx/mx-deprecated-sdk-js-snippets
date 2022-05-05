@@ -1,3 +1,4 @@
+import BigNumber from "bignumber.js";
 import { Account, IAccountBalance, IAddress, TransactionHash } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { INetworkProvider } from "./interfaceOfNetwork";
@@ -131,3 +132,12 @@ export interface IAccountSnapshotWithinStorage {
 }
 
 export interface IToken { identifier: string, decimals: number; }
+
+export interface ITokenPayment {
+    readonly tokenIdentifier: string;
+    readonly nonce: number;
+    readonly amountAsBigInteger: BigNumber.Value;
+    isEgld(): boolean;
+    isFungible(): boolean;
+    valueOf(): BigNumber.Value;
+}

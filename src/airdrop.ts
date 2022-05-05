@@ -1,8 +1,8 @@
-import { TokenPayment, Transaction, ESDTNFTTransferPayloadBuilder, ESDTTransferPayloadBuilder, MultiESDTNFTTransferPayloadBuilder } from "@elrondnetwork/erdjs";
+import { Transaction, ESDTNFTTransferPayloadBuilder, ESDTTransferPayloadBuilder, MultiESDTNFTTransferPayloadBuilder } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
 import { computeGasLimit } from "./gasLimit";
-import { ITestSession, ITestUser } from "./interface";
+import { ITestSession, ITestUser, ITokenPayment } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 
 export function createAirdropService(session: ITestSession): AirdropService {
@@ -21,7 +21,11 @@ export class AirdropService {
         this.networkConfig = networkConfig;
     }
 
-    async sendToEachUser(sender: ITestUser, receivers: ITestUser[], payments: TokenPayment[]) {
+    async sendToEachUser(
+        sender: ITestUser,
+        receivers: ITestUser[],
+        payments: ITokenPayment[]
+    ) {
         // Remove the "sender" from the list of "receivers".
         receivers = receivers.filter(user => user.address.bech32() != sender.address.bech32());
         let transactions = this.createTransactions(sender, receivers, payments);
@@ -38,7 +42,7 @@ export class AirdropService {
         await watcher.awaitNonce(senderExpectedNonce);
     }
 
-    private createTransactions(sender: ITestUser, receivers: ITestUser[], payments: TokenPayment[]): Transaction[] {
+    private createTransactions(sender: ITestUser, receivers: ITestUser[], payments: ITokenPayment[]): Transaction[] {
         if (payments.length > 1) {
             return this.createMultiTransferTransactions(sender, receivers, payments);
         }
@@ -56,7 +60,7 @@ export class AirdropService {
         return this.createSingleESDTNFTTransferTransactions(sender, receivers, payment);
     }
 
-    private createMultiTransferTransactions(sender: ITestUser, receivers: ITestUser[], payments: TokenPayment[]): Transaction[] {
+    private createMultiTransferTransactions(sender: ITestUser, receivers: ITestUser[], payments: ITokenPayment[]): Transaction[] {
         let transactions: Transaction[] = [];
 
         for (const receiver of receivers) {
@@ -79,7 +83,7 @@ export class AirdropService {
         return transactions;
     }
 
-    private createEGLDTransferTransactions(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment): Transaction[] {
+    private createEGLDTransferTransactions(sender: ITestUser, receivers: ITestUser[], payment: ITokenPayment): Transaction[] {
         let transactions: Transaction[] = [];
 
         for (const receiver of receivers) {
@@ -95,7 +99,7 @@ export class AirdropService {
         return transactions;
     }
 
-    private createSingleESDTTransferTransactions(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment): Transaction[] {
+    private createSingleESDTTransferTransactions(sender: ITestUser, receivers: ITestUser[], payment: ITokenPayment): Transaction[] {
         let transactions: Transaction[] = [];
 
         for (const receiver of receivers) {
@@ -117,7 +121,7 @@ export class AirdropService {
         return transactions;
     }
 
-    private createSingleESDTNFTTransferTransactions(sender: ITestUser, receivers: ITestUser[], payment: TokenPayment): Transaction[] {
+    private createSingleESDTNFTTransferTransactions(sender: ITestUser, receivers: ITestUser[], payment: ITokenPayment): Transaction[] {
         let transactions: Transaction[] = [];
 
         for (const receiver of receivers) {
