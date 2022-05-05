@@ -12,6 +12,7 @@ export interface ITestSessionConfig {
 export interface INetworkProviderConfig {
     readonly type: string;
     readonly url: string;
+    readonly timeout?: number;
 }
 
 export interface IUsersConfig {

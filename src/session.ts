@@ -79,10 +79,10 @@ export class TestSession implements ITestSession {
         }
 
         if (config.type == ProxyNetworkProvider.name) {
-            return new ProxyNetworkProvider(config.url);
+            return new ProxyNetworkProvider(config.url, { timeout: config.timeout });
         }
         if (config.type == ApiNetworkProvider.name) {
-            return new ApiNetworkProvider(config.url);
+            return new ApiNetworkProvider(config.url, { timeout: config.timeout });
         }
 
         throw new ErrBadSessionConfig(sessionName, "bad networkProvider.type");

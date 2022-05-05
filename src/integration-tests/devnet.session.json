@@ -1,13 +1,14 @@
 {
     "networkProvider": {
         "type": "ProxyNetworkProvider",
-        "url": "https://devnet-gateway.elrond.com"
+        "url": "https://devnet-gateway.elrond.com",
+        "timeout": 5000
     },
     "users": {
         "individuals": [
             {
                 "name": "whale",
-                "pem": "~/elrondsdk/testwallets/latest/users/alice.pem"
+                "pem": "~/test-wallets/erd1testnlersh4z0wsv8kjx39me4rmnvjkwu8dsaea7ukdvvc9z396qykv7z7.pem"
             },
             {
                 "name": "alice",
