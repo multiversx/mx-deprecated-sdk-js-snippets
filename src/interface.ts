@@ -49,8 +49,11 @@ export interface ITestSession {
     saveToken(name: string, token: IToken): Promise<void>;
     loadToken(name: string): Promise<IToken>;
 
-    saveBreadcrumb(name: string, breadcrumb: any): Promise<void>;
+    saveBreadcrumb(params: { type?: string, name: string, value: any }): Promise<void>;
     loadBreadcrumb(name: string): Promise<any>;
+    loadBreadcrumbsByType(type: string): Promise<any[]>;
+
+    destroy(): Promise<void>;
 }
 
 export interface IMochaSuite {
@@ -103,6 +106,7 @@ export interface IStorage {
     storeInteraction(scope: string, interaction: IInteractionWithinStorage): Promise<IReferenceOfInteractionWithinStorage>;
     updateInteractionSetOutput(reference: IReferenceOfInteractionWithinStorage, output: any): Promise<void>;
     storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotWithinStorage): Promise<void>;
+    destroy(): Promise<void>;
 }
 
 export interface IInteractionWithinStorage {

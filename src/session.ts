@@ -141,13 +141,26 @@ export class TestSession implements ITestSession {
         return token;
     }
 
-    async saveBreadcrumb(name: string, breadcrumb: any): Promise<void> {
-        await this.storage.storeBreadcrumb(this.scope, TypeArbitraryBreadcrumb, name, breadcrumb);
+    async saveBreadcrumb(params: { type?: string, name: string, value: any }): Promise<void> {
+        await this.storage.storeBreadcrumb(
+            this.scope,
+            params.type || TypeArbitraryBreadcrumb,
+            params.name,
+            params.value
+        );
     }
 
     async loadBreadcrumb(name: string): Promise<any> {
         let payload = await this.storage.loadBreadcrumb(this.scope, name);
         return payload;
     }
-}
 
+    async loadBreadcrumbsByType(type: string): Promise<any[]> {
+        let payload: any[] = await this.storage.loadBreadcrumbsByType(this.scope, type);
+        return payload;
+    }
+
+    async destroy(): Promise<void> {
+        await this.storage.destroy();
+    }
+}
