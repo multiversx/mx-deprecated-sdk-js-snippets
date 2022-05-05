@@ -38,7 +38,6 @@ export interface ITestSession {
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
 
-    expectLongInteraction(mochaTest: IMochaTest, minutes?: number): void;
     syncNetworkConfig(): Promise<void>;
     getNetworkConfig(): NetworkConfig;
     syncUsers(users: ITestUser[]): Promise<void>;
@@ -59,10 +58,6 @@ export interface ITestSession {
 export interface IMochaSuite {
     file?: string | undefined;
     fullTitle(): string;
-}
-
-export interface IMochaTest {
-    timeout(ms: string | number): void;
 }
 
 export interface IUsersConfig {

@@ -3,7 +3,7 @@ import { existsSync, PathLike, readFileSync } from "fs";
 import { Address } from "@elrondnetwork/erdjs";
 import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, IMochaSuite, IMochaTest, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
+import { IBunchOfUsers, IMochaSuite, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
@@ -12,7 +12,6 @@ import { resolvePath } from "./utils";
 const TypeToken = "token";
 const TypeAddress = "address";
 const TypeArbitraryBreadcrumb = "breadcrumb";
-const OneMinuteInMilliseconds = 60 * 1000;
 
 export class TestSession implements ITestSession {
     readonly name: string;
@@ -101,10 +100,6 @@ export class TestSession implements ITestSession {
         }
 
         throw new ErrBadSessionConfig(sessionName, "file not found");
-    }
-
-    expectLongInteraction(mochaTest: IMochaTest, minutes: number = 5) {
-        mochaTest.timeout(minutes * OneMinuteInMilliseconds);
     }
 
     async syncNetworkConfig(): Promise<void> {

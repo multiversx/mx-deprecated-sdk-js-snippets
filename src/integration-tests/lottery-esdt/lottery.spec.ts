@@ -1,6 +1,7 @@
 import { ReturnCode, TokenPayment } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
 import { createAirdropService } from "../../airdrop";
+import { FiveMinutesInMilliseconds } from "../../constants";
 import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
@@ -29,7 +30,7 @@ describe("lottery snippet", async function () {
     });
 
     it("airdrop EGLD", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let payment = TokenPayment.egldFromAmount(0.1);
         await session.syncUsers([whale]);
@@ -37,7 +38,7 @@ describe("lottery snippet", async function () {
     });
 
     it("issue lottery token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session);
         await session.syncUsers([owner]);
@@ -46,7 +47,7 @@ describe("lottery snippet", async function () {
     });
 
     it("airdrop lottery token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let lotteryToken = await session.loadToken("lotteryToken");
         let payment = TokenPayment.fungibleFromAmount(lotteryToken.identifier, "10", lotteryToken.decimals);
@@ -55,7 +56,7 @@ describe("lottery snippet", async function () {
     });
 
     it("setup", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner]);
 
@@ -68,7 +69,7 @@ describe("lottery snippet", async function () {
     });
 
     it("start lottery", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner]);
 
@@ -105,7 +106,7 @@ describe("lottery snippet", async function () {
     });
 
     it("friends buy tickets", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner, ...friends]);
 

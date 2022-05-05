@@ -1,6 +1,7 @@
 import { TokenPayment } from "@elrondnetwork/erdjs/out";
 import { assert } from "chai";
 import { createAirdropService } from "../../airdrop";
+import { FiveMinutesInMilliseconds } from "../../constants";
 import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
@@ -27,7 +28,7 @@ describe("counter snippet", async function () {
     });
 
     it("issue counter token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session);
         await session.syncUsers([owner]);
@@ -36,7 +37,7 @@ describe("counter snippet", async function () {
     });
 
     it("airdrop counter token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let token = await session.loadToken("counterToken");
         let payment = TokenPayment.fungibleFromAmount(token.identifier, "100", token.decimals);
@@ -45,7 +46,7 @@ describe("counter snippet", async function () {
     });
 
     it("setup", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner]);
 
@@ -58,7 +59,7 @@ describe("counter snippet", async function () {
     });
 
     it("increment with single ESDT transfer", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner, alice]);
 
@@ -76,7 +77,7 @@ describe("counter snippet", async function () {
     });
 
     it("increment with multi transfer", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner, alice]);
 

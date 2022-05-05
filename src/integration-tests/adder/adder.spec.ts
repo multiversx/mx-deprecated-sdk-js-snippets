@@ -1,6 +1,7 @@
 import { TokenPayment } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
 import { createAirdropService } from "../../airdrop";
+import { FiveMinutesInMilliseconds } from "../../constants";
 import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
@@ -26,7 +27,7 @@ describe("adder snippet", async function () {
     });
 
     it("airdrop", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([whale]);
         let payment = TokenPayment.egldFromAmount(0.1);
@@ -34,7 +35,7 @@ describe("adder snippet", async function () {
     });
 
     it("setup", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner]);
 
@@ -47,7 +48,7 @@ describe("adder snippet", async function () {
     });
 
     it("add", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner]);
 

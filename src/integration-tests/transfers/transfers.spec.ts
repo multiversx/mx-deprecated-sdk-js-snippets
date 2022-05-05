@@ -1,5 +1,6 @@
 import { TokenPayment } from "@elrondnetwork/erdjs/out";
 import { createAirdropService } from "../../airdrop";
+import { FiveMinutesInMilliseconds } from "../../constants";
 import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
@@ -22,7 +23,7 @@ describe("transfers snippet", async function () {
     });
 
     it("transfer NFT", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let payment = TokenPayment.nonFungible("ERDJS-38f249", 1);
         await session.syncUsers([alice]);
