@@ -88,18 +88,14 @@ export interface ITestUser {
  * 
  * [Design] {@link IStorage} depends on `I{name of record}WithinStorage` interfaces.
  * That is, it does not depend on complex (and somehow unstable) types of erdjs, such as: Interaction, TransactionOnNetwork etc.
- * Though, it depends on simple (and quite stable) types of erdjs, such as: Address, Nonce, TransactionHash etc.
- * 
- * [Design] when necessary, references to record objects may be used as input / output to functions of {@link IStorage}.
- * They should be interfaces as well, e.g. `IReferenceOf{name of record}WithinStorage`
- * Details: in the implementation of storage, these references would usually be surrogate keys (numbers).
+ * Though, it depends on simple (and quite stable) types of erdjs, such as: Address, TransactionHash etc.
  */
 export interface IStorage {
     storeBreadcrumb(scope: string, type: string, name: string, payload: any): Promise<void>;
     loadBreadcrumb(scope: string, name: string): Promise<any>;
     loadBreadcrumbsByType(scope: string, type: string): Promise<any[]>;
-    storeInteraction(scope: string, interaction: IInteractionWithinStorage): Promise<IReferenceOfInteractionWithinStorage>;
-    updateInteractionSetOutput(reference: IReferenceOfInteractionWithinStorage, output: any): Promise<void>;
+    storeInteraction(scope: string, interaction: IInteractionWithinStorage): Promise<number>;
+    updateInteractionSetOutput(id: number, output: any): Promise<void>;
     storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotWithinStorage): Promise<void>;
     destroy(): Promise<void>;
 }
@@ -119,16 +115,14 @@ export interface IInteractionWithinStorage {
     output: any;
 }
 
-export interface IReferenceOfInteractionWithinStorage { }
-
 export interface IAccountSnapshotWithinStorage {
     timestamp: string;
     address: IAddress;
     nonce: number;
     balance: IAccountBalance;
     tokens: any;
-    takenBeforeInteraction?: IReferenceOfInteractionWithinStorage;
-    takenAfterInteraction?: IReferenceOfInteractionWithinStorage;
+    takenBeforeInteraction?: number;
+    takenAfterInteraction?: number;
 }
 
 export interface IToken { identifier: string, decimals: number; }

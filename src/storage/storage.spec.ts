@@ -56,10 +56,8 @@ describe("test storage", async function () {
         });
 
         assert.isTrue(reference.valueOf() > 0);
-        
 
         await storage.updateInteractionSetOutput(reference, { something: "something" });
-
 
         await storage.destroy();
     });

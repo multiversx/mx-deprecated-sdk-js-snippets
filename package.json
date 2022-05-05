@@ -21,12 +21,11 @@
     "@elrondnetwork/erdjs-network-providers": "0.1.5",
     "@elrondnetwork/erdjs-walletcore": "1.0.0",
     "better-sqlite3": "7.5.0",
-    "bignumber.js": "9.0.2",
-    "reflect-metadata": "0.1.13",
-    "typeorm": "0.2.45"
+    "bignumber.js": "9.0.2"
   },
   "devDependencies": {
     "@types/assert": "1.4.6",
+    "@types/better-sqlite3": "7.5.0",
     "@types/chai": "4.2.11",
     "@types/mocha": "9.1.0",
     "@types/node": "13.13.2",
