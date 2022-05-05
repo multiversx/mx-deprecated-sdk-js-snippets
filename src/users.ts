@@ -5,7 +5,7 @@ import { ErrMissingUserOrGroup } from "./errors";
 import { IBunchOfUsers, ITestUser as ITestUser, IUsersConfig } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
-import { resolvePath } from "./utils";
+import { resolvePath } from "./filesystem";
 
 export class TestUser implements ITestUser {
     readonly name: string;

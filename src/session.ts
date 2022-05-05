@@ -7,7 +7,7 @@ import { IBunchOfUsers, IMochaSuite, INetworkProviderConfig, IStorage, ITestSess
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
-import { resolvePath } from "./utils";
+import { resolvePath } from "./filesystem";
 
 const TypeToken = "token";
 const TypeAddress = "address";
