@@ -18,7 +18,7 @@ const PathToAbi = path.resolve(__dirname, "adder.abi.json");
 
 export async function createInteractor(session: ITestSession, contractAddress?: IAddress): Promise<AdderInteractor> {
     let registry = await loadAbiRegistry(PathToAbi);
-    let abi = new SmartContractAbi(registry, ["Adder"]);
+    let abi = new SmartContractAbi(registry);
     let contract = new SmartContract({ address: contractAddress, abi: abi });
     let networkProvider = session.networkProvider;
     let networkConfig = session.getNetworkConfig();

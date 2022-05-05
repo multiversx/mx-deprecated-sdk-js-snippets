@@ -13,7 +13,7 @@ const IssuePriceInEgld = new BigNumber("0.05");
 
 export async function createESDTInteractor(session: ITestSession) {
     let registry = await loadAbiRegistry(PathToAbi);
-    let abi = new SmartContractAbi(registry, ["esdt"]);
+    let abi = new SmartContractAbi(registry);
     let contract = new SmartContract({ address: ESDTContractAddress, abi: abi });
     let networkProvider = session.networkProvider;
     let networkConfig = session.getNetworkConfig();
