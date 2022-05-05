@@ -48,3 +48,9 @@ export class ErrMissingUserOrGroup extends Err {
         super(`Missing user or group: ${name}`);
     }
 }
+
+export class ErrNumRetriesExceeded extends Err {
+    public constructor() {
+        super(`Number of retries exceeded.`);
+    }
+} 
