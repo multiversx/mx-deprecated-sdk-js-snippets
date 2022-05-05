@@ -60,11 +60,6 @@ export interface IMochaSuite {
     fullTitle(): string;
 }
 
-export interface IUsersConfig {
-    readonly whalePem: string;
-    readonly othersPem: string;
-}
-
 export interface IBunchOfUsers {
     getUser(name: string): ITestUser;
     getGroup(name: string): ITestUser[];
