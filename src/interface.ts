@@ -16,6 +16,8 @@ export interface INetworkProviderConfig {
 export interface IUsersConfig {
     readonly individuals: IUserConfig[];
     readonly groups: IGroupOfUsersConfig[];
+    readonly generatedIndividuals: IGeneratedUserConfig[];
+    readonly generatedGroups: IGeneratedGroupOfUsersConfig[];
 }
 
 export interface IUserConfig {
@@ -23,10 +25,21 @@ export interface IUserConfig {
     readonly pem: string;
 }
 
+export interface IGeneratedUserConfig {
+    readonly name: string;
+    readonly shard?: number;
+}
+
 export interface IGroupOfUsersConfig {
     readonly name: string;
     readonly pem?: string;
     readonly folder?: string;
+}
+
+export interface IGeneratedGroupOfUsersConfig {
+    readonly name: string;
+    readonly size: number;
+    readonly shard?: number;
 }
 
 export interface ITestSession {
@@ -36,6 +49,7 @@ export interface ITestSession {
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
     readonly log: IEventLog;
+    // TODO: readonly snapshots: ISnapshottingService
 
     syncNetworkConfig(): Promise<void>;
     getNetworkConfig(): INetworkConfig;
@@ -121,7 +135,6 @@ export interface IAccountSnapshotTowardsStorage {
 }
 
 export interface IEventTowardsStorage {
-    timestamp: string;
     kind: string;
     summary: string;
     payload: any;
