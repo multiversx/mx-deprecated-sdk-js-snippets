@@ -29,4 +29,8 @@ describe("transfers snippet", async function () {
         await session.syncUsers([alice]);
         await createAirdropService(session).sendToEachUser(alice, [bob], [payment]);
     });
+
+    it.skip("destroy session", async function () {
+        await session.destroy();
+    });
 });

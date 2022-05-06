@@ -129,5 +129,9 @@ describe("lottery snippet", async function () {
             numRetries: 3,
             delayInMilliseconds: 1000
         });
-    })
+    });
+
+    it.skip("destroy session", async function () {
+        await session.destroy();
+    });
 });
