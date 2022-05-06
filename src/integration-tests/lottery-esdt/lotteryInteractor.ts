@@ -9,19 +9,20 @@
 import path from "path";
 import { CodeMetadata, EnumValue, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, Struct, TokenPayment, TransactionWatcher, VariadicValue } from "@elrondnetwork/erdjs";
 import { loadAbiRegistry, loadCode } from "../../contracts";
-import { ITestSession, ITestUser } from "../../interface";
+import { IEventLog, ITestSession, ITestUser } from "../../interface";
 import { INetworkConfig, INetworkProvider } from "../../interfaceOfNetwork";
 
 const PathToWasm = path.resolve(__dirname, "lottery-esdt.wasm");
 const PathToAbi = path.resolve(__dirname, "lottery-esdt.abi.json");
 
 export async function createInteractor(session: ITestSession, contractAddress?: IAddress): Promise<LotteryInteractor> {
-    let registry = await loadAbiRegistry(PathToAbi);
-    let abi = new SmartContractAbi(registry);
-    let contract = new SmartContract({ address: contractAddress, abi: abi });
-    let networkProvider = session.networkProvider;
-    let networkConfig = session.getNetworkConfig();
-    let interactor = new LotteryInteractor(contract, networkProvider, networkConfig);
+    const registry = await loadAbiRegistry(PathToAbi);
+    const abi = new SmartContractAbi(registry);
+    const contract = new SmartContract({ address: contractAddress, abi: abi });
+    const networkProvider = session.networkProvider;
+    const networkConfig = session.getNetworkConfig();
+    const log = session.log;
+    const interactor = new LotteryInteractor(contract, networkProvider, networkConfig, log);
     return interactor;
 }
 
@@ -31,13 +32,15 @@ export class LotteryInteractor {
     private readonly networkConfig: INetworkConfig;
     private readonly transactionWatcher: TransactionWatcher;
     private readonly resultsParser: ResultsParser;
+    private readonly log: IEventLog;
 
-    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig) {
+    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig, log: IEventLog) {
         this.contract = contract;
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;
         this.transactionWatcher = new TransactionWatcher(networkProvider);
         this.resultsParser = new ResultsParser();
+        this.log = log;
     }
 
     async deploy(deployer: ITestUser): Promise<{ address: IAddress, returnCode: ReturnCode }> {
@@ -64,8 +67,11 @@ export class LotteryInteractor {
         let address = SmartContract.computeAddress(transaction.getSender(), transaction.getNonce());
 
         // Let's broadcast the transaction and await its completion:
-        await this.networkProvider.sendTransaction(transaction);
+        const transactionHash = await this.networkProvider.sendTransaction(transaction);
+        await this.log.onContractDeploymentSent(transactionHash, address);
+
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        await this.log.onTransactionCompleted(transactionHash, transactionOnNetwork);
 
         // In the end, parse the results:
         let { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
@@ -100,8 +106,11 @@ export class LotteryInteractor {
         await owner.signer.sign(transaction);
 
         // Let's broadcast the transaction and await its completion:
-        await this.networkProvider.sendTransaction(transaction);
+        const transactionHash = await this.networkProvider.sendTransaction(transaction);
+        await this.log.onTransactionSent(transactionHash);
+
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        await this.log.onTransactionCompleted(transactionHash, transactionOnNetwork);
 
         // In the end, parse the results:
         let { returnCode, returnMessage } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());
@@ -129,8 +138,11 @@ export class LotteryInteractor {
         await user.signer.sign(transaction);
 
         // Let's broadcast the transaction and await its completion:
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        const transactionHash = await this.networkProvider.sendTransaction(transaction);
+        await this.log.onTransactionSent(transactionHash);
+
+        const transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        await this.log.onTransactionCompleted(transactionHash, transactionOnNetwork);
 
         // In the end, parse the results:
         let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());

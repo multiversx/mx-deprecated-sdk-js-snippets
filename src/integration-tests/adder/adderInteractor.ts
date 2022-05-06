@@ -95,8 +95,11 @@ export class AdderInteractor {
         await caller.signer.sign(transaction);
 
         // Let's broadcast the transaction and await its completion:
-        await this.networkProvider.sendTransaction(transaction);
+        const transactionHash = await this.networkProvider.sendTransaction(transaction);
+        await this.log.onTransactionSent(transactionHash);
+
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        await this.log.onTransactionCompleted(transactionHash, transactionOnNetwork);
 
         // In the end, parse the results:
         let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());

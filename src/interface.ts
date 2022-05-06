@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider, ITransactionOnNetwork } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
 
 export interface ITestSessionConfig {
@@ -167,7 +167,6 @@ export interface ITokenPayment {
 
 export interface IEventLog {
     onContractDeploymentSent(transactionHash: IHash, contractAddress: IAddress): Promise<void>;
-    onTransactionSent(): Promise<void>;
-    onTransactionCompleted(transactionHash: IHash, payload: any): Promise<void>;
-    onContractOutcomeParsed(): Promise<void>;
+    onTransactionSent(transactionHash: IHash): Promise<void>;
+    onTransactionCompleted(transactionHash: IHash, transactionOnNetwork: ITransactionOnNetwork): Promise<void>;
 }
