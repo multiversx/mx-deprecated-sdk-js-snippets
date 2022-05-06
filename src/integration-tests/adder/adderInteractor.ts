@@ -1,44 +1,46 @@
 // adderInteractor.ts
 /**
  * The code in this file is partially usable as production code, as well.
- * Note: in production code, make sure you do not depend on {@link ITestUser}.
+ * Note: in production code, make sure you do not depend on {@link ITestUser}, {@link IEventLog} etc..
  * Note: in production code, make sure you DO NOT reference the package "erdjs-snippets".
  * Note: in dApps, make sure you use a proper wallet provider to sign the transaction.
  * @module
  */
 import path from "path";
 import { BigUIntValue, CodeMetadata, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher } from "@elrondnetwork/erdjs";
-import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
-import { ITestSession, ITestUser } from "../../interface";
+import { IEventLog, ITestSession, ITestUser } from "../../interface";
 import { loadAbiRegistry, loadCode } from "../../contracts";
-import { INetworkProvider } from "../../interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider } from "../../interfaceOfNetwork";
 
 const PathToWasm = path.resolve(__dirname, "adder.wasm");
 const PathToAbi = path.resolve(__dirname, "adder.abi.json");
 
 export async function createInteractor(session: ITestSession, contractAddress?: IAddress): Promise<AdderInteractor> {
-    let registry = await loadAbiRegistry(PathToAbi);
-    let abi = new SmartContractAbi(registry);
-    let contract = new SmartContract({ address: contractAddress, abi: abi });
-    let networkProvider = session.networkProvider;
-    let networkConfig = session.getNetworkConfig();
-    let interactor = new AdderInteractor(contract, networkProvider, networkConfig);
+    const registry = await loadAbiRegistry(PathToAbi);
+    const abi = new SmartContractAbi(registry);
+    const contract = new SmartContract({ address: contractAddress, abi: abi });
+    const networkProvider = session.networkProvider;
+    const networkConfig = session.getNetworkConfig();
+    const log = session.log;
+    const interactor = new AdderInteractor(contract, networkProvider, networkConfig, log);
     return interactor;
 }
 
 export class AdderInteractor {
     private readonly contract: SmartContract;
     private readonly networkProvider: INetworkProvider;
-    private readonly networkConfig: NetworkConfig;
+    private readonly networkConfig: INetworkConfig;
     private readonly transactionWatcher: TransactionWatcher;
     private readonly resultsParser: ResultsParser;
+    private readonly log: IEventLog;
 
-    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
+    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig, log: IEventLog) {
         this.contract = contract;
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;
         this.transactionWatcher = new TransactionWatcher(networkProvider);
         this.resultsParser = new ResultsParser();
+        this.log = log;
     }
 
     async deploy(deployer: ITestUser, initialValue: number): Promise<{ address: IAddress, returnCode: ReturnCode }> {

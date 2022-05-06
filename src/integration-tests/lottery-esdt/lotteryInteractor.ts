@@ -8,10 +8,9 @@
  */
 import path from "path";
 import { CodeMetadata, EnumValue, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, Struct, TokenPayment, TransactionWatcher, VariadicValue } from "@elrondnetwork/erdjs";
-import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { loadAbiRegistry, loadCode } from "../../contracts";
 import { ITestSession, ITestUser } from "../../interface";
-import { INetworkProvider } from "../../interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider } from "../../interfaceOfNetwork";
 
 const PathToWasm = path.resolve(__dirname, "lottery-esdt.wasm");
 const PathToAbi = path.resolve(__dirname, "lottery-esdt.abi.json");
@@ -29,11 +28,11 @@ export async function createInteractor(session: ITestSession, contractAddress?: 
 export class LotteryInteractor {
     private readonly contract: SmartContract;
     private readonly networkProvider: INetworkProvider;
-    private readonly networkConfig: NetworkConfig;
+    private readonly networkConfig: INetworkConfig;
     private readonly transactionWatcher: TransactionWatcher;
     private readonly resultsParser: ResultsParser;
 
-    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
+    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig) {
         this.contract = contract;
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;

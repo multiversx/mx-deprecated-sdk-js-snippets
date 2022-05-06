@@ -4,7 +4,7 @@ import { Address } from "@elrondnetwork/erdjs";
 import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
 import { IBunchOfUsers, IEventLog, IMochaSuite, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
-import { INetworkProvider } from "./interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
 import { resolvePath } from "./filesystem";
@@ -21,7 +21,7 @@ export class TestSession implements ITestSession {
     readonly users: IBunchOfUsers;
     readonly storage: IStorage;
     readonly log: IEventLog;
-    private networkConfig: NetworkConfig = new NetworkConfig();
+    private networkConfig: INetworkConfig = new NetworkConfig();
 
     constructor(args: {
         name: string,
@@ -110,7 +110,7 @@ export class TestSession implements ITestSession {
         this.networkConfig = await this.networkProvider.getNetworkConfig();
     }
 
-    getNetworkConfig(): NetworkConfig {
+    getNetworkConfig(): INetworkConfig {
         return this.networkConfig;
     }
 

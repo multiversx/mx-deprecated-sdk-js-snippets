@@ -1,9 +1,8 @@
 import { Transaction, ESDTNFTTransferPayloadBuilder, ESDTTransferPayloadBuilder, MultiESDTNFTTransferPayloadBuilder } from "@elrondnetwork/erdjs";
-import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
 import { computeGasLimit } from "./gasLimit";
 import { ITestSession, ITestUser, ITokenPayment } from "./interface";
-import { INetworkProvider } from "./interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
 
 export function createAirdropService(session: ITestSession): AirdropService {
     let networkProvider = session.networkProvider;
@@ -14,9 +13,9 @@ export function createAirdropService(session: ITestSession): AirdropService {
 
 export class AirdropService {
     private readonly networkProvider: INetworkProvider;
-    private readonly networkConfig: NetworkConfig;
+    private readonly networkConfig: INetworkConfig;
 
-    constructor(networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
+    constructor(networkProvider: INetworkProvider, networkConfig: INetworkConfig) {
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;
     }

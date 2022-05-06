@@ -2,7 +2,7 @@ import { Account, IAddress } from "@elrondnetwork/erdjs";
 import { parseUserKeys, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs-walletcore";
 import { PathLike, readFileSync, readdirSync } from "fs";
 import { ErrMissingUserOrGroup } from "./errors";
-import { IBunchOfUsers, ITestUser, IUsersConfig } from "./interface";
+import { IAccount, IBunchOfUsers, ITestUser, IUsersConfig } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
 import { resolvePath } from "./filesystem";
@@ -11,7 +11,7 @@ export class TestUser implements ITestUser {
     readonly name: string;
     readonly group: string;
     readonly address: IAddress;
-    readonly account: Account;
+    readonly account: IAccount;
     readonly signer: ISigner;
 
     constructor(name: string, group: string, secretKey: UserSecretKey) {

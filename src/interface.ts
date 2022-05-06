@@ -1,7 +1,5 @@
 import BigNumber from "bignumber.js";
-import { Account, IAccountBalance, IAddress, TransactionHash } from "@elrondnetwork/erdjs";
-import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
-import { INetworkProvider } from "./interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
 
 export interface ITestSessionConfig {
@@ -40,7 +38,7 @@ export interface ITestSession {
     readonly log: IEventLog;
 
     syncNetworkConfig(): Promise<void>;
-    getNetworkConfig(): NetworkConfig;
+    getNetworkConfig(): INetworkConfig;
     syncUsers(users: ITestUser[]): Promise<void>;
 
     saveAddress(name: string, address: IAddress): Promise<void>;
@@ -70,7 +68,7 @@ export interface ITestUser {
     readonly name: string;
     readonly group: string;
     readonly address: IAddress;
-    readonly account: Account;
+    readonly account: IAccount;
     readonly signer: ISigner;
 
     sync(provider: INetworkProvider): Promise<void>;
@@ -101,7 +99,7 @@ export interface IInteractionTowardsStorage {
     action: string;
     userAddress: IAddress;
     contractAddress: IAddress;
-    transactionHash: TransactionHash;
+    transactionHash: IHash;
     timestamp: string;
     round: number;
     epoch: number;
@@ -130,6 +128,19 @@ export interface IEventTowardsStorage {
     interaction?: number;
 }
 
+export interface IAccount {
+    readonly address: IAddress;
+    readonly nonce: INonce;
+    readonly balance: IAccountBalance;
+    update(obj: { nonce: INonce; balance: IAccountBalance; }): void;
+    incrementNonce(): void;
+    getNonceThenIncrement(): INonce;
+}
+
+export interface INonce { valueOf(): number; }
+export interface IAddress { bech32(): string; }
+export interface IHash { toString(): string; }
+export interface IAccountBalance { toString(): string; }
 export interface IToken { identifier: string, decimals: number; }
 
 export interface ITokenPayment {
@@ -142,6 +153,7 @@ export interface ITokenPayment {
 }
 
 export interface IEventLog {
+    onContractDeploymentSent(contractAddress: IAddress): void;
     onTransactionSent(): void;
     onTransactionCompleted(): void;
     onContractOutcomeParsed(): void;
