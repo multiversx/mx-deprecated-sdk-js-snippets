@@ -1,6 +1,5 @@
-import { Transaction, ESDTNFTTransferPayloadBuilder, ESDTTransferPayloadBuilder, MultiESDTNFTTransferPayloadBuilder } from "@elrondnetwork/erdjs";
+import { Transaction, TransactionFactory, GasEstimator, DefaultGasConfiguration } from "@elrondnetwork/erdjs";
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
-import { computeGasLimit } from "./gasLimit";
 import { ITestSession, ITestUser, ITokenPayment } from "./interface";
 import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
 
@@ -14,10 +13,12 @@ export function createAirdropService(session: ITestSession): AirdropService {
 export class AirdropService {
     private readonly networkProvider: INetworkProvider;
     private readonly networkConfig: INetworkConfig;
+    private readonly transactionsFactory: TransactionFactory;
 
     constructor(networkProvider: INetworkProvider, networkConfig: INetworkConfig) {
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;
+        this.transactionsFactory = new TransactionFactory(new GasEstimator(DefaultGasConfiguration))
     }
 
     async sendToEachUser(
@@ -63,20 +64,16 @@ export class AirdropService {
         let transactions: Transaction[] = [];
 
         for (const receiver of receivers) {
-            let data = new MultiESDTNFTTransferPayloadBuilder()
-                .setPayments(payments)
-                .setDestination(receiver.address)
-                .build();
 
-            let gasLimit = computeGasLimit(this.networkConfig, data.length(), 1000000 * payments.length);
-
-            transactions.push(new Transaction({
+            const transaction = this.transactionsFactory.createMultiESDTNFTTransfer({
+                payments: payments,
                 nonce: sender.account.getNonceThenIncrement(),
-                receiver: sender.address,
-                data: data,
-                gasLimit: gasLimit,
+                destination: receiver.address,
+                sender: sender.address,
                 chainID: this.networkConfig.ChainID
-            }));
+            });
+
+            transactions.push(transaction);
         }
 
         return transactions;
@@ -86,13 +83,15 @@ export class AirdropService {
         let transactions: Transaction[] = [];
 
         for (const receiver of receivers) {
-            transactions.push(new Transaction({
+            const transaction = this.transactionsFactory.createEGLDTransfer({
                 nonce: sender.account.getNonceThenIncrement(),
+                sender: sender.address,
                 receiver: receiver.address,
                 value: payment.toString(),
-                gasLimit: computeGasLimit(this.networkConfig),
                 chainID: this.networkConfig.ChainID
-            }));
+            });
+
+            transactions.push(transaction);
         }
 
         return transactions;
@@ -102,19 +101,15 @@ export class AirdropService {
         let transactions: Transaction[] = [];
 
         for (const receiver of receivers) {
-            let data = new ESDTTransferPayloadBuilder()
-                .setPayment(payment)
-                .build();
-
-            let gasLimit = computeGasLimit(this.networkConfig, data.length(), 300000);
-
-            transactions.push(new Transaction({
+            const transaction = this.transactionsFactory.createESDTTransfer({
+                payment: payment,
                 nonce: sender.account.getNonceThenIncrement(),
+                sender: sender.address,
                 receiver: receiver.address,
-                data: data,
-                gasLimit: gasLimit,
                 chainID: this.networkConfig.ChainID
-            }));
+            });
+
+            transactions.push(transaction);
         }
 
         return transactions;
@@ -124,20 +119,15 @@ export class AirdropService {
         let transactions: Transaction[] = [];
 
         for (const receiver of receivers) {
-            let data = new ESDTNFTTransferPayloadBuilder()
-                .setPayment(payment)
-                .setDestination(receiver.address)
-                .build();
-
-            let gasLimit = computeGasLimit(this.networkConfig, data.length(), 1000000);
-
-            transactions.push(new Transaction({
+            const transaction = this.transactionsFactory.createESDTNFTTransfer({
+                payment: payment,
                 nonce: sender.account.getNonceThenIncrement(),
-                receiver: sender.address,
-                data: data,
-                gasLimit: gasLimit,
+                sender: sender.address,
+                destination: receiver.address,
                 chainID: this.networkConfig.ChainID
-            }));
+            });
+
+            transactions.push(transaction);
         }
 
         return transactions;
