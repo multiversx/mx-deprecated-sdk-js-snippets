@@ -76,3 +76,26 @@ VALUES (
     @takenBeforeInteraction, @takenAfterInteraction
 );`;
 }
+
+export class Log {
+    static CreateTable = `
+CREATE TABLE "log" (
+    "id" INTEGER PRIMARY KEY ASC, 
+    "scope" TEXT,
+    "timestamp" TEXT,
+    "event" TEXT,
+    "summary" TEXT,
+    "payload" TEXT,
+    "interaction" NUMBER NULL,
+
+    FOREIGN KEY("interaction") REFERENCES "interaction"("id")
+);`;
+
+    static Insert = `
+INSERT INTO "log" (
+    "scope", "timestamp", "event", "summary", "payload"
+)
+VALUES (
+    @scope, @timestamp, @event, @summary, @payload
+);`;
+}

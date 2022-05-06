@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as sql from "./sql";
 import DatabaseConstructor, { Database } from "better-sqlite3";
-import { IAccountSnapshotWithinStorage, IInteractionWithinStorage, IStorage } from "../interface";
+import { IAccountSnapshotTowardsStorage, IEventTowardsStorage, IInteractionTowardsStorage, IStorage } from "../interface";
 
 export class Storage implements IStorage {
     private readonly file: string;
@@ -20,6 +20,7 @@ export class Storage implements IStorage {
             db.prepare(sql.Breadcrumb.CreateTable).run();
             db.prepare(sql.Interaction.CreateTable).run();
             db.prepare(sql.AccountSnapshot.CreateTable).run();
+            db.prepare(sql.Log.CreateTable).run();
         }
 
         return new Storage(file, db);
@@ -68,7 +69,7 @@ export class Storage implements IStorage {
         return payloads;
     }
 
-    async storeInteraction(scope: string, interaction: IInteractionWithinStorage): Promise<number> {
+    async storeInteraction(scope: string, interaction: IInteractionTowardsStorage): Promise<number> {
         const record = {
             scope: scope,
             action: interaction.action,
@@ -97,7 +98,7 @@ export class Storage implements IStorage {
         update.run({ id: id, output: outputJson });
     }
 
-    async storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotWithinStorage): Promise<void> {
+    async storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotTowardsStorage): Promise<void> {
         const record: any = {
             scope: scope,
             timestamp: snapshot.timestamp,
@@ -110,6 +111,20 @@ export class Storage implements IStorage {
         }
 
         const insert = this.db.prepare(sql.AccountSnapshot.Insert);
+        insert.run(record);
+    }
+
+    async logEvent(scope: string, event: IEventTowardsStorage): Promise<void> {
+        const record: any = {
+            scope: scope,
+            timestamp: event.timestamp,
+            event: event.kind,
+            summary: event.summary,
+            payload: this.serializeItem(event.payload),
+            interaction: event.interaction
+        }
+
+        const insert = this.db.prepare(sql.Log.Insert);
         insert.run(record);
     }
 

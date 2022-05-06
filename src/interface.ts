@@ -37,6 +37,7 @@ export interface ITestSession {
     readonly networkProvider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
+    readonly log: IEventLog;
 
     syncNetworkConfig(): Promise<void>;
     getNetworkConfig(): NetworkConfig;
@@ -81,7 +82,7 @@ export interface ITestUser {
  * that is, the interface isn't segregated into more, smaller interfaces yet (for simplicity).
  * It will be split once it grows a little bit more.
  * 
- * [Design] {@link IStorage} depends on `I{name of record}WithinStorage` interfaces.
+ * [Design] {@link IStorage} depends on `I{name of record}TowardsStorage`, `I{name of record}FromStorage` interfaces.
  * That is, it does not depend on complex (and somehow unstable) types of erdjs, such as: Interaction, TransactionOnNetwork etc.
  * Though, it depends on simple (and quite stable) types of erdjs, such as: Address, TransactionHash etc.
  */
@@ -89,13 +90,14 @@ export interface IStorage {
     storeBreadcrumb(scope: string, type: string, name: string, payload: any): Promise<void>;
     loadBreadcrumb(scope: string, name: string): Promise<any>;
     loadBreadcrumbsByType(scope: string, type: string): Promise<any[]>;
-    storeInteraction(scope: string, interaction: IInteractionWithinStorage): Promise<number>;
+    storeInteraction(scope: string, interaction: IInteractionTowardsStorage): Promise<number>;
     updateInteractionSetOutput(id: number, output: any): Promise<void>;
-    storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotWithinStorage): Promise<void>;
+    storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotTowardsStorage): Promise<void>;
+    logEvent(scope: string, event: IEventTowardsStorage): Promise<void>;
     destroy(): Promise<void>;
 }
 
-export interface IInteractionWithinStorage {
+export interface IInteractionTowardsStorage {
     action: string;
     userAddress: IAddress;
     contractAddress: IAddress;
@@ -110,7 +112,7 @@ export interface IInteractionWithinStorage {
     output: any;
 }
 
-export interface IAccountSnapshotWithinStorage {
+export interface IAccountSnapshotTowardsStorage {
     timestamp: string;
     address: IAddress;
     nonce: number;
@@ -118,6 +120,14 @@ export interface IAccountSnapshotWithinStorage {
     tokens: any;
     takenBeforeInteraction?: number;
     takenAfterInteraction?: number;
+}
+
+export interface IEventTowardsStorage {
+    timestamp: string;
+    kind: string;
+    summary: string;
+    payload: any;
+    interaction?: number;
 }
 
 export interface IToken { identifier: string, decimals: number; }
@@ -129,4 +139,10 @@ export interface ITokenPayment {
     isEgld(): boolean;
     isFungible(): boolean;
     valueOf(): BigNumber.Value;
+}
+
+export interface IEventLog {
+    onTransactionSent(): void;
+    onTransactionCompleted(): void;
+    onContractOutcomeParsed(): void;
 }

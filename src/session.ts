@@ -3,11 +3,12 @@ import { existsSync, PathLike, readFileSync } from "fs";
 import { Address } from "@elrondnetwork/erdjs";
 import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, IMochaSuite, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
+import { IBunchOfUsers, IEventLog, IMochaSuite, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
 import { resolvePath } from "./filesystem";
+import { EventLog } from "./eventLog";
 
 const TypeToken = "token";
 const TypeAddress = "address";
@@ -19,6 +20,7 @@ export class TestSession implements ITestSession {
     readonly networkProvider: INetworkProvider;
     readonly users: IBunchOfUsers;
     readonly storage: IStorage;
+    readonly log: IEventLog;
     private networkConfig: NetworkConfig = new NetworkConfig();
 
     constructor(args: {
@@ -27,13 +29,14 @@ export class TestSession implements ITestSession {
         provider: INetworkProvider,
         users: IBunchOfUsers,
         storage: IStorage,
-        config: ITestSessionConfig
+        log: IEventLog
     }) {
         this.name = args.name;
         this.scope = args.scope;
         this.networkProvider = args.provider;
         this.users = args.users;
         this.storage = args.storage;
+        this.log = args.log;
     }
 
     static async loadOnSuite(sessionName: string, mochaSuite: IMochaSuite): Promise<ITestSession> {
@@ -56,6 +59,7 @@ export class TestSession implements ITestSession {
         let users = new BunchOfUsers(config.users);
         let storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
         let storage = await Storage.create(storageName.toString());
+        const log = new EventLog(storage);
 
         let session = new TestSession({
             name: sessionName,
@@ -63,7 +67,7 @@ export class TestSession implements ITestSession {
             provider: provider,
             users: users,
             storage: storage,
-            config: config
+            log: log
         });
 
         return session;
