@@ -82,7 +82,7 @@ export class Log {
 CREATE TABLE "log" (
     "id" INTEGER PRIMARY KEY ASC, 
     "scope" TEXT,
-    "timestamp" TEXT,
+    "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "event" TEXT,
     "summary" TEXT,
     "payload" TEXT,
@@ -93,9 +93,9 @@ CREATE TABLE "log" (
 
     static Insert = `
 INSERT INTO "log" (
-    "scope", "timestamp", "event", "summary", "payload"
+    "scope", "event", "summary", "payload"
 )
 VALUES (
-    @scope, @timestamp, @event, @summary, @payload
+    @scope, @event, @summary, @payload
 );`;
 }

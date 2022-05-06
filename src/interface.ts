@@ -153,8 +153,8 @@ export interface ITokenPayment {
 }
 
 export interface IEventLog {
-    onContractDeploymentSent(contractAddress: IAddress): void;
-    onTransactionSent(): void;
-    onTransactionCompleted(): void;
-    onContractOutcomeParsed(): void;
+    onContractDeploymentSent(transactionHash: IHash, contractAddress: IAddress): Promise<void>;
+    onTransactionSent(): Promise<void>;
+    onTransactionCompleted(transactionHash: IHash, payload: any): Promise<void>;
+    onContractOutcomeParsed(): Promise<void>;
 }

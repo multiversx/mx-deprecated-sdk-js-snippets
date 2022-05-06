@@ -117,7 +117,6 @@ export class Storage implements IStorage {
     async logEvent(scope: string, event: IEventTowardsStorage): Promise<void> {
         const record: any = {
             scope: scope,
-            timestamp: event.timestamp,
             event: event.kind,
             summary: event.summary,
             payload: this.serializeItem(event.payload),

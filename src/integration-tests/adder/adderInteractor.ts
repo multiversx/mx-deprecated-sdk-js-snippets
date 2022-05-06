@@ -64,14 +64,17 @@ export class AdderInteractor {
         await deployer.signer.sign(transaction);
 
         // The contract address is deterministically computable:
-        let address = SmartContract.computeAddress(transaction.getSender(), transaction.getNonce());
+        const address = SmartContract.computeAddress(transaction.getSender(), transaction.getNonce());
 
         // Let's broadcast the transaction and await its completion:
-        await this.networkProvider.sendTransaction(transaction);
+        const transactionHash = await this.networkProvider.sendTransaction(transaction);
+        await this.log.onContractDeploymentSent(transactionHash, address);
+        
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        await this.log.onTransactionCompleted(transactionHash, transactionOnNetwork);
 
         // In the end, parse the results:
-        let { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
+        const { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
 
         console.log(`AdderInteractor.deploy(): contract = ${address}`);
         return { address, returnCode };
