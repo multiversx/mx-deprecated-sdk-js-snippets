@@ -53,7 +53,10 @@ describe("lottery snippet", async function () {
         let lotteryToken = await session.loadToken("lotteryToken");
         let payment = TokenPayment.fungibleFromAmount(lotteryToken.identifier, "10", lotteryToken.decimals);
         await session.syncUsers([owner]);
+        
+        await session.snapshots.takeSnapshotsOfUsers(friends);
         await createAirdropService(session).sendToEachUser(owner, friends, [payment]);
+        await session.snapshots.takeSnapshotsOfUsers(friends);
     });
 
     it("setup", async function () {

@@ -54,7 +54,7 @@ export class AccountSnapshot {
 CREATE TABLE "account_snapshot" (
     "id" INTEGER PRIMARY KEY ASC, 
     "scope" TEXT,
-    "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,,
+    "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "address" TEXT,
     "nonce" NUMBER,
     "balance" TEXT,

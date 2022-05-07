@@ -49,7 +49,7 @@ export interface ITestSession {
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
     readonly log: IEventLog;
-    // TODO: readonly snapshots: ISnapshottingService
+    readonly snapshots: ISnapshottingService
 
     syncNetworkConfig(): Promise<void>;
     getNetworkConfig(): INetworkConfig;
@@ -169,4 +169,10 @@ export interface IEventLog {
     onContractDeploymentSent(transactionHash: IHash, contractAddress: IAddress): Promise<void>;
     onTransactionSent(transactionHash: IHash): Promise<void>;
     onTransactionCompleted(transactionHash: IHash, transactionOnNetwork: ITransactionOnNetwork): Promise<void>;
+}
+
+export interface ISnapshottingService {
+    takeSnapshotsOfUsers(users: ITestUser[]): Promise<void>;
+    takeSnapshotsOfAccounts(addresses: IAddress[]): Promise<void>;
+    takeSnapshotOfAccount(address: IAddress): Promise<void>;
 }

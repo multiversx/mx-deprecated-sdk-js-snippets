@@ -1,7 +1,7 @@
-import { IAddress, IStorage } from "./interface";
+import { IAddress, ISnapshottingService, IStorage, ITestUser } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 
-export class SnapshottingService {
+export class SnapshottingService implements ISnapshottingService {
     private readonly scope: string;
     private readonly networkProvider: INetworkProvider;
     private readonly storage: IStorage;
@@ -12,7 +12,19 @@ export class SnapshottingService {
         this.storage = storage;
     }
 
-    async takeSnapshotsOfAccount(address: IAddress): Promise<void> {
+    async takeSnapshotsOfUsers(users: ITestUser[]): Promise<void> {
+        for (const user of users) {
+            await this.takeSnapshotOfAccount(user.address);
+        }
+    }
+
+    async takeSnapshotsOfAccounts(addresses: IAddress[]): Promise<void> {
+        for (const address of addresses) {
+            await this.takeSnapshotOfAccount(address);
+        }
+    }
+
+    async takeSnapshotOfAccount(address: IAddress): Promise<void> {
         const account = await this.networkProvider.getAccount(address);
         const fungibleTokens = await this.networkProvider.getFungibleTokensOfAccount(address);
         const nonFungibleTokens = await this.networkProvider.getNonFungibleTokensOfAccount(address);
