@@ -69,11 +69,10 @@ describe("test storage", async function () {
 
         // Without reference to "before" / "after" interaction
         await storage.storeAccountSnapshot("foo", {
-            timestamp: "friday",
             address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
             nonce: 42,
             balance: TokenPayment.egldFromAmount(1),
-            tokens: { RIDE: 1000, MEX: 1000 }
+            fungibleTokens: [{ identifier: "RIDE", balance: 1000 }, { identifier: "MEX", balance: 1000 }],
         });
 
         // With references to "before" / "after" interaction
@@ -93,20 +92,18 @@ describe("test storage", async function () {
         });
 
         let snapshotBefore = {
-            timestamp: "friday",
             address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
             nonce: 42,
             balance: TokenPayment.egldFromAmount(1),
-            tokens: { RIDE: 1000, MEX: 1000 },
+            fungibleTokens: [{ identifier: "RIDE", balance: 1000 }, { identifier: "MEX", balance: 1000 }],
             takenBeforeInteraction: interactionReference
         };
 
         let snapshotAfter = {
-            timestamp: "friday",
             address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
             nonce: 43,
             balance: TokenPayment.egldFromAmount(2),
-            tokens: { RIDE: 500, MEX: 500 },
+            fungibleTokens: [{ identifier: "RIDE", balance: 500 }, { identifier: "MEX", balance: 500 }],
             takenAfterInteraction: interactionReference
         };
 

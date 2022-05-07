@@ -101,11 +101,11 @@ export class Storage implements IStorage {
     async storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotTowardsStorage): Promise<void> {
         const record: any = {
             scope: scope,
-            timestamp: snapshot.timestamp,
             address: snapshot.address.bech32(),
             nonce: snapshot.nonce.valueOf(),
             balance: snapshot.balance.toString(),
-            tokens: this.serializeItem(snapshot.tokens),
+            fungibleTokens: this.serializeItem(snapshot.fungibleTokens || []),
+            nonFungibleTokens: this.serializeItem(snapshot.nonFungibleTokens || []),
             takenBeforeInteraction: snapshot.takenBeforeInteraction || null,
             takenAfterInteraction: snapshot.takenAfterInteraction || null
         }

@@ -54,11 +54,12 @@ export class AccountSnapshot {
 CREATE TABLE "account_snapshot" (
     "id" INTEGER PRIMARY KEY ASC, 
     "scope" TEXT,
-    "timestamp" TEXT,
+    "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,,
     "address" TEXT,
     "nonce" NUMBER,
     "balance" TEXT,
-    "tokens" TEXT,
+    "fungible_tokens" TEXT,
+    "non_fungible_tokens" TEXT,
     "taken_before_interaction" NUMBER NULL,
     "taken_after_interaction" NUMBER NULL,
 
@@ -68,11 +69,11 @@ CREATE TABLE "account_snapshot" (
 
     static Insert = `
 INSERT INTO "account_snapshot" (
-    "scope", "timestamp", "address", "nonce", "balance", "tokens", 
+    "scope", "address", "nonce", "balance", "fungible_tokens", "non_fungible_tokens" 
     "taken_before_interaction", "taken_after_interaction"
 )
 VALUES (
-    @scope, @timestamp, @address, @nonce, @balance, @tokens, 
+    @scope, @address, @nonce, @balance, @fungibleTokens, @nonFungibleTokens, 
     @takenBeforeInteraction, @takenAfterInteraction
 );`;
 }

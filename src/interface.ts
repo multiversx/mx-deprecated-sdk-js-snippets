@@ -125,11 +125,11 @@ export interface IInteractionTowardsStorage {
 }
 
 export interface IAccountSnapshotTowardsStorage {
-    timestamp: string;
     address: IAddress;
     nonce: number;
     balance: IAccountBalance;
-    tokens: any;
+    fungibleTokens?: any[];
+    nonFungibleTokens?: any[];
     takenBeforeInteraction?: number;
     takenAfterInteraction?: number;
 }
