@@ -16,18 +16,11 @@ export interface INetworkProviderConfig {
 export interface IUsersConfig {
     readonly individuals: IUserConfig[];
     readonly groups: IGroupOfUsersConfig[];
-    readonly generatedIndividuals: IGeneratedUserConfig[];
-    readonly generatedGroups: IGeneratedGroupOfUsersConfig[];
 }
 
 export interface IUserConfig {
     readonly name: string;
     readonly pem: string;
-}
-
-export interface IGeneratedUserConfig {
-    readonly name: string;
-    readonly shard?: number;
 }
 
 export interface IGroupOfUsersConfig {
@@ -36,10 +29,23 @@ export interface IGroupOfUsersConfig {
     readonly folder?: string;
 }
 
+export interface ISecretKeysGeneratorConfig {
+    readonly mnemonic: string;
+    readonly individuals: IGeneratedUserConfig[];
+    readonly groups: IGeneratedGroupOfUsersConfig[];
+}
+
+export interface IGeneratedUserConfig {
+    readonly name: string;
+    readonly shard?: number;
+    readonly pem: string;
+}
+
 export interface IGeneratedGroupOfUsersConfig {
     readonly name: string;
     readonly size: number;
     readonly shard?: number;
+    readonly pem: string;
 }
 
 export interface ITestSession {

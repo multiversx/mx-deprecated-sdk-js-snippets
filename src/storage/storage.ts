@@ -20,7 +20,6 @@ export class Storage implements IStorage {
             db.prepare(sql.Breadcrumb.CreateTable).run();
             db.prepare(sql.Interaction.CreateTable).run();
             db.prepare(sql.AccountSnapshot.CreateTable).run();
-            db.prepare(sql.GeneratedUser.CreateTable).run();
             db.prepare(sql.Log.CreateTable).run();
         }
 
