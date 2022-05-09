@@ -12,7 +12,8 @@
     "pretest": "npm run compile",
     "prepare": "npm run compile",
     "lint": "tslint --project .",
-    "copy-files": "cp src/system/*.json out/system/"
+    "copy-files": "cp src/system/*.json out/system/",
+    "mocha-grep": "mocha --grep ${PATTERN}"
   },
   "author": "ElrondNetwork",
   "license": "GPL-3.0-or-later",
