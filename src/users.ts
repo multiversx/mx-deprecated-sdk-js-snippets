@@ -34,13 +34,21 @@ export class BunchOfUsers implements IBunchOfUsers {
     readonly individuals: Map<string, ITestUser> = new Map<string, ITestUser>();
     readonly groups: Map<string, ITestUser[]> = new Map<string, ITestUser[]>();
 
-    constructor(config: IUsersConfig) {
+    constructor(individuals: Map<string, ITestUser>, groups: Map<string, ITestUser[]> ) {
+        this.individuals = individuals;
+        this.groups = groups;
+    }
+
+    static async create(config: IUsersConfig): Promise<BunchOfUsers> {
+        const individuals = new Map<string, ITestUser>();
+        const groups = new Map<string, ITestUser[]>();
+
         // Load individuals
         for (const individual of config.individuals) {
             let key = loadKeyFromPemFile(individual.pem);
             let user = new TestUser(individual.name, "", key);
 
-            this.individuals.set(individual.name, user);
+            individuals.set(individual.name, user);
         }
 
         // Load groups
@@ -50,7 +58,7 @@ export class BunchOfUsers implements IBunchOfUsers {
                 let keys = loadMoreKeysFromPemFile(group.pem);
                 let users = keys.map(key => new TestUser("", group.name, key));
 
-                this.groups.set(group.name, users);
+                groups.set(group.name, users);
                 continue;
             }
 
@@ -70,10 +78,12 @@ export class BunchOfUsers implements IBunchOfUsers {
                     groupOfUsers.push(...users);
                 }
 
-                this.groups.set(group.name, groupOfUsers);
+                groups.set(group.name, groupOfUsers);
                 continue;
             }
         }
+
+        return new BunchOfUsers(individuals, groups);
     }
 
     getUser(name: string): ITestUser {

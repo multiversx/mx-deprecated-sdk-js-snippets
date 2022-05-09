@@ -56,7 +56,7 @@ export class TestSession implements ITestSession {
         let config = <ITestSessionConfig>JSON.parse(configJson);
 
         let provider = this.createNetworkProvider(sessionName, config.networkProvider);
-        let users = new BunchOfUsers(config.users);
+        let users = await BunchOfUsers.create(config.users);
         let storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
         let storage = await Storage.create(storageName.toString());
         const log = new EventLog(scope, storage);

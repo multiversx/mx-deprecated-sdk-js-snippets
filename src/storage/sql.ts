@@ -77,6 +77,26 @@ VALUES (
 );`;
 }
 
+export class GeneratedUser {
+    static CreateTable = `
+CREATE TABLE "generated_user" (
+    "id" INTEGER PRIMARY KEY ASC, 
+    "name" TEXT,
+    "group" TEXT,
+    "address" TEXT,
+    "secret_key" TEXT
+);`;
+
+    static Insert = `
+INSERT INTO "generated_user" (
+    "name", "group", "address", "secret_key"
+)
+VALUES (
+    @name, @group, @address, @secretKey
+);`;
+}
+
+
 export class Log {
     static CreateTable = `
 CREATE TABLE "log" (
