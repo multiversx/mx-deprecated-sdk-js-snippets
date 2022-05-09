@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider, ITransactionOnNetwork } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
 
 export interface ITestSessionConfig {
@@ -49,7 +49,7 @@ export interface ITestSession {
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
     readonly log: IEventLog;
-    // TODO: readonly snapshots: ISnapshottingService
+    readonly snapshots: ISnapshottingService
 
     syncNetworkConfig(): Promise<void>;
     getNetworkConfig(): INetworkConfig;
@@ -125,11 +125,11 @@ export interface IInteractionTowardsStorage {
 }
 
 export interface IAccountSnapshotTowardsStorage {
-    timestamp: string;
     address: IAddress;
     nonce: number;
     balance: IAccountBalance;
-    tokens: any;
+    fungibleTokens?: any[];
+    nonFungibleTokens?: any[];
     takenBeforeInteraction?: number;
     takenAfterInteraction?: number;
 }
@@ -167,7 +167,12 @@ export interface ITokenPayment {
 
 export interface IEventLog {
     onContractDeploymentSent(transactionHash: IHash, contractAddress: IAddress): Promise<void>;
-    onTransactionSent(): Promise<void>;
-    onTransactionCompleted(transactionHash: IHash, payload: any): Promise<void>;
-    onContractOutcomeParsed(): Promise<void>;
+    onTransactionSent(transactionHash: IHash): Promise<void>;
+    onTransactionCompleted(transactionHash: IHash, transactionOnNetwork: ITransactionOnNetwork): Promise<void>;
+}
+
+export interface ISnapshottingService {
+    takeSnapshotsOfUsers(users: ITestUser[]): Promise<void>;
+    takeSnapshotsOfAccounts(addresses: IAddress[]): Promise<void>;
+    takeSnapshotOfAccount(address: IAddress): Promise<void>;
 }

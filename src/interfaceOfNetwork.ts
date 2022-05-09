@@ -1,8 +1,11 @@
+import BigNumber from "bignumber.js";
 import { IAccountBalance, IAddress } from "./interface";
 
 export interface INetworkProvider {
     getNetworkConfig(): Promise<INetworkConfig>;
     getAccount(address: IAddress): Promise<IAccountOnNetwork>;
+    getFungibleTokensOfAccount(address: IAddress): Promise<IFungibleTokenOfAccountOnNetwork[]>;
+    getNonFungibleTokensOfAccount(address: IAddress): Promise<INonFungibleTokenOfAccountOnNetwork[]>;
     getTransaction(txHash: string): Promise<ITransactionOnNetwork>;
     sendTransaction(tx: ITransaction): Promise<string>;
     queryContract(query: IContractQuery): Promise<IContractQueryResponse>;
@@ -37,7 +40,7 @@ export interface IAccountOnNetwork {
 
 export interface ITransactionOnNetwork {
     isCompleted: boolean;
-    
+
     hash: string;
     type: string;
     value: string;
@@ -106,4 +109,21 @@ export interface ITransactionEvent {
 export interface ITransactionEventTopic {
     toString(): string;
     hex(): string;
+}
+
+export interface IFungibleTokenOfAccountOnNetwork {
+    identifier: string;
+    balance: BigNumber.Value;
+}
+
+export interface INonFungibleTokenOfAccountOnNetwork {
+    identifier: string;
+    timestamp: number;
+    attributes: Buffer;
+    nonce: number;
+    type: string;
+    name: string;
+    creator: IAddress;
+    supply: BigNumber.Value;
+    decimals: number;
 }
