@@ -70,8 +70,4 @@ describe("adder snippet", async function () {
         let result = await interactor.getSum();
         assert.isTrue(result > 0);
     });
-
-    it.skip("destroy session", async function () {
-        await session.destroy();
-    });
 });
