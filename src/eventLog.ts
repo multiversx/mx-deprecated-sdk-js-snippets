@@ -1,5 +1,6 @@
 import { IAddress, IEventLog, IHash, IStorage } from "./interface";
 import { ITransactionOnNetwork } from "./interfaceOfNetwork";
+import { prettifyObject } from "./pretty";
 
 enum EventKind {
     TransactionSent = "TransactionSent",
@@ -42,10 +43,12 @@ export class EventLog implements IEventLog {
     }
 
     async onTransactionCompleted(transactionHash: IHash, transactionOnNetwork: ITransactionOnNetwork): Promise<void> {
+        const prettyTransaction = prettifyObject(transactionOnNetwork);
+
         await this.storage.logEvent(this.scope, {
             kind: EventKind.TransactionCompleted,
             summary: `transaction completed, transaction = ${transactionHash.toString()}`,
-            payload: transactionOnNetwork
+            payload: prettyTransaction
         });
     }
 }
