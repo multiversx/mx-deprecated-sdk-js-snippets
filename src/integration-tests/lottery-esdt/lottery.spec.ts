@@ -4,7 +4,7 @@ import { createAirdropService } from "../../airdrop";
 import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
-import { createESDTInteractor } from "../../system/esdtInteractor";
+import { createESDTInteractor } from "../../system/esdt";
 import { createInteractor } from "./lotteryInteractor";
 
 describe("lottery snippet", async function () {

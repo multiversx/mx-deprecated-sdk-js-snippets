@@ -131,3 +131,5 @@ export interface IAccountSnapshotWithinStorage {
 }
 
 export interface IToken { identifier: string, decimals: number; }
+
+export interface IBLS { key: string, signature: string }

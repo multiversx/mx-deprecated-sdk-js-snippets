@@ -25,7 +25,7 @@
                 },
                 {
                     "name": "properties",
-                    "type": "variadic<multi<bytes, bool>>",
+                    "type": "variadic<multi<bytes, bytes>>",
                     "multi_arg": true
                 }
             ],
@@ -52,7 +52,7 @@
                 },
                 {
                     "name": "properties",
-                    "type": "variadic<multi<bytes, bool>>",
+                    "type": "variadic<multi<bytes, bytes>>",
                     "multi_arg": true
                 }
             ],
@@ -79,7 +79,7 @@
                 },
                 {
                     "name": "properties",
-                    "type": "variadic<multi<bytes, bool>>",
+                    "type": "variadic<multi<bytes, bytes>>",
                     "multi_arg": true
                 }
             ],
@@ -91,7 +91,7 @@
             ]
         },
         {
-            "name": "ESDTBurn",
+            "name": "ESDTLocalBurn",
             "inputs": [
                 {
                     "name": "tokenName",
@@ -105,7 +105,7 @@
             "outputs": []
         },
         {
-            "name": "mint",
+            "name": "ESDTLocalMint",
             "inputs": [
                 {
                     "name": "tokenName",
@@ -264,7 +264,7 @@
                 },
                 {
                     "name": "totalMinted",
-                    "type": "bytes"
+                    "type": "BigUint"
                 },
                 {
                     "name": "totalBurned",

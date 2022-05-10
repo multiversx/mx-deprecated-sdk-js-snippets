@@ -4,5 +4,5 @@ export * from "./erdjsPatching/accountWatcher";
 export * from "./interface";
 export * from "./interfaceOfNetwork";
 export * from "./session";
-export * from "./system/esdtInteractor";
+export * from "./system/esdt";
 export * from "./users";

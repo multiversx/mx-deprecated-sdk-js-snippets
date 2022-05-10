@@ -1,0 +1,125 @@
+{
+    "name": "staking",
+    "endpoints": [
+        {
+            "name": "stake",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "numberOfNodes",
+                    "type": "bytes"
+                },
+                {
+                    "name": "bls",
+                    "type": "variadic<multi<bytes, bytes>>",
+                    "multi_arg": true
+                },
+                {
+                    "name": "rewardAddress",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "register",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "numberOfNodes",
+                    "type": "bytes"
+                },
+                {
+                    "name": "bls",
+                    "type": "variadic<multi<bytes, bytes>>",
+                    "multi_arg": true
+                },
+                {
+                    "name": "rewardAddress",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unStake",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "bls",
+                    "type": "variadic<multi<bytes, bytes>>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unBond",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "bls",
+                    "type": "variadic<multi<bytes, bytes>>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "get",
+            "inputs": [
+                {
+                    "name": "key",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "name":"storageData",
+                    "type":"bytes"
+                }
+            ]
+        },
+        {
+            "name": "isStaked",
+            "inputs": [
+                {
+                    "name": "bls",
+                    "type": "variadic<multi<bytes>>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "jail",
+            "inputs": [
+                {
+                    "name": "bls",
+                    "type": "variadic<multi<bytes>>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unJail",
+            "inputs": [
+                {
+                    "name": "bls",
+                    "type": "variadic<multi<bytes>>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        }
+    ]
+}
