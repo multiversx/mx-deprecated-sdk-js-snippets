@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as sql from "./sql";
 import DatabaseConstructor, { Database } from "better-sqlite3";
 import { IAccountSnapshotTowardsStorage, IBreadcrumbFromStorage, IBreadcrumbTowardsStorage, IEventTowardsStorage, IInteractionTowardsStorage, IStorage } from "../interface";
+import { ErrBreadcrumbNotFound } from "../errors";
 
 export class Storage implements IStorage {
     private readonly file: string;
@@ -57,6 +58,11 @@ export class Storage implements IStorage {
     async loadBreadcrumb(name: string): Promise<IBreadcrumbFromStorage> {
         const find = this.db.prepare(sql.Breadcrumb.GetByName);
         const row = find.get({ name: name });
+
+        if (!row) {
+            throw new ErrBreadcrumbNotFound(name);
+        }
+
         const result = {
             name: row.name,
             type: row.type,

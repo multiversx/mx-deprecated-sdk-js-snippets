@@ -68,7 +68,7 @@ describe("lottery snippet", async function () {
 
         assert.isTrue(returnCode.isSuccess());
 
-        await session.saveAddress("contractAddress", address);
+        await session.saveAddress("lottery", address);
     });
 
     it("start lottery", async function () {
@@ -76,7 +76,7 @@ describe("lottery snippet", async function () {
 
         await session.syncUsers([owner]);
 
-        let contractAddress = await session.loadAddress("contractAddress");
+        let contractAddress = await session.loadAddress("lottery");
         let lotteryToken = await session.loadToken("lotteryToken");
         let interactor = await createInteractor(session, contractAddress);
         let whitelist = friends.map(user => user.address);
@@ -85,7 +85,7 @@ describe("lottery snippet", async function () {
     });
 
     it("get lottery info and status", async function () {
-        let contractAddress = await session.loadAddress("contractAddress");
+        let contractAddress = await session.loadAddress("lottery");
         let lotteryToken = await session.loadToken("lotteryToken");
         let interactor = await createInteractor(session, contractAddress);
         let lotteryInfo = await interactor.getLotteryInfo(LotteryName);
@@ -99,7 +99,7 @@ describe("lottery snippet", async function () {
     });
 
     it("get whitelist", async function () {
-        let contractAddress = await session.loadAddress("contractAddress");
+        let contractAddress = await session.loadAddress("lottery");
         let interactor = await createInteractor(session, contractAddress);
         let whitelist = await interactor.getWhitelist(LotteryName);
         let expectedWhitelist = friends.map(user => user.address).map(address => address.bech32());
@@ -116,7 +116,7 @@ describe("lottery snippet", async function () {
             func: async function () {
                 await session.syncUsers([owner, ...friends]);
 
-                let contractAddress = await session.loadAddress("contractAddress");
+                let contractAddress = await session.loadAddress("lottery");
                 let lotteryToken = await session.loadToken("lotteryToken");
                 let interactor = await createInteractor(session, contractAddress);
 
@@ -131,5 +131,9 @@ describe("lottery snippet", async function () {
             numRetries: 3,
             delayInMilliseconds: 1000
         });
+    });
+
+    it("destroy session", async function () {
+        await session.destroy();
     });
 });

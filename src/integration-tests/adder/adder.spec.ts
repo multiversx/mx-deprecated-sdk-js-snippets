@@ -43,7 +43,7 @@ describe("adder snippet", async function () {
 
         assert.isTrue(returnCode.isSuccess());
 
-        await session.saveAddress("contractAddress", address);
+        await session.saveAddress("adder", address);
     });
 
     it("add", async function () {
@@ -53,7 +53,7 @@ describe("adder snippet", async function () {
 
         await session.syncUsers([owner]);
 
-        let contractAddress = await session.loadAddress("contractAddress");
+        let contractAddress = await session.loadAddress("adder");
         let interactor = await createInteractor(session, contractAddress);
 
         let sumBefore = await interactor.getSum();
@@ -64,7 +64,7 @@ describe("adder snippet", async function () {
     });
 
     it("getSum", async function () {
-        let contractAddress = await session.loadAddress("contractAddress");
+        let contractAddress = await session.loadAddress("adder");
         let interactor = await createInteractor(session, contractAddress);
         let result = await interactor.getSum();
         assert.isTrue(result > 0);
@@ -72,5 +72,9 @@ describe("adder snippet", async function () {
 
     it("generate report", async function () {
         await session.generateReport();
+    });
+
+    it("destroy session", async function () {
+        await session.destroy();
     });
 });

@@ -54,7 +54,7 @@ describe("counter snippet", async function () {
 
         assert.isTrue(returnCode.isSuccess());
 
-        await session.saveAddress("contractAddress", address);
+        await session.saveAddress("counter", address);
     });
 
     it("increment with single ESDT transfer", async function () {
@@ -62,7 +62,7 @@ describe("counter snippet", async function () {
 
         await session.syncUsers([owner, alice]);
 
-        let contractAddress = await session.loadAddress("contractAddress");
+        let contractAddress = await session.loadAddress("counter");
         let token = await session.loadToken("counterToken");
         let interactor = await createInteractor(session, contractAddress);
 
@@ -80,7 +80,7 @@ describe("counter snippet", async function () {
 
         await session.syncUsers([owner, alice]);
 
-        let contractAddress = await session.loadAddress("contractAddress");
+        let contractAddress = await session.loadAddress("counter");
         let token = await session.loadToken("counterToken");
         let interactor = await createInteractor(session, contractAddress);
 
@@ -91,5 +91,9 @@ describe("counter snippet", async function () {
 
         // Cross-shard
         interactor.incrementWithSingleESDTTransfer(alice, 1, payment);
+    });
+
+    it("destroy session", async function () {
+        await session.destroy();
     });
 });

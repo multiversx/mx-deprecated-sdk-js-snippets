@@ -7,8 +7,8 @@ CREATE TABLE "breadcrumb" (
     "payload" TEXT
 );`;
 
-    static GetByName = `SELECT * FROM "breadcrumb" WHERE AND "name" = @name`;
-    static GetByType = `SELECT * FROM "breadcrumb" WHERE AND "type" = @type`;
+    static GetByName = `SELECT * FROM "breadcrumb" WHERE "name" = @name`;
+    static GetByType = `SELECT * FROM "breadcrumb" WHERE "type" = @type`;
     static GetAll = `SELECT * FROM "breadcrumb"`;
     static Insert = `INSERT INTO "breadcrumb" ("type", "name", "payload") VALUES (@type, @name, @payload)`;
     static UpdateSetPayload = `UPDATE "breadcrumb" SET "payload" = @payload WHERE "id" = @id`;
