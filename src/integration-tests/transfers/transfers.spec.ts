@@ -8,14 +8,13 @@ import { TestSession } from "../../session";
 describe("transfers snippet", async function () {
     this.bail(true);
 
-    let suite = this;
     let session: ITestSession;
     let provider: INetworkProvider;
     let alice: ITestUser;
     let bob: ITestUser;
 
     this.beforeAll(async function () {
-        session = await TestSession.loadOnSuite("devnet", suite);
+        session = await TestSession.load("devnet", __dirname);
         provider = session.networkProvider;
         alice = session.users.getUser("alice");
         bob = session.users.getUser("bob");

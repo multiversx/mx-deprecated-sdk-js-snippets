@@ -14,7 +14,6 @@ describe("lottery snippet", async function () {
 
     const LotteryName = "fooLottery";
 
-    let suite = this;
     let session: ITestSession;
     let provider: INetworkProvider;
     let whale: ITestUser;
@@ -22,7 +21,7 @@ describe("lottery snippet", async function () {
     let friends: ITestUser[];
 
     this.beforeAll(async function () {
-        session = await TestSession.loadOnSuite("devnet", suite);
+        session = await TestSession.load("devnet", __dirname);
         provider = session.networkProvider;
         whale = session.users.getUser("whale");
         owner = session.users.getUser("whale");

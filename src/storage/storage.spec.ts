@@ -10,26 +10,26 @@ describe("test storage", async function () {
 
         let storage = await Storage.create(createDatabaseName(this));
 
-        await storage.storeBreadcrumb("foo", { type: "typeX", name: "A", payload: { value: 42 }});
-        await storage.storeBreadcrumb("foo", { type: "typeX", name: "A", payload: { value: 43 }});
-        await storage.storeBreadcrumb("foo", { type: "typeX", name: "C", payload: { value: 42 }});
-        await storage.storeBreadcrumb("foo", { type: "typeY", name: "B", payload: { value: 44 }});
-        await storage.storeBreadcrumb("bar", { type: "typeY", name: "A", payload: { value: 42 }});
+        await storage.storeBreadcrumb({ type: "typeX", name: "A", payload: { value: 42 }});
+        await storage.storeBreadcrumb({ type: "typeX", name: "A", payload: { value: 43 }});
+        await storage.storeBreadcrumb({ type: "typeX", name: "C", payload: { value: 42 }});
+        await storage.storeBreadcrumb({ type: "typeY", name: "B", payload: { value: 44 }});
+        await storage.storeBreadcrumb({ type: "typeY", name: "A", payload: { value: 42 }});
 
-        let breadcrumb = await storage.loadBreadcrumb("foo", "A");
+        let breadcrumb = await storage.loadBreadcrumb("A");
         assert.deepEqual(breadcrumb.payload, { value: 43 });
-        breadcrumb = await storage.loadBreadcrumb("foo", "B");
+        breadcrumb = await storage.loadBreadcrumb("B");
         assert.deepEqual(breadcrumb.payload, { value: 44 });
-        breadcrumb = await storage.loadBreadcrumb("bar", "A");
+        breadcrumb = await storage.loadBreadcrumb("A");
         assert.deepEqual(breadcrumb.payload, { value: 42 });
 
-        let breadcrumbs = await storage.loadBreadcrumbsByType("foo", "typeX");
+        let breadcrumbs = await storage.loadBreadcrumbsByType("typeX");
         assert.lengthOf(breadcrumbs, 2);
-        breadcrumbs = await storage.loadBreadcrumbsByType("foo", "typeY");
+        breadcrumbs = await storage.loadBreadcrumbsByType("typeY");
         assert.lengthOf(breadcrumbs, 1);
-        breadcrumbs = await storage.loadBreadcrumbsByType("bar", "typeY");
+        breadcrumbs = await storage.loadBreadcrumbsByType("typeY");
         assert.lengthOf(breadcrumbs, 1);
-        breadcrumbs = await storage.loadBreadcrumbsByType("foo", "typeMissing");
+        breadcrumbs = await storage.loadBreadcrumbsByType("typeMissing");
         assert.lengthOf(breadcrumbs, 0);
 
         await storage.destroy();
@@ -40,7 +40,7 @@ describe("test storage", async function () {
 
         let storage = await Storage.create(createDatabaseName(this));
 
-        let reference = await storage.storeInteraction("foo", {
+        let reference = await storage.storeInteraction({
             action: "stake",
             userAddress: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
             contractAddress: new Address("erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu"),
@@ -68,7 +68,7 @@ describe("test storage", async function () {
         let storage = await Storage.create(createDatabaseName(this));
 
         // Without reference to "before" / "after" interaction
-        await storage.storeAccountSnapshot("foo", {
+        await storage.storeAccountSnapshot({
             address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
             nonce: 42,
             balance: TokenPayment.egldFromAmount(1),
@@ -76,7 +76,7 @@ describe("test storage", async function () {
         });
 
         // With references to "before" / "after" interaction
-        let interactionReference = await storage.storeInteraction("foo", {
+        let interactionReference = await storage.storeInteraction({
             action: "doSomething",
             userAddress: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
             contractAddress: new Address("erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu"),
@@ -107,8 +107,8 @@ describe("test storage", async function () {
             takenAfterInteraction: interactionReference
         };
 
-        await storage.storeAccountSnapshot("foo", snapshotBefore);
-        await storage.storeAccountSnapshot("foo", snapshotAfter);
+        await storage.storeAccountSnapshot(snapshotBefore);
+        await storage.storeAccountSnapshot(snapshotAfter);
 
         // TODO: Add some assertions.
 

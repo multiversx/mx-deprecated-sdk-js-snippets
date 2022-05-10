@@ -7,7 +7,7 @@ describe("test session", async function () {
     it("store and load breadcrumbs", async function () {
         this.timeout(Timeout);
 
-        const session = await TestSession.load("dummy", "dummy", "src/testdata");
+        const session = await TestSession.load("dummy", "src/testdata");
 
         await session.saveBreadcrumb({ name: "a", type: "foo", value: { x: 42 } });
         await session.saveBreadcrumb({ name: "b", type: "foo", value: { x: 43 } });

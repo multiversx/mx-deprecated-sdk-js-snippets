@@ -13,6 +13,7 @@ export class Report {
     }
 
     async prepare() {
+        const breadcrumbs = await this.storage.loadBreadcrumbs();
     }
 
     async generate(tag?: string) {

@@ -57,7 +57,6 @@ export interface IGeneratedGroupOfUsersConfig {
 
 export interface ITestSession {
     readonly name: string;
-    readonly scope: string;
     readonly networkProvider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
@@ -80,11 +79,6 @@ export interface ITestSession {
 
     generateReport(tag?: string): Promise<void>;
     destroy(): Promise<void>;
-}
-
-export interface IMochaSuite {
-    file?: string | undefined;
-    fullTitle(): string;
 }
 
 export interface IBunchOfUsers {
@@ -113,14 +107,14 @@ export interface ITestUser {
  * Though, it depends on simple (and quite stable) types of erdjs, such as: Address, TransactionHash etc.
  */
 export interface IStorage {
-    storeBreadcrumb(scope: string, breadcrumb: IBreadcrumbTowardsStorage): Promise<void>;
-    loadBreadcrumb(scope: string, name: string): Promise<IBreadcrumbFromStorage>;
-    loadBreadcrumbs(scope: string): Promise<IBreadcrumbFromStorage[]>;
-    loadBreadcrumbsByType(scope: string, type: string): Promise<IBreadcrumbFromStorage[]>;
-    storeInteraction(scope: string, interaction: IInteractionTowardsStorage): Promise<number>;
+    storeBreadcrumb(breadcrumb: IBreadcrumbTowardsStorage): Promise<void>;
+    loadBreadcrumb(name: string): Promise<IBreadcrumbFromStorage>;
+    loadBreadcrumbs(): Promise<IBreadcrumbFromStorage[]>;
+    loadBreadcrumbsByType(type: string): Promise<IBreadcrumbFromStorage[]>;
+    storeInteraction(sinteraction: IInteractionTowardsStorage): Promise<number>;
     updateInteractionSetOutput(id: number, output: any): Promise<void>;
-    storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotTowardsStorage): Promise<void>;
-    logEvent(scope: string, event: IEventTowardsStorage): Promise<void>;
+    storeAccountSnapshot(snapshot: IAccountSnapshotTowardsStorage): Promise<void>;
+    logEvent(event: IEventTowardsStorage): Promise<void>;
     destroy(): Promise<void>;
 }
 

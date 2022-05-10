@@ -31,12 +31,12 @@ export class Storage implements IStorage {
         await fs.promises.unlink(this.file);
     }
 
-    async storeBreadcrumb(scope: string, breadcrumb: IBreadcrumbTowardsStorage): Promise<void> {
+    async storeBreadcrumb(breadcrumb: IBreadcrumbTowardsStorage): Promise<void> {
         const serializedPayload = this.serializeItem(breadcrumb.payload);
-        const find = this.db.prepare(sql.Breadcrumb.GetByScopeAndName);
+        const find = this.db.prepare(sql.Breadcrumb.GetByName);
         const insert = this.db.prepare(sql.Breadcrumb.Insert);
         const update = this.db.prepare(sql.Breadcrumb.UpdateSetPayload);
-        const existingRecord = find.get({ scope: scope, name: breadcrumb.name });
+        const existingRecord = find.get({ name: breadcrumb.name });
 
         if (existingRecord) {
             update.run({
@@ -48,16 +48,15 @@ export class Storage implements IStorage {
         }
 
         insert.run({
-            scope: scope,
             type: breadcrumb.type,
             name: breadcrumb.name,
             payload: serializedPayload
         });
     }
 
-    async loadBreadcrumb(scope: string, name: string): Promise<IBreadcrumbFromStorage> {
-        const find = this.db.prepare(sql.Breadcrumb.GetByScopeAndName);
-        const row = find.get({ scope: scope, name: name });
+    async loadBreadcrumb(name: string): Promise<IBreadcrumbFromStorage> {
+        const find = this.db.prepare(sql.Breadcrumb.GetByName);
+        const row = find.get({ name: name });
         const result = {
             name: row.name,
             type: row.type,
@@ -67,9 +66,9 @@ export class Storage implements IStorage {
         return result;
     }
 
-    async loadBreadcrumbs(scope: string): Promise<IBreadcrumbFromStorage[]> {
+    async loadBreadcrumbs(): Promise<IBreadcrumbFromStorage[]> {
         const find = this.db.prepare(sql.Breadcrumb.GetAll);
-        const rows = find.all({ scope: scope });
+        const rows = find.all();
         const results = rows.map(row => {
             return {
                 name: row.name,
@@ -81,9 +80,9 @@ export class Storage implements IStorage {
         return results;
     }
 
-    async loadBreadcrumbsByType(scope: string, type: string): Promise<IBreadcrumbFromStorage[]> {
-        const find = this.db.prepare(sql.Breadcrumb.GetByScopeAndType);
-        const rows = find.all({ scope: scope, type: type });
+    async loadBreadcrumbsByType(type: string): Promise<IBreadcrumbFromStorage[]> {
+        const find = this.db.prepare(sql.Breadcrumb.GetByType);
+        const rows = find.all({ type: type });
         const results = rows.map(row => {
             return {
                 name: row.name,
@@ -95,9 +94,8 @@ export class Storage implements IStorage {
         return results;
     }
 
-    async storeInteraction(scope: string, interaction: IInteractionTowardsStorage): Promise<number> {
+    async storeInteraction(interaction: IInteractionTowardsStorage): Promise<number> {
         const record = {
-            scope: scope,
             action: interaction.action,
             user: interaction.userAddress.bech32(),
             contract: interaction.contractAddress.bech32(),
@@ -124,9 +122,8 @@ export class Storage implements IStorage {
         update.run({ id: id, output: outputJson });
     }
 
-    async storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotTowardsStorage): Promise<void> {
+    async storeAccountSnapshot(snapshot: IAccountSnapshotTowardsStorage): Promise<void> {
         const record: any = {
-            scope: scope,
             address: snapshot.address.bech32(),
             nonce: snapshot.nonce.valueOf(),
             balance: snapshot.balance.toString(),
@@ -140,9 +137,8 @@ export class Storage implements IStorage {
         insert.run(record);
     }
 
-    async logEvent(scope: string, event: IEventTowardsStorage): Promise<void> {
+    async logEvent(event: IEventTowardsStorage): Promise<void> {
         const record: any = {
-            scope: scope,
             event: event.kind,
             summary: event.summary,
             payload: this.serializeItem(event.payload),

@@ -2,12 +2,10 @@ import { IAddress, ISnapshottingService, IStorage, ITestUser } from "./interface
 import { INetworkProvider } from "./interfaceOfNetwork";
 
 export class SnapshottingService implements ISnapshottingService {
-    private readonly scope: string;
     private readonly networkProvider: INetworkProvider;
     private readonly storage: IStorage;
 
-    constructor(scope: string, networkProvider: INetworkProvider, storage: IStorage) {
-        this.scope = scope;
+    constructor(networkProvider: INetworkProvider, storage: IStorage) {
         this.networkProvider = networkProvider;
         this.storage = storage;
     }
@@ -51,6 +49,6 @@ export class SnapshottingService implements ISnapshottingService {
             nonFungibleTokens: simplifiedNonFungibleTokens
         };
 
-        await this.storage.storeAccountSnapshot(this.scope, snapshot);
+        await this.storage.storeAccountSnapshot(snapshot);
     }
 }

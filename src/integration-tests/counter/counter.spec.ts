@@ -11,7 +11,6 @@ import { createInteractor } from "./counterInteractor";
 describe("counter snippet", async function () {
     this.bail(true);
 
-    let suite = this;
     let session: ITestSession;
     let provider: INetworkProvider;
     let whale: ITestUser;
@@ -19,7 +18,7 @@ describe("counter snippet", async function () {
     let alice: ITestUser;
 
     this.beforeAll(async function () {
-        session = await TestSession.loadOnSuite("devnet", suite);
+        session = await TestSession.load("devnet", __dirname);
         provider = session.networkProvider;
         whale = session.users.getUser("whale");
         owner = session.users.getUser("whale");

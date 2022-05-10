@@ -10,11 +10,9 @@ enum EventKind {
 }
 
 export class EventLog implements IEventLog {
-    private readonly scope: string;
     private readonly storage: IStorage;
 
-    constructor(scope: string, storage: IStorage) {
-        this.scope = scope;
+    constructor(storage: IStorage) {
         this.storage = storage;
     }
 
@@ -22,7 +20,7 @@ export class EventLog implements IEventLog {
         const transaction = transactionHash.toString();
         const address = contractAddress.bech32();
 
-        await this.storage.logEvent(this.scope, {
+        await this.storage.logEvent({
             kind: EventKind.ContractDeploymentSent,
             summary: `deployment transaction sent, transaction = ${transaction}, contract = ${address}`,
             payload: {
@@ -33,7 +31,7 @@ export class EventLog implements IEventLog {
     }
 
     async onTransactionSent(transactionHash: IHash): Promise<void> {
-        await this.storage.logEvent(this.scope, {
+        await this.storage.logEvent({
             kind: EventKind.TransactionSent,
             summary: `transaction sent, transaction = ${transactionHash}`,
             payload: {
@@ -45,7 +43,7 @@ export class EventLog implements IEventLog {
     async onTransactionCompleted(transactionHash: IHash, transactionOnNetwork: ITransactionOnNetwork): Promise<void> {
         const prettyTransaction = prettifyObject(transactionOnNetwork);
 
-        await this.storage.logEvent(this.scope, {
+        await this.storage.logEvent({
             kind: EventKind.TransactionCompleted,
             summary: `transaction completed, transaction = ${transactionHash.toString()}`,
             payload: prettyTransaction
