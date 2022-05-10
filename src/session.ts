@@ -127,42 +127,46 @@ export class TestSession implements ITestSession {
 
     async saveAddress(name: string, address: Address): Promise<void> {
         console.log(`TestSession.saveAddress(): name = [${name}], address = ${address.bech32()}`);
-        await this.storage.storeBreadcrumb(this.scope, TypeAddress, name, address.bech32());
+
+        const breadcrumb = { type: TypeAddress, name: name, payload: address.bech32() };
+        await this.storage.storeBreadcrumb(this.scope, breadcrumb);
     }
 
     async loadAddress(name: string): Promise<Address> {
-        let payload = await this.storage.loadBreadcrumb(this.scope, name);
-        let address = new Address(payload);
+        const breadcrumb = await this.storage.loadBreadcrumb(this.scope, name);
+        const address = new Address(breadcrumb.payload);
         return address;
     }
 
     async saveToken(name: string, token: IToken): Promise<void> {
-        await this.storage.storeBreadcrumb(this.scope, TypeToken, name, token);
+        console.log(`TestSession.saveToken(): name = [${name}], token = ${token.identifier}`);
+
+        const breadcrumb = { type: TypeToken, name: name, payload: token };
+        await this.storage.storeBreadcrumb(this.scope, breadcrumb);
     }
 
     async loadToken(name: string): Promise<IToken> {
-        let payload = await this.storage.loadBreadcrumb(this.scope, name);
-        let token = { identifier: payload.identifier, decimals: payload.decimals };
+        const breadcrumb = await this.storage.loadBreadcrumb(this.scope, name);
+        const token = { identifier: breadcrumb.payload.identifier, decimals: breadcrumb.payload.decimals };
         return token;
     }
 
     async saveBreadcrumb(params: { type?: string, name: string, value: any }): Promise<void> {
-        await this.storage.storeBreadcrumb(
-            this.scope,
-            params.type || TypeArbitraryBreadcrumb,
-            params.name,
-            params.value
-        );
+        console.log(`TestSession.saveBreadcrumb(): name = [${params.name}], type = ${params.type}`);
+
+        const breadcrumb = { type: params.type || TypeArbitraryBreadcrumb, name: params.name, payload: params.value };
+        await this.storage.storeBreadcrumb(this.scope, breadcrumb);
     }
 
     async loadBreadcrumb(name: string): Promise<any> {
-        let payload = await this.storage.loadBreadcrumb(this.scope, name);
-        return payload;
+        const breadcrumb = await this.storage.loadBreadcrumb(this.scope, name);
+        return breadcrumb.payload;
     }
 
     async loadBreadcrumbsByType(type: string): Promise<any[]> {
-        let payload: any[] = await this.storage.loadBreadcrumbsByType(this.scope, type);
-        return payload;
+        const breadcrumbs = await this.storage.loadBreadcrumbsByType(this.scope, type);
+        const payloads = breadcrumbs.map(breadcrumb => breadcrumb.payload);
+        return payloads;
     }
 
     async destroy(): Promise<void> {

@@ -10,18 +10,18 @@ describe("test storage", async function () {
 
         let storage = await Storage.create(createDatabaseName(this));
 
-        await storage.storeBreadcrumb("foo", "typeX", "A", { value: 42 });
-        await storage.storeBreadcrumb("foo", "typeX", "A", { value: 43 });
-        await storage.storeBreadcrumb("foo", "typeX", "C", { value: 42 });
-        await storage.storeBreadcrumb("foo", "typeY", "B", { value: 44 });
-        await storage.storeBreadcrumb("bar", "typeY", "A", { value: 42 });
+        await storage.storeBreadcrumb("foo", { type: "typeX", name: "A", payload: { value: 42 }});
+        await storage.storeBreadcrumb("foo", { type: "typeX", name: "A", payload: { value: 43 }});
+        await storage.storeBreadcrumb("foo", { type: "typeX", name: "C", payload: { value: 42 }});
+        await storage.storeBreadcrumb("foo", { type: "typeY", name: "B", payload: { value: 44 }});
+        await storage.storeBreadcrumb("bar", { type: "typeY", name: "A", payload: { value: 42 }});
 
         let breadcrumb = await storage.loadBreadcrumb("foo", "A");
-        assert.deepEqual(breadcrumb, { value: 43 });
+        assert.deepEqual(breadcrumb.payload, { value: 43 });
         breadcrumb = await storage.loadBreadcrumb("foo", "B");
-        assert.deepEqual(breadcrumb, { value: 44 });
+        assert.deepEqual(breadcrumb.payload, { value: 44 });
         breadcrumb = await storage.loadBreadcrumb("bar", "A");
-        assert.deepEqual(breadcrumb, { value: 42 });
+        assert.deepEqual(breadcrumb.payload, { value: 42 });
 
         let breadcrumbs = await storage.loadBreadcrumbsByType("foo", "typeX");
         assert.lengthOf(breadcrumbs, 2);

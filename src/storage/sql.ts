@@ -10,6 +10,7 @@ CREATE TABLE "breadcrumb" (
 
     static GetByScopeAndName = `SELECT * FROM "breadcrumb" WHERE "scope" = @scope AND "name" = @name`;
     static GetByScopeAndType = `SELECT * FROM "breadcrumb" WHERE "scope" = @scope AND "type" = @type`;
+    static GetAll = `SELECT * FROM "breadcrumb"`;
     static Insert = `INSERT INTO "breadcrumb" ("scope", "type", "name", "payload") VALUES (@scope, @type, @name, @payload)`;
     static UpdateSetPayload = `UPDATE "breadcrumb" SET "payload" = @payload WHERE "id" = @id`;
 }
@@ -69,7 +70,7 @@ CREATE TABLE "account_snapshot" (
 
     static Insert = `
 INSERT INTO "account_snapshot" (
-    "scope", "address", "nonce", "balance", "fungible_tokens", "non_fungible_tokens" 
+    "scope", "address", "nonce", "balance", "fungible_tokens", "non_fungible_tokens", 
     "taken_before_interaction", "taken_after_interaction"
 )
 VALUES (

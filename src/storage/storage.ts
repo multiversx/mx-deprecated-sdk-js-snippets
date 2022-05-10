@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as sql from "./sql";
 import DatabaseConstructor, { Database } from "better-sqlite3";
-import { IAccountSnapshotTowardsStorage, IEventTowardsStorage, IInteractionTowardsStorage, IStorage } from "../interface";
+import { IAccountSnapshotTowardsStorage, IBreadcrumbFromStorage, IBreadcrumbTowardsStorage, IEventTowardsStorage, IInteractionTowardsStorage, IStorage } from "../interface";
 
 export class Storage implements IStorage {
     private readonly file: string;
@@ -31,12 +31,12 @@ export class Storage implements IStorage {
         await fs.promises.unlink(this.file);
     }
 
-    async storeBreadcrumb(scope: string, type: string, name: string, payload: any): Promise<void> {
-        const serializedPayload = this.serializeItem(payload);
+    async storeBreadcrumb(scope: string, breadcrumb: IBreadcrumbTowardsStorage): Promise<void> {
+        const serializedPayload = this.serializeItem(breadcrumb.payload);
         const find = this.db.prepare(sql.Breadcrumb.GetByScopeAndName);
         const insert = this.db.prepare(sql.Breadcrumb.Insert);
         const update = this.db.prepare(sql.Breadcrumb.UpdateSetPayload);
-        const existingRecord = find.get({ scope: scope, name: name });
+        const existingRecord = find.get({ scope: scope, name: breadcrumb.name });
 
         if (existingRecord) {
             update.run({
@@ -49,24 +49,50 @@ export class Storage implements IStorage {
 
         insert.run({
             scope: scope,
-            type: type,
-            name: name,
+            type: breadcrumb.type,
+            name: breadcrumb.name,
             payload: serializedPayload
         });
     }
 
-    async loadBreadcrumb(scope: string, name: string): Promise<any> {
+    async loadBreadcrumb(scope: string, name: string): Promise<IBreadcrumbFromStorage> {
         const find = this.db.prepare(sql.Breadcrumb.GetByScopeAndName);
         const row = find.get({ scope: scope, name: name });
-        const payload = this.deserializeItem(row.payload);
-        return payload;
+        const result = {
+            name: row.name,
+            type: row.type,
+            payload: this.deserializeItem(row.payload)
+        };
+
+        return result;
     }
 
-    async loadBreadcrumbsByType(scope: string, type: string): Promise<any[]> {
+    async loadBreadcrumbs(scope: string): Promise<IBreadcrumbFromStorage[]> {
+        const find = this.db.prepare(sql.Breadcrumb.GetAll);
+        const rows = find.all({ scope: scope });
+        const results = rows.map(row => {
+            return {
+                name: row.name,
+                type: row.type,
+                payload: this.deserializeItem(row.payload)
+            }
+        });
+
+        return results;
+    }
+
+    async loadBreadcrumbsByType(scope: string, type: string): Promise<IBreadcrumbFromStorage[]> {
         const find = this.db.prepare(sql.Breadcrumb.GetByScopeAndType);
         const rows = find.all({ scope: scope, type: type });
-        let payloads = rows.map(row => this.deserializeItem(row.payload));
-        return payloads;
+        const results = rows.map(row => {
+            return {
+                name: row.name,
+                type: row.type,
+                payload: this.deserializeItem(row.payload)
+            }
+        });
+
+        return results;
     }
 
     async storeInteraction(scope: string, interaction: IInteractionTowardsStorage): Promise<number> {

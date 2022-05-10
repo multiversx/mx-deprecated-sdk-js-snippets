@@ -105,14 +105,27 @@ export interface ITestUser {
  * Though, it depends on simple (and quite stable) types of erdjs, such as: Address, TransactionHash etc.
  */
 export interface IStorage {
-    storeBreadcrumb(scope: string, type: string, name: string, payload: any): Promise<void>;
-    loadBreadcrumb(scope: string, name: string): Promise<any>;
-    loadBreadcrumbsByType(scope: string, type: string): Promise<any[]>;
+    storeBreadcrumb(scope: string, breadcrumb: IBreadcrumbTowardsStorage): Promise<void>;
+    loadBreadcrumb(scope: string, name: string): Promise<IBreadcrumbFromStorage>;
+    loadBreadcrumbs(scope: string): Promise<IBreadcrumbFromStorage[]>;
+    loadBreadcrumbsByType(scope: string, type: string): Promise<IBreadcrumbFromStorage[]>;
     storeInteraction(scope: string, interaction: IInteractionTowardsStorage): Promise<number>;
     updateInteractionSetOutput(id: number, output: any): Promise<void>;
     storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotTowardsStorage): Promise<void>;
     logEvent(scope: string, event: IEventTowardsStorage): Promise<void>;
     destroy(): Promise<void>;
+}
+
+export interface IBreadcrumbTowardsStorage {
+    type: string;
+    name: string;
+    payload: any;
+}
+
+export interface IBreadcrumbFromStorage {
+    type: string;
+    name: string;
+    payload: any;
 }
 
 export interface IInteractionTowardsStorage {
