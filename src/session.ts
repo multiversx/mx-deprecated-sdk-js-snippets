@@ -10,12 +10,14 @@ import { BunchOfUsers } from "./users";
 import { resolvePath } from "./filesystem";
 import { EventLog } from "./eventLog";
 import { SnapshottingService } from "./snapshotting";
+import { Report } from "./reports/report";
 
 const TypeToken = "token";
 const TypeAddress = "address";
 const TypeArbitraryBreadcrumb = "breadcrumb";
 
 export class TestSession implements ITestSession {
+    readonly config: ITestSessionConfig;
     readonly name: string;
     readonly scope: string;
     readonly networkProvider: INetworkProvider;
@@ -26,6 +28,7 @@ export class TestSession implements ITestSession {
     private networkConfig: INetworkConfig = new NetworkConfig();
 
     constructor(args: {
+        config: ITestSessionConfig,
         name: string,
         scope: string,
         provider: INetworkProvider,
@@ -34,6 +37,7 @@ export class TestSession implements ITestSession {
         snapshots: ISnapshottingService,
         log: IEventLog
     }) {
+        this.config = args.config;
         this.name = args.name;
         this.scope = args.scope;
         this.networkProvider = args.provider;
@@ -67,6 +71,7 @@ export class TestSession implements ITestSession {
         const log = new EventLog(scope, storage);
 
         let session = new TestSession({
+            config: config,
             name: sessionName,
             scope: scope,
             provider: provider,
@@ -167,6 +172,12 @@ export class TestSession implements ITestSession {
         const breadcrumbs = await this.storage.loadBreadcrumbsByType(this.scope, type);
         const payloads = breadcrumbs.map(breadcrumb => breadcrumb.payload);
         return payloads;
+    }
+
+    async generateReport(tag?: string): Promise<void> {
+        const report = new Report(this.config.reporting, this.storage);
+        await report.prepare();
+        await report.generate(tag);
     }
 
     async destroy(): Promise<void> {

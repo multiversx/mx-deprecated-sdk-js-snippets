@@ -5,6 +5,7 @@ import { ISigner } from "./interfaceOfWalletCore";
 export interface ITestSessionConfig {
     readonly networkProvider: INetworkProviderConfig;
     readonly users: IUsersConfig;
+    readonly reporting: IReportingConfig;
 }
 
 export interface INetworkProviderConfig {
@@ -27,6 +28,12 @@ export interface IGroupOfUsersConfig {
     readonly name: string;
     readonly pem?: string;
     readonly folder?: string;
+}
+
+export interface IReportingConfig {
+    explorerUrl: string;
+    apiUrl: string;
+    outputFolder: string;
 }
 
 export interface ISecretKeysGeneratorConfig {
@@ -71,6 +78,7 @@ export interface ITestSession {
     loadBreadcrumb(name: string): Promise<any>;
     loadBreadcrumbsByType(type: string): Promise<any[]>;
 
+    generateReport(tag?: string): Promise<void>;
     destroy(): Promise<void>;
 }
 
