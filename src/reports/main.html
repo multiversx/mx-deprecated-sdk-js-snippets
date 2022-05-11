@@ -7,12 +7,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report</title>
     <link href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/darkly/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/regular.min.css" integrity="sha512-YoxvmIzlVlt4nYJ6QwBqDzFc+2aXL7yQwkAuscf2ZAg7daNQxlgQHV+LLRHnRXFWPHRvXhJuBBjQqHAqRFkcVw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
     </style>
 </head>
 
 <body>
     <div class="container">
+        <h3>Breadcrumbs</h3>
+
         <div class="mt-4">
             <h4>Addresses</h4>
 
@@ -110,6 +113,25 @@
                         <% }); %>
                 </tbody>
             </table>
+        </div>
+
+        <h3>Interactions</h3>
+
+        <div class="mt-4">
+            <% interactions.forEach(function(interaction) { %>
+                <div class="row">
+                    <div class="col-sm-3">
+                        #<%= interaction.id %> <strong><%= interaction.action %></strong>
+                        
+                        <a target="_blank" href="<%= interaction.transactionHref %>"><%= interaction.transaction %></a>
+                    </div>
+                    <div class="col-sm-3">
+                        <a target="_blank" href="<%= interaction.userHref %>"><%= interaction.user %></a>
+                        <i class="fa-solid fa-arrow-right"></i>
+                        <a target="_blank" href="<%= interaction.contractHref %>"><%= interaction.contract %></a>
+                    </div>
+                </div>
+                <% }); %>
         </div>
     </div>
 </body>
