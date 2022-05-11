@@ -6,11 +6,112 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/darkly/bootstrap.min.css" rel="stylesheet" />
     <style>
     </style>
 </head>
 
 <body>
+    <div class="container">
+        <div class="mt-4">
+            <h4>Addresses</h4>
+
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Address</th>
+                        <th scope="col">Explorer</th>
+                        <th scope="col">API</th>
+                        <th scope="col">Tag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% addresses.forEach(function(address) { %>
+                        <tr>
+                            <th scope="row">
+                                <%= address.name %>
+                            </th>
+                            <td>
+                                <%= address.value %>
+                            </td>
+                            <td>
+                                <a target="_blank" href="<%= address.explorerHref %>">Explorer</a>
+                            </td>
+                            <td>
+                                <a target="_blank" href="<%= address.apiHref %>">API</a>
+                            </td>
+                            <td>
+                                <pre><%= address.tag %></pre>
+                            </td>
+                        </tr>
+                        <% }); %>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <h4>Tokens</h4>
+
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Identifier</th>
+                        <th scope="col">Tag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% tokens.forEach(function(token) { %>
+                        <tr>
+                            <th scope="row">
+                                <%= token.name %>
+                            </th>
+                            <td>
+                                <%= token.identifier %>
+                            </td>
+                            <td>
+                                <pre><%= token.tag %></pre>
+                            </td>
+                        </tr>
+                        <% }); %>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <h4>All breadcrumbs</h4>
+
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Payload</th>
+                        <th scope="col">Tag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% breadcrumbs.forEach(function(breadcrumb) { %>
+                        <tr>
+                            <th scope="row">
+                                <%= breadcrumb.name %>
+                            </th>
+                            <th>
+                                <%= breadcrumb.type %>
+                            </th>
+                            <td>
+                                <pre><%= breadcrumb.payload %></pre>
+                            </td>
+                            <td>
+                                <pre><%= breadcrumb.tag %></pre>
+                            </td>
+                        </tr>
+                        <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </body>
 
 </html>

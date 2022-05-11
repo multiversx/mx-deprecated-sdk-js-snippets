@@ -26,6 +26,10 @@ describe("counter snippet", async function () {
         await session.syncNetworkConfig();
     });
 
+    this.beforeEach(async function () {
+        session.correlation.tag = this.currentTest?.fullTitle() || "";
+    });
+
     it("issue counter token", async function () {
         this.timeout(FiveMinutesInMilliseconds);
 

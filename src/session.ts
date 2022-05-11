@@ -12,10 +12,7 @@ import { EventLog } from "./eventLog";
 import { SnapshottingService } from "./snapshotting";
 import { Report } from "./reports/report";
 import { CorrelationHolder } from "./correlationHolder";
-
-const TypeToken = "token";
-const TypeAddress = "address";
-const TypeArbitraryBreadcrumb = "breadcrumb";
+import { BreadcrumbTypeAddress, BreadcrumbTypeArbitrary, BreadcrumbTypeToken } from "./constants";
 
 export class TestSession implements ITestSession {
     readonly config: ITestSessionConfig;
@@ -127,7 +124,7 @@ export class TestSession implements ITestSession {
 
         await this.storage.storeBreadcrumb({
             correlationTag: this.correlation.tag,
-            type: TypeAddress,
+            type: BreadcrumbTypeAddress,
             name: name,
             payload: address.bech32()
         });
@@ -144,7 +141,7 @@ export class TestSession implements ITestSession {
 
         await this.storage.storeBreadcrumb({
             correlationTag: this.correlation.tag,
-            type: TypeToken,
+            type: BreadcrumbTypeToken,
             name: name,
             payload: token
         });
@@ -161,7 +158,7 @@ export class TestSession implements ITestSession {
 
         await this.storage.storeBreadcrumb({
             correlationTag: this.correlation.tag,
-            type: params.type || TypeArbitraryBreadcrumb,
+            type: params.type || BreadcrumbTypeArbitrary,
             name: params.name,
             payload: params.value,
         });

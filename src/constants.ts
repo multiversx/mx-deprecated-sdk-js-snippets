@@ -5,3 +5,7 @@ export const TwoMinutesInMilliseconds = 2 * OneMinuteInMilliseconds;
 export const ThreeMinutesInMilliseconds = 3 * OneMinuteInMilliseconds;
 export const FourMinutesInMilliseconds = 4 * OneMinuteInMilliseconds;
 export const FiveMinutesInMilliseconds = 5 * OneMinuteInMilliseconds;
+
+export const BreadcrumbTypeToken = "token";
+export const BreadcrumbTypeAddress = "address";
+export const BreadcrumbTypeArbitrary = "breadcrumb";

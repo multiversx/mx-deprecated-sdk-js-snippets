@@ -29,6 +29,10 @@ describe("lottery snippet", async function () {
         await session.syncNetworkConfig();
     });
 
+    this.beforeEach(async function () {
+        session.correlation.tag = this.currentTest?.fullTitle() || "";
+    });
+
     it("airdrop EGLD", async function () {
         this.timeout(FiveMinutesInMilliseconds);
 

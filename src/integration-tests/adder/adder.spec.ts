@@ -25,6 +25,10 @@ describe("adder snippet", async function () {
         await session.syncNetworkConfig();
     });
 
+    this.beforeEach(async function () {
+        session.correlation.tag = this.currentTest?.fullTitle() || "";
+    });
+
     it("airdrop", async function () {
         this.timeout(FiveMinutesInMilliseconds);
 
