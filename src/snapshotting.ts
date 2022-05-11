@@ -44,6 +44,7 @@ export class SnapshottingService implements ISnapshottingService {
         });
 
         const snapshot = {
+            id: 0,
             correlationTag: this.correlation.tag,
             address: address,
             nonce: account.nonce,

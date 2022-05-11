@@ -123,6 +123,7 @@ export class TestSession implements ITestSession {
         console.log(`TestSession.saveAddress(): name = [${name}], address = ${address.bech32()}`);
 
         await this.storage.storeBreadcrumb({
+            id: 0,
             correlationTag: this.correlation.tag,
             type: BreadcrumbTypeAddress,
             name: name,
@@ -140,6 +141,7 @@ export class TestSession implements ITestSession {
         console.log(`TestSession.saveToken(): name = [${name}], token = ${token.identifier}`);
 
         await this.storage.storeBreadcrumb({
+            id: 0,
             correlationTag: this.correlation.tag,
             type: BreadcrumbTypeToken,
             name: name,
@@ -157,6 +159,7 @@ export class TestSession implements ITestSession {
         console.log(`TestSession.saveBreadcrumb(): name = [${params.name}], type = ${params.type}`);
 
         await this.storage.storeBreadcrumb({
+            id: 0,
             correlationTag: this.correlation.tag,
             type: params.type || BreadcrumbTypeArbitrary,
             name: params.name,

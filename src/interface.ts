@@ -102,38 +102,32 @@ export interface ITestUser {
  * The functions are not grouped "by entity" ("by record type") at this point - 
  * that is, the interface isn't segregated into more, smaller interfaces yet (for simplicity).
  * It will be split once it grows a little bit more.
- * 
- * [Design] {@link IStorage} depends on `I{name of record}TowardsStorage`, `I{name of record}FromStorage` interfaces.
- * That is, it does not depend on complex (and somehow unstable) types of erdjs, such as: Interaction, TransactionOnNetwork etc.
- * Though, it depends on simple (and quite stable) types of erdjs, such as: Address, TransactionHash etc.
  */
 export interface IStorage {
-    storeBreadcrumb(breadcrumb: IBreadcrumbTowardsStorage): Promise<void>;
-    loadBreadcrumb(name: string): Promise<IBreadcrumbFromStorage>;
-    loadBreadcrumbs(): Promise<IBreadcrumbFromStorage[]>;
-    loadBreadcrumbsByType(type: string): Promise<IBreadcrumbFromStorage[]>;
-    storeInteraction(sinteraction: IInteractionTowardsStorage): Promise<number>;
+    storeBreadcrumb(breadcrumb: IBreadcrumbRecord): Promise<void>;
+    loadBreadcrumb(name: string): Promise<IBreadcrumbRecord>;
+    loadBreadcrumbs(): Promise<IBreadcrumbRecord[]>;
+    loadBreadcrumbsByType(type: string): Promise<IBreadcrumbRecord[]>;
+    storeInteraction(interaction: IInteractionRecord): Promise<number>;
     updateInteractionSetOutput(id: number, output: any): Promise<void>;
-    storeAccountSnapshot(snapshot: IAccountSnapshotTowardsStorage): Promise<void>;
-    logEvent(event: IEventTowardsStorage): Promise<void>;
+    loadInteractions(): Promise<IInteractionRecord[]>;
+    storeAccountSnapshot(snapshot: IAccountSnapshotRecord): Promise<void>;
+    loadAccountSnapshots(): Promise<IAccountSnapshotRecord[]>;
+    logEvent(event: IEventRecord): Promise<void>;
+    loadEvents(): Promise<IEventRecord[]>;
     destroy(): Promise<void>;
 }
 
-export interface IBreadcrumbTowardsStorage {
+export interface IBreadcrumbRecord {
+    id: number;
     correlationTag: string;
     type: string;
     name: string;
     payload: any;
 }
 
-export interface IBreadcrumbFromStorage {
-    correlationTag: string;
-    type: string;
-    name: string;
-    payload: any;
-}
-
-export interface IInteractionTowardsStorage {
+export interface IInteractionRecord {
+    id: number;
     correlationTag: string;
     action: string;
     userAddress: IAddress;
@@ -149,7 +143,8 @@ export interface IInteractionTowardsStorage {
     output: any;
 }
 
-export interface IAccountSnapshotTowardsStorage {
+export interface IAccountSnapshotRecord {
+    id: number;
     correlationTag: string;
     address: IAddress;
     nonce: number;
@@ -160,7 +155,8 @@ export interface IAccountSnapshotTowardsStorage {
     takenAfterInteraction?: number;
 }
 
-export interface IEventTowardsStorage {
+export interface IEventRecord {
+    id: number;
     correlationTag: string;
     kind: string;
     summary: string;

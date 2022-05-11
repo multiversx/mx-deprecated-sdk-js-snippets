@@ -2,7 +2,7 @@ import ejs from "ejs";
 import { readFileSync, writeFileSync } from "fs";
 import { BreadcrumbTypeAddress, BreadcrumbTypeToken } from "../constants";
 import { resolvePath } from "../filesystem";
-import { IBreadcrumbFromStorage, IReportingConfig, IStorage } from "../interface";
+import { IBreadcrumbRecord, IReportingConfig, IStorage } from "../interface";
 
 export class Report {
     private readonly config: IReportingConfig;
@@ -65,7 +65,7 @@ class AddressBreadcrumbModel {
     readonly apiHref: string;
     readonly tag: string;
 
-    constructor(breadcrumb: IBreadcrumbFromStorage, config: IReportingConfig) {
+    constructor(breadcrumb: IBreadcrumbRecord, config: IReportingConfig) {
         this.name = breadcrumb.name;
         this.value = breadcrumb.payload;
         this.explorerHref = `${config.explorerUrl}/accounts/${this.value}`;
@@ -79,7 +79,7 @@ class TokenBreadcrumbModel {
     readonly identifier: string;
     readonly tag: string;
 
-    constructor(breadcrumb: IBreadcrumbFromStorage) {
+    constructor(breadcrumb: IBreadcrumbRecord) {
         this.name = breadcrumb.name;
         this.identifier = breadcrumb.payload;
         this.tag = breadcrumb.correlationTag;
@@ -92,7 +92,7 @@ class ArbitraryBreadcrumbModel {
     readonly payload: string;
     readonly tag: string;
 
-    constructor(breadcrumb: IBreadcrumbFromStorage) {
+    constructor(breadcrumb: IBreadcrumbRecord) {
         this.name = breadcrumb.name;
         this.type = breadcrumb.type;
         this.payload = JSON.stringify(breadcrumb.payload, null, 4);

@@ -10,15 +10,15 @@ describe("test storage", async function () {
 
         let storage = await Storage.create(createDatabaseName(this));
 
-        await storage.storeBreadcrumb({ correlationTag: "test", type: "typeX", name: "A", payload: { value: 42 }});
-        await storage.storeBreadcrumb({ correlationTag: "test", type: "typeX", name: "A", payload: { value: 43 }});
-        await storage.storeBreadcrumb({ correlationTag: "test", type: "typeX", name: "C", payload: { value: 42 }});
-        await storage.storeBreadcrumb({ correlationTag: "test", type: "typeY", name: "B", payload: { value: 44 }});
+        await storage.storeBreadcrumb({ id: 0, correlationTag: "test", type: "typeX", name: "A", payload: { value: 42 }});
+        await storage.storeBreadcrumb({ id: 0, correlationTag: "test", type: "typeX", name: "A", payload: { value: 43 }});
+        await storage.storeBreadcrumb({ id: 0, correlationTag: "test", type: "typeX", name: "C", payload: { value: 42 }});
+        await storage.storeBreadcrumb({ id: 0, correlationTag: "test", type: "typeY", name: "B", payload: { value: 44 }});
 
         let breadcrumb = await storage.loadBreadcrumb("A");
-        assert.deepEqual(breadcrumb, { correlationTag: "test", type: "typeX", name: "A", payload: { value: 43 }});
+        assert.deepEqual(breadcrumb, { id: 0, correlationTag: "test", type: "typeX", name: "A", payload: { value: 43 }});
         breadcrumb = await storage.loadBreadcrumb("B");
-        assert.deepEqual(breadcrumb, { correlationTag: "test", type: "typeY", name: "B", payload: { value: 44 }});
+        assert.deepEqual(breadcrumb, { id: 0, correlationTag: "test", type: "typeY", name: "B", payload: { value: 44 }});
 
         let breadcrumbs = await storage.loadBreadcrumbsByType("typeX");
         assert.lengthOf(breadcrumbs, 2);
@@ -38,6 +38,7 @@ describe("test storage", async function () {
         let storage = await Storage.create(createDatabaseName(this));
 
         let reference = await storage.storeInteraction({
+            id: 0,
             correlationTag: "test",
             action: "stake",
             userAddress: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
@@ -67,6 +68,7 @@ describe("test storage", async function () {
 
         // Without reference to "before" / "after" interaction
         await storage.storeAccountSnapshot({
+            id: 0,
             correlationTag: "test",
             address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
             nonce: 42,
@@ -76,6 +78,7 @@ describe("test storage", async function () {
 
         // With references to "before" / "after" interaction
         let interactionReference = await storage.storeInteraction({
+            id: 0,
             correlationTag: "test",
             action: "doSomething",
             userAddress: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
@@ -92,6 +95,7 @@ describe("test storage", async function () {
         });
 
         let snapshotBefore = {
+            id: 0,
             correlationTag: "test",
             address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
             nonce: 42,
@@ -101,6 +105,7 @@ describe("test storage", async function () {
         };
 
         let snapshotAfter = {
+            id: 0,
             correlationTag: "test",
             address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
             nonce: 43,

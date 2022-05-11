@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as sql from "./sql";
 import DatabaseConstructor, { Database } from "better-sqlite3";
-import { IAccountSnapshotTowardsStorage, IBreadcrumbFromStorage, IBreadcrumbTowardsStorage, IEventTowardsStorage, IInteractionTowardsStorage, IStorage } from "../interface";
+import { IAccountSnapshotRecord, IBreadcrumbRecord, IEventRecord, IInteractionRecord, IStorage } from "../interface";
 import { ErrBreadcrumbNotFound } from "../errors";
 
 export class Storage implements IStorage {
@@ -32,15 +32,15 @@ export class Storage implements IStorage {
         await fs.promises.unlink(this.file);
     }
 
-    async storeBreadcrumb(breadcrumb: IBreadcrumbTowardsStorage): Promise<void> {
+    async storeBreadcrumb(breadcrumb: IBreadcrumbRecord): Promise<void> {
         const serializedPayload = this.serializeItem(breadcrumb.payload);
         const find = this.db.prepare(sql.Breadcrumb.GetByName);
         const insert = this.db.prepare(sql.Breadcrumb.Insert);
         const delete_ = this.db.prepare(sql.Breadcrumb.Delete);
-        const existingRecord = find.get({ name: breadcrumb.name });
+        const existingRow = find.get({ name: breadcrumb.name });
 
-        if (existingRecord) {
-            delete_.run({ id: existingRecord.id });
+        if (existingRow) {
+            delete_.run({ id: existingRow.id });
         }
 
         insert.run({
@@ -51,7 +51,7 @@ export class Storage implements IStorage {
         });
     }
 
-    async loadBreadcrumb(name: string): Promise<IBreadcrumbFromStorage> {
+    async loadBreadcrumb(name: string): Promise<IBreadcrumbRecord> {
         const find = this.db.prepare(sql.Breadcrumb.GetByName);
         const row = find.get({ name: name });
 
@@ -59,48 +59,36 @@ export class Storage implements IStorage {
             throw new ErrBreadcrumbNotFound(name);
         }
 
-        const result = {
+        const record = this.hydrateBreadcrumb(row);
+        return record;
+    }
+
+    private hydrateBreadcrumb(row: any): IBreadcrumbRecord {
+        return {
+            id: row.id,
             correlationTag: row.correlation_tag,
             name: row.name,
             type: row.type,
             payload: this.deserializeItem(row.payload)
         };
-
-        return result;
     }
 
-    async loadBreadcrumbs(): Promise<IBreadcrumbFromStorage[]> {
+    async loadBreadcrumbs(): Promise<IBreadcrumbRecord[]> {
         const find = this.db.prepare(sql.Breadcrumb.GetAll);
         const rows = find.all();
-        const results = rows.map(row => {
-            return {
-                correlationTag: row.correlation_tag,
-                name: row.name,
-                type: row.type,
-                payload: this.deserializeItem(row.payload)
-            }
-        });
-
-        return results;
+        const records = rows.map(row => this.hydrateBreadcrumb(row));
+        return records;
     }
 
-    async loadBreadcrumbsByType(type: string): Promise<IBreadcrumbFromStorage[]> {
+    async loadBreadcrumbsByType(type: string): Promise<IBreadcrumbRecord[]> {
         const find = this.db.prepare(sql.Breadcrumb.GetByType);
         const rows = find.all({ type: type });
-        const results = rows.map(row => {
-            return {
-                correlationTag: row.correlation_tag,
-                name: row.name,
-                type: row.type,
-                payload: this.deserializeItem(row.payload)
-            }
-        });
-
-        return results;
+        const records = rows.map(row => this.hydrateBreadcrumb(row));
+        return records;
     }
 
-    async storeInteraction(interaction: IInteractionTowardsStorage): Promise<number> {
-        const record = {
+    async storeInteraction(interaction: IInteractionRecord): Promise<number> {
+        const row = {
             correlationTag: interaction.correlationTag,
             action: interaction.action,
             user: interaction.userAddress.bech32(),
@@ -117,7 +105,7 @@ export class Storage implements IStorage {
         };
 
         const insert = this.db.prepare(sql.Interaction.Insert);
-        const result = insert.run(record);
+        const result = insert.run(row);
         const id = Number(result.lastInsertRowid);
         return id;
     }
@@ -128,8 +116,12 @@ export class Storage implements IStorage {
         update.run({ id: id, output: outputJson });
     }
 
-    async storeAccountSnapshot(snapshot: IAccountSnapshotTowardsStorage): Promise<void> {
-        const record: any = {
+    loadInteractions(): Promise<IInteractionRecord[]> {
+        throw new Error("Method not implemented.");
+    }
+
+    async storeAccountSnapshot(snapshot: IAccountSnapshotRecord): Promise<void> {
+        const row: any = {
             correlationTag: snapshot.correlationTag,
             address: snapshot.address.bech32(),
             nonce: snapshot.nonce.valueOf(),
@@ -141,11 +133,15 @@ export class Storage implements IStorage {
         }
 
         const insert = this.db.prepare(sql.AccountSnapshot.Insert);
-        insert.run(record);
+        insert.run(row);
     }
 
-    async logEvent(event: IEventTowardsStorage): Promise<void> {
-        const record: any = {
+    loadAccountSnapshots(): Promise<IAccountSnapshotRecord[]> {
+        throw new Error("Method not implemented.");
+    }
+
+    async logEvent(event: IEventRecord): Promise<void> {
+        const row: any = {
             correlationTag: event.correlationTag,
             event: event.kind,
             summary: event.summary,
@@ -154,7 +150,11 @@ export class Storage implements IStorage {
         }
 
         const insert = this.db.prepare(sql.Log.Insert);
-        insert.run(record);
+        insert.run(row);
+    }
+
+    loadEvents(): Promise<IEventRecord[]> {
+        throw new Error("Method not implemented.");
     }
 
     private serializeItem(item: any) {

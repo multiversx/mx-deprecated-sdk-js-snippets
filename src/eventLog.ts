@@ -23,6 +23,7 @@ export class EventLog implements IEventLog {
         const address = contractAddress.bech32();
 
         await this.storage.logEvent({
+            id: 0,
             correlationTag: this.correlation.tag,
             kind: EventKind.ContractDeploymentSent,
             summary: `deployment transaction sent, transaction = ${transaction}, contract = ${address}`,
@@ -35,6 +36,7 @@ export class EventLog implements IEventLog {
 
     async onTransactionSent(transactionHash: IHash): Promise<void> {
         await this.storage.logEvent({
+            id: 0,
             correlationTag: this.correlation.tag,
             kind: EventKind.TransactionSent,
             summary: `transaction sent, transaction = ${transactionHash}`,
@@ -48,6 +50,7 @@ export class EventLog implements IEventLog {
         const prettyTransaction = prettifyObject(transactionOnNetwork);
 
         await this.storage.logEvent({
+            id: 0,
             correlationTag: this.correlation.tag,
             kind: EventKind.TransactionCompleted,
             summary: `transaction completed, transaction = ${transactionHash.toString()}`,
