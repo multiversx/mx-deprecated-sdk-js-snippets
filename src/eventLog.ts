@@ -1,4 +1,4 @@
-import { IAddress, IEventLog, IHash, IStorage } from "./interface";
+import { IAddress, ICorrelationHolder, IEventLog, IHash, IStorage } from "./interface";
 import { ITransactionOnNetwork } from "./interfaceOfNetwork";
 import { prettifyObject } from "./pretty";
 
@@ -11,9 +11,11 @@ enum EventKind {
 
 export class EventLog implements IEventLog {
     private readonly storage: IStorage;
+    private readonly correlation: ICorrelationHolder;
 
-    constructor(storage: IStorage) {
+    constructor(storage: IStorage, correlation: ICorrelationHolder) {
         this.storage = storage;
+        this.correlation = correlation;
     }
 
     async onContractDeploymentSent(transactionHash: IHash, contractAddress: IAddress): Promise<void> {
@@ -21,6 +23,7 @@ export class EventLog implements IEventLog {
         const address = contractAddress.bech32();
 
         await this.storage.logEvent({
+            correlationTag: this.correlation.tag,
             kind: EventKind.ContractDeploymentSent,
             summary: `deployment transaction sent, transaction = ${transaction}, contract = ${address}`,
             payload: {
@@ -32,6 +35,7 @@ export class EventLog implements IEventLog {
 
     async onTransactionSent(transactionHash: IHash): Promise<void> {
         await this.storage.logEvent({
+            correlationTag: this.correlation.tag,
             kind: EventKind.TransactionSent,
             summary: `transaction sent, transaction = ${transactionHash}`,
             payload: {
@@ -44,6 +48,7 @@ export class EventLog implements IEventLog {
         const prettyTransaction = prettifyObject(transactionOnNetwork);
 
         await this.storage.logEvent({
+            correlationTag: this.correlation.tag,
             kind: EventKind.TransactionCompleted,
             summary: `transaction completed, transaction = ${transactionHash.toString()}`,
             payload: prettyTransaction

@@ -57,28 +57,29 @@ export interface IGeneratedGroupOfUsersConfig {
 
 export interface ITestSession {
     readonly name: string;
+    readonly correlation: ICorrelationHolder;
     readonly networkProvider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
     readonly log: IEventLog;
-    readonly snapshots: ISnapshottingService
+    readonly snapshots: ISnapshottingService;
 
     syncNetworkConfig(): Promise<void>;
     getNetworkConfig(): INetworkConfig;
     syncUsers(users: ITestUser[]): Promise<void>;
-
     saveAddress(name: string, address: IAddress): Promise<void>;
     loadAddress(name: string): Promise<IAddress>;
-
     saveToken(name: string, token: IToken): Promise<void>;
     loadToken(name: string): Promise<IToken>;
-
     saveBreadcrumb(params: { type?: string, name: string, value: any }): Promise<void>;
     loadBreadcrumb(name: string): Promise<any>;
     loadBreadcrumbsByType(type: string): Promise<any[]>;
-
     generateReport(tag?: string): Promise<void>;
     destroy(): Promise<void>;
+}
+
+export interface ICorrelationHolder {
+    tag: string;
 }
 
 export interface IBunchOfUsers {
@@ -119,18 +120,21 @@ export interface IStorage {
 }
 
 export interface IBreadcrumbTowardsStorage {
+    correlationTag: string;
     type: string;
     name: string;
     payload: any;
 }
 
 export interface IBreadcrumbFromStorage {
+    correlationTag: string;
     type: string;
     name: string;
     payload: any;
 }
 
 export interface IInteractionTowardsStorage {
+    correlationTag: string;
     action: string;
     userAddress: IAddress;
     contractAddress: IAddress;
@@ -146,6 +150,7 @@ export interface IInteractionTowardsStorage {
 }
 
 export interface IAccountSnapshotTowardsStorage {
+    correlationTag: string;
     address: IAddress;
     nonce: number;
     balance: IAccountBalance;
@@ -156,6 +161,7 @@ export interface IAccountSnapshotTowardsStorage {
 }
 
 export interface IEventTowardsStorage {
+    correlationTag: string;
     kind: string;
     summary: string;
     payload: any;

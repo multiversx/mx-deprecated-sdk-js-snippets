@@ -36,19 +36,15 @@ export class Storage implements IStorage {
         const serializedPayload = this.serializeItem(breadcrumb.payload);
         const find = this.db.prepare(sql.Breadcrumb.GetByName);
         const insert = this.db.prepare(sql.Breadcrumb.Insert);
-        const update = this.db.prepare(sql.Breadcrumb.UpdateSetPayload);
+        const delete_ = this.db.prepare(sql.Breadcrumb.Delete);
         const existingRecord = find.get({ name: breadcrumb.name });
 
         if (existingRecord) {
-            update.run({
-                id: existingRecord.id,
-                payload: serializedPayload
-            });
-
-            return;
+            delete_.run({ id: existingRecord.id });
         }
 
         insert.run({
+            correlationTag: breadcrumb.correlationTag,
             type: breadcrumb.type,
             name: breadcrumb.name,
             payload: serializedPayload
@@ -64,6 +60,7 @@ export class Storage implements IStorage {
         }
 
         const result = {
+            correlationTag: row.correlation_tag,
             name: row.name,
             type: row.type,
             payload: this.deserializeItem(row.payload)
@@ -77,6 +74,7 @@ export class Storage implements IStorage {
         const rows = find.all();
         const results = rows.map(row => {
             return {
+                correlationTag: row.correlation_tag,
                 name: row.name,
                 type: row.type,
                 payload: this.deserializeItem(row.payload)
@@ -91,6 +89,7 @@ export class Storage implements IStorage {
         const rows = find.all({ type: type });
         const results = rows.map(row => {
             return {
+                correlationTag: row.correlation_tag,
                 name: row.name,
                 type: row.type,
                 payload: this.deserializeItem(row.payload)
@@ -102,6 +101,7 @@ export class Storage implements IStorage {
 
     async storeInteraction(interaction: IInteractionTowardsStorage): Promise<number> {
         const record = {
+            correlationTag: interaction.correlationTag,
             action: interaction.action,
             user: interaction.userAddress.bech32(),
             contract: interaction.contractAddress.bech32(),
@@ -130,6 +130,7 @@ export class Storage implements IStorage {
 
     async storeAccountSnapshot(snapshot: IAccountSnapshotTowardsStorage): Promise<void> {
         const record: any = {
+            correlationTag: snapshot.correlationTag,
             address: snapshot.address.bech32(),
             nonce: snapshot.nonce.valueOf(),
             balance: snapshot.balance.toString(),
@@ -145,6 +146,7 @@ export class Storage implements IStorage {
 
     async logEvent(event: IEventTowardsStorage): Promise<void> {
         const record: any = {
+            correlationTag: event.correlationTag,
             event: event.kind,
             summary: event.summary,
             payload: this.serializeItem(event.payload),

@@ -1,13 +1,15 @@
-import { IAddress, ISnapshottingService, IStorage, ITestUser } from "./interface";
+import { IAddress, ICorrelationHolder, ISnapshottingService, IStorage, ITestUser } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 
 export class SnapshottingService implements ISnapshottingService {
     private readonly networkProvider: INetworkProvider;
     private readonly storage: IStorage;
+    private readonly correlation: ICorrelationHolder;
 
-    constructor(networkProvider: INetworkProvider, storage: IStorage) {
+    constructor(networkProvider: INetworkProvider, storage: IStorage, correlation: ICorrelationHolder) {
         this.networkProvider = networkProvider;
         this.storage = storage;
+        this.correlation = correlation;
     }
 
     async takeSnapshotsOfUsers(users: ITestUser[]): Promise<void> {
@@ -42,6 +44,7 @@ export class SnapshottingService implements ISnapshottingService {
         });
 
         const snapshot = {
+            correlationTag: this.correlation.tag,
             address: address,
             nonce: account.nonce,
             balance: account.balance,

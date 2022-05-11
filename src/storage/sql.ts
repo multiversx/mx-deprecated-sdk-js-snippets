@@ -2,6 +2,7 @@ export class Breadcrumb {
     static CreateTable = `
 CREATE TABLE "breadcrumb" (
     "id" INTEGER PRIMARY KEY ASC, 
+    "correlation_tag" TEXT,
     "type" TEXT,
     "name" TEXT,
     "payload" TEXT
@@ -10,14 +11,15 @@ CREATE TABLE "breadcrumb" (
     static GetByName = `SELECT * FROM "breadcrumb" WHERE "name" = @name`;
     static GetByType = `SELECT * FROM "breadcrumb" WHERE "type" = @type`;
     static GetAll = `SELECT * FROM "breadcrumb"`;
-    static Insert = `INSERT INTO "breadcrumb" ("type", "name", "payload") VALUES (@type, @name, @payload)`;
-    static UpdateSetPayload = `UPDATE "breadcrumb" SET "payload" = @payload WHERE "id" = @id`;
+    static Insert = `INSERT INTO "breadcrumb" ("correlation_tag", "type", "name", "payload") VALUES (@correlationTag, @type, @name, @payload)`;
+    static Delete = `DELETE FROM "breadcrumb" WHERE "id" = @id`;
 }
 
 export class Interaction {
     static CreateTable = `
 CREATE TABLE "interaction" (
     "id" INTEGER PRIMARY KEY ASC, 
+    "correlation_tag" TEXT,
     "action" TEXT,
     "user" TEXT,
     "contract" TEXT,
@@ -35,12 +37,12 @@ CREATE TABLE "interaction" (
 
     static Insert = `
 INSERT INTO "interaction" (
-    "action", "user", "contract", "transaction", 
+    "correlation_tag", "action", "user", "contract", "transaction", 
     "timestamp", "round", "epoch", "block_nonce", "hyperblock_nonce", 
     "input", "transfers", "output"
 ) 
 VALUES (
-    @action, @user, @contract, @transaction, 
+    @correlationTag, @action, @user, @contract, @transaction, 
     @timestamp, @round, @epoch, @blockNonce, @hyperblockNonce, 
     @input, @transfers, @output
 );`
@@ -52,6 +54,7 @@ export class AccountSnapshot {
     static CreateTable = `
 CREATE TABLE "account_snapshot" (
     "id" INTEGER PRIMARY KEY ASC, 
+    "correlation_tag" TEXT,
     "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "address" TEXT,
     "nonce" NUMBER,
@@ -67,11 +70,11 @@ CREATE TABLE "account_snapshot" (
 
     static Insert = `
 INSERT INTO "account_snapshot" (
-    "address", "nonce", "balance", "fungible_tokens", "non_fungible_tokens", 
+    "correlation_tag", "address", "nonce", "balance", "fungible_tokens", "non_fungible_tokens", 
     "taken_before_interaction", "taken_after_interaction"
 )
 VALUES (
-    @address, @nonce, @balance, @fungibleTokens, @nonFungibleTokens, 
+    @correlationTag, @address, @nonce, @balance, @fungibleTokens, @nonFungibleTokens, 
     @takenBeforeInteraction, @takenAfterInteraction
 );`;
 }
@@ -80,6 +83,7 @@ export class Log {
     static CreateTable = `
 CREATE TABLE "log" (
     "id" INTEGER PRIMARY KEY ASC, 
+    "correlation_tag" TEXT,
     "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "event" TEXT,
     "summary" TEXT,
@@ -91,9 +95,9 @@ CREATE TABLE "log" (
 
     static Insert = `
 INSERT INTO "log" (
-    "event", "summary", "payload"
+    "correlation_tag", "event", "summary", "payload"
 )
 VALUES (
-    @event, @summary, @payload
+    @correlationTag, @event, @summary, @payload
 );`;
 }
