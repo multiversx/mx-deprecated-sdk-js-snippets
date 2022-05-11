@@ -116,8 +116,30 @@ export class Storage implements IStorage {
         update.run({ id: id, output: outputJson });
     }
 
-    loadInteractions(): Promise<IInteractionRecord[]> {
-        throw new Error("Method not implemented.");
+    async loadInteractions(): Promise<IInteractionRecord[]> {
+        const find = this.db.prepare(sql.Interaction.GetAll);
+        const rows = find.all();
+        const records = rows.map(row => this.hydrateInteraction(row));
+        return records;
+    }
+
+    private hydrateInteraction(row: any): IInteractionRecord {
+        return {
+            id: row.id,
+            correlationTag: row.correlation_tag,
+            action: row.action,
+            userAddress: { bech32: () => row.user },
+            contractAddress: { bech32: () => row.contract },
+            transactionHash: row.transaction,
+            timestamp: row.timestamp,
+            round: row.round,
+            epoch: row.epoch,
+            blockNonce: row.block_nonce,
+            hyperblockNonce: row.hyperblock_nonce,
+            input: this.deserializeItem(row.input),
+            transfers: this.deserializeItem(row.transfers),
+            output: this.deserializeItem(row.output)
+        };
     }
 
     async storeAccountSnapshot(snapshot: IAccountSnapshotRecord): Promise<void> {
@@ -136,8 +158,25 @@ export class Storage implements IStorage {
         insert.run(row);
     }
 
-    loadAccountSnapshots(): Promise<IAccountSnapshotRecord[]> {
-        throw new Error("Method not implemented.");
+    async loadAccountSnapshots(): Promise<IAccountSnapshotRecord[]> {
+        const find = this.db.prepare(sql.AccountSnapshot.GetAll);
+        const rows = find.all();
+        const records = rows.map(row => this.hydrateAccountSnapshot(row));
+        return records;
+    }
+
+    private hydrateAccountSnapshot(row: any): IAccountSnapshotRecord {
+        return {
+            id: row.id,
+            correlationTag: row.correlation_tag,
+            address: { bech32: () => row.address },
+            nonce: row.nonce,
+            balance: row.balance,
+            fungibleTokens: this.deserializeItem(row.fungible_tokens),
+            nonFungibleTokens: this.deserializeItem(row.non_fungible_tokens),
+            takenBeforeInteraction: row.taken_before_interaction,
+            takenAfterInteraction: row.taken_after_interaction
+        };
     }
 
     async logEvent(event: IEventRecord): Promise<void> {
@@ -153,8 +192,22 @@ export class Storage implements IStorage {
         insert.run(row);
     }
 
-    loadEvents(): Promise<IEventRecord[]> {
-        throw new Error("Method not implemented.");
+    async loadEvents(): Promise<IEventRecord[]> {
+        const find = this.db.prepare(sql.Log.GetAll);
+        const rows = find.all();
+        const records = rows.map(row => this.hydrateEvent(row));
+        return records;
+    }
+
+    private hydrateEvent(row: any): IEventRecord {
+        return {
+            id: row.id,
+            correlationTag: row.correlation_tag,
+            kind: row.kind,
+            summary: row.summary,
+            payload: this.deserializeItem(row.payload),
+            interaction: row.interaction
+        };
     }
 
     private serializeItem(item: any) {

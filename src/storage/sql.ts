@@ -34,7 +34,7 @@ CREATE TABLE "interaction" (
     "output" TEXT
 );`;
 
-
+    static GetAll = `SELECT * FROM "interaction"`;
     static Insert = `
 INSERT INTO "interaction" (
     "correlation_tag", "action", "user", "contract", "transaction", 
@@ -68,6 +68,7 @@ CREATE TABLE "account_snapshot" (
     FOREIGN KEY("taken_after_interaction") REFERENCES "interaction"("id")
 );`;
 
+    static GetAll = `SELECT * FROM "account_snapshot"`;
     static Insert = `
 INSERT INTO "account_snapshot" (
     "correlation_tag", "address", "nonce", "balance", "fungible_tokens", "non_fungible_tokens", 
@@ -93,6 +94,7 @@ CREATE TABLE "log" (
     FOREIGN KEY("interaction") REFERENCES "interaction"("id")
 );`;
 
+    static GetAll = `SELECT * FROM "log"`;
     static Insert = `
 INSERT INTO "log" (
     "correlation_tag", "event", "summary", "payload"
