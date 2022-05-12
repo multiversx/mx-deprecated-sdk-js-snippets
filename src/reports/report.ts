@@ -2,7 +2,7 @@ import ejs from "ejs";
 import { readFileSync, writeFileSync } from "fs";
 import { BreadcrumbTypeAddress, BreadcrumbTypeToken } from "../constants";
 import { resolvePath } from "../filesystem";
-import { IBreadcrumbRecord, IAuditRecord, IReportingConfig, IStorage } from "../interface";
+import { IBreadcrumbRecord, IAuditEntryRecord, IReportingConfig, IStorage } from "../interface";
 
 export class Report {
     private readonly config: IReportingConfig;

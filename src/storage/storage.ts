@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as sql from "./sql";
 import DatabaseConstructor, { Database } from "better-sqlite3";
-import { IBreadcrumbRecord, IAuditRecord, IStorage } from "../interface";
+import { IBreadcrumbRecord, IAuditEntryRecord, IStorage } from "../interface";
 import { ErrBreadcrumbNotFound } from "../errors";
 
 export class Storage implements IStorage {
@@ -85,7 +85,7 @@ export class Storage implements IStorage {
         return records;
     }
 
-    async storeEvent(record: IAuditRecord): Promise<number> {
+    async storeAuditEntry(record: IAuditEntryRecord): Promise<number> {
         const row: any = {
             correlationTag: record.correlationTag,
             event: record.event,
@@ -99,14 +99,14 @@ export class Storage implements IStorage {
         return Number(result.lastInsertRowid);
     }
 
-    async loadEvents(): Promise<IAuditRecord[]> {
+    async loadAuditEntries(): Promise<IAuditEntryRecord[]> {
         const find = this.db.prepare(sql.Audit.GetAll);
         const rows = find.all();
-        const records = rows.map(row => this.hydrateEvent(row));
+        const records = rows.map(row => this.hydrateAuditEntry(row));
         return records;
     }
 
-    private hydrateEvent(row: any): IAuditRecord {
+    private hydrateAuditEntry(row: any): IAuditEntryRecord {
         return {
             id: row.id,
             correlationTag: row.correlation_tag,

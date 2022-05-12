@@ -30,7 +30,7 @@ export class Audit implements IAudit {
         const transaction = transactionHash.toString();
         const address = contractAddress.bech32();
 
-        await this.storage.storeEvent({
+        await this.storage.storeAuditEntry({
             id: 0,
             correlationTag: this.correlation.tag,
             event: EventKind.ContractDeploymentSent,
@@ -43,7 +43,7 @@ export class Audit implements IAudit {
     }
 
     async onTransactionSent(transactionHash: IHash): Promise<void> {
-        await this.storage.storeEvent({
+        await this.storage.storeAuditEntry({
             id: 0,
             correlationTag: this.correlation.tag,
             event: EventKind.TransactionSent,
@@ -57,7 +57,7 @@ export class Audit implements IAudit {
     async onTransactionCompleted(transactionHash: IHash, transactionOnNetwork: ITransactionOnNetwork): Promise<void> {
         const payload = prettifyObject(transactionOnNetwork);
 
-        await this.storage.storeEvent({
+        await this.storage.storeAuditEntry({
             id: 0,
             correlationTag: this.correlation.tag,
             event: EventKind.TransactionCompleted,
@@ -73,7 +73,7 @@ export class Audit implements IAudit {
     }): Promise<void> {
         const payload = prettifyObject(params);
 
-        await this.storage.storeEvent({
+        await this.storage.storeAuditEntry({
             id: 0,
             correlationTag: this.correlation.tag,
             event: EventKind.ContractOutcomeReceived,
@@ -83,7 +83,7 @@ export class Audit implements IAudit {
     }
 
     async onSnapshot(params: { state: any, summary?: string, comparableTo?: number }): Promise<number> {
-        return await this.storage.storeEvent({
+        return await this.storage.storeAuditEntry({
             id: 0,
             correlationTag: this.correlation.tag,
             event: EventKind.ArbitrarySnapshot,
@@ -147,7 +147,7 @@ export class Audit implements IAudit {
 
 
     private async onAccountsSnapshot(params: { state: any, summary?: string, comparableTo?: number }): Promise<number> {
-        return await this.storage.storeEvent({
+        return await this.storage.storeAuditEntry({
             id: 0,
             correlationTag: this.correlation.tag,
             event: EventKind.AccountsSnapshot,

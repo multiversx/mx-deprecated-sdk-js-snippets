@@ -107,8 +107,8 @@ export interface IStorage {
     loadBreadcrumb(name: string): Promise<IBreadcrumbRecord>;
     loadBreadcrumbs(): Promise<IBreadcrumbRecord[]>;
     loadBreadcrumbsByType(type: string): Promise<IBreadcrumbRecord[]>;
-    storeEvent(record: IAuditRecord): Promise<number>;
-    loadEvents(): Promise<IAuditRecord[]>;
+    storeAuditEntry(record: IAuditEntryRecord): Promise<number>;
+    loadAuditEntries(): Promise<IAuditEntryRecord[]>;
     destroy(): Promise<void>;
 }
 
@@ -120,7 +120,7 @@ export interface IBreadcrumbRecord {
     payload: any;
 }
 
-export interface IAuditRecord {
+export interface IAuditEntryRecord {
     id: number;
     correlationTag: string;
     event: string;
