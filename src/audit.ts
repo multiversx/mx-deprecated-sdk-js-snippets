@@ -38,7 +38,8 @@ export class Audit implements IAudit {
             payload: {
                 transaction: transaction,
                 address: address
-            }
+            },
+            comparableTo: null
         });
     }
 
@@ -50,7 +51,8 @@ export class Audit implements IAudit {
             summary: `transaction sent, transaction = ${transactionHash}`,
             payload: {
                 transaction: transactionHash,
-            }
+            },
+            comparableTo: null
         });
     }
 
@@ -62,7 +64,8 @@ export class Audit implements IAudit {
             correlationTag: this.correlation.tag,
             event: EventKind.TransactionCompleted,
             summary: `transaction completed, transaction = ${transactionHash.toString()}`,
-            payload: payload
+            payload: payload,
+            comparableTo: null
         });
     }
 
@@ -78,7 +81,8 @@ export class Audit implements IAudit {
             correlationTag: this.correlation.tag,
             event: EventKind.ContractOutcomeReceived,
             summary: `returnCode = ${params.returnCode?.toString()}, returnMessage = ${params.returnMessage}`,
-            payload: payload
+            payload: payload,
+            comparableTo: null
         });
     }
 
@@ -89,7 +93,7 @@ export class Audit implements IAudit {
             event: EventKind.ArbitrarySnapshot,
             summary: params.summary || "",
             payload: params.state,
-            comparableTo: params.comparableTo
+            comparableTo: params.comparableTo || null
         });
     }
 
@@ -153,7 +157,7 @@ export class Audit implements IAudit {
             event: EventKind.AccountsSnapshot,
             summary: params.summary || "",
             payload: params.state,
-            comparableTo: params.comparableTo
+            comparableTo: params.comparableTo || null
         });
     }
 }

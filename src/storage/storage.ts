@@ -30,7 +30,7 @@ export class Storage implements IStorage {
         await fs.promises.unlink(this.file);
     }
 
-    async storeBreadcrumb(record: IBreadcrumbRecord): Promise<void> {
+    async storeBreadcrumb(record: IBreadcrumbRecord): Promise<number> {
         const serializedPayload = this.serializeItem(record.payload);
         const find = this.db.prepare(sql.Breadcrumb.GetByName);
         const insert = this.db.prepare(sql.Breadcrumb.Insert);
@@ -41,12 +41,16 @@ export class Storage implements IStorage {
             delete_.run({ id: existingRow.id });
         }
 
-        insert.run({
+        const result = insert.run({
             correlationTag: record.correlationTag,
             type: record.type,
             name: record.name,
             payload: serializedPayload
         });
+
+        const id = Number(result.lastInsertRowid);
+        record.id = id;
+        return id;
     }
 
     async loadBreadcrumb(name: string): Promise<IBreadcrumbRecord> {
@@ -96,7 +100,9 @@ export class Storage implements IStorage {
 
         const insert = this.db.prepare(sql.Audit.Insert);
         const result = insert.run(row);
-        return Number(result.lastInsertRowid);
+        const id = Number(result.lastInsertRowid);
+        record.id = id;
+        return id;
     }
 
     async loadAuditEntries(): Promise<IAuditEntryRecord[]> {

@@ -103,7 +103,7 @@ export interface ITestUser {
  * It will be split once it grows a little bit more.
  */
 export interface IStorage {
-    storeBreadcrumb(record: IBreadcrumbRecord): Promise<void>;
+    storeBreadcrumb(record: IBreadcrumbRecord): Promise<number>;
     loadBreadcrumb(name: string): Promise<IBreadcrumbRecord>;
     loadBreadcrumbs(): Promise<IBreadcrumbRecord[]>;
     loadBreadcrumbsByType(type: string): Promise<IBreadcrumbRecord[]>;
@@ -126,7 +126,7 @@ export interface IAuditEntryRecord {
     event: string;
     summary: string;
     payload: any;
-    comparableTo?: number;
+    comparableTo: number | null;
 }
 
 export interface IAccount {
