@@ -13,7 +13,7 @@
         "individuals": [
             {
                 "name": "whale",
-                "pem": "~/test-wallets/erd1testnlersh4z0wsv8kjx39me4rmnvjkwu8dsaea7ukdvvc9z396qykv7z7.pem"
+                "pem": "~/elrondsdk/testwallets/latest/users/alice.pem"
             },
             {
                 "name": "alice",
