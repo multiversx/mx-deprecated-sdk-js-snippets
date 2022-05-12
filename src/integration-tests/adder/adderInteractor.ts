@@ -68,10 +68,10 @@ export class AdderInteractor {
 
         // Let's broadcast the transaction and await its completion:
         const transactionHash = await this.networkProvider.sendTransaction(transaction);
-        await this.audit.onContractDeploymentSent(transactionHash, address);
-        
+        await this.audit.onContractDeploymentSent({ transactionHash: transactionHash, contractAddress: address });
+
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        await this.audit.onTransactionCompleted(transactionHash, transactionOnNetwork);
+        await this.audit.onTransactionCompleted({ transactionHash: transactionHash, transaction: transactionOnNetwork });
 
         // In the end, parse the results:
         const { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
@@ -96,10 +96,10 @@ export class AdderInteractor {
 
         // Let's broadcast the transaction and await its completion:
         const transactionHash = await this.networkProvider.sendTransaction(transaction);
-        await this.audit.onTransactionSent(transactionHash);
+        await this.audit.onTransactionSent({ action: "add", args: [value], transactionHash: transactionHash });
 
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        await this.audit.onTransactionCompleted(transactionHash, transactionOnNetwork);
+        await this.audit.onTransactionCompleted({ transactionHash: transactionHash, transaction: transactionOnNetwork });
 
         // In the end, parse the results:
         let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());

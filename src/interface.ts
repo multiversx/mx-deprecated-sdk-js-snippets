@@ -158,12 +158,25 @@ export interface ITokenPayment {
 }
 
 export interface IAudit {
-    onContractDeploymentSent(transactionHash: IHash, contractAddress: IAddress): Promise<void>;
-    onTransactionSent(transactionHash: IHash): Promise<void>;
-    onTransactionCompleted(transactionHash: IHash, transactionOnNetwork: ITransactionOnNetwork): Promise<void>;
-    onContractOutcome(params: { returnCode?: IReturnCode, returnMessage?: string, values?: any[] }): Promise<void>
-    onSnapshot(params: { state: any, summary?: string, comparableTo?: number }): Promise<number>;
+    onContractDeploymentSent(params: { transactionHash: IHash, contractAddress: IAddress }): Promise<void>;
     
+    onTransactionSent(params: {
+        action?: string,
+        args?: any[],
+        transactionHash: IHash
+    }): Promise<void>;
+
+    onTransactionCompleted(params: { transactionHash: IHash, transaction: ITransactionOnNetwork }): Promise<void>;
+
+    onContractOutcome(params: {
+        transactionHash?: IHash,
+        returnCode?: IReturnCode,
+        returnMessage?: string,
+        values?: any[]
+    }): Promise<void>
+
+    onSnapshot(params: { state: any, summary?: string, comparableTo?: number }): Promise<number>;
+
     emitSnapshotOfUsers(params: { users: ITestUser[], comparableTo?: number }): Promise<number>;
     emitSnapshotOfAccounts(params: { addresses: IAddress[], comparableTo?: number }): Promise<number>;
 }

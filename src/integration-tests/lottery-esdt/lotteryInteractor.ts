@@ -68,10 +68,10 @@ export class LotteryInteractor {
 
         // Let's broadcast the transaction and await its completion:
         const transactionHash = await this.networkProvider.sendTransaction(transaction);
-        await this.audit.onContractDeploymentSent(transactionHash, address);
+        await this.audit.onContractDeploymentSent({ transactionHash: transactionHash, contractAddress: address });
 
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        await this.audit.onTransactionCompleted(transactionHash, transactionOnNetwork);
+        await this.audit.onTransactionCompleted({ transactionHash: transactionHash, transaction: transactionOnNetwork });
 
         // In the end, parse the results:
         let { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
@@ -107,10 +107,10 @@ export class LotteryInteractor {
 
         // Let's broadcast the transaction and await its completion:
         const transactionHash = await this.networkProvider.sendTransaction(transaction);
-        await this.audit.onTransactionSent(transactionHash);
+        await this.audit.onTransactionSent({ action: "start", args: [lotteryName, tokenIdentifier], transactionHash: transactionHash });
 
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        await this.audit.onTransactionCompleted(transactionHash, transactionOnNetwork);
+        await this.audit.onTransactionCompleted({ transactionHash: transactionHash, transaction: transactionOnNetwork });
 
         // In the end, parse the results:
         let { returnCode, returnMessage } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());
@@ -139,10 +139,10 @@ export class LotteryInteractor {
 
         // Let's broadcast the transaction and await its completion:
         const transactionHash = await this.networkProvider.sendTransaction(transaction);
-        await this.audit.onTransactionSent(transactionHash);
+        await this.audit.onTransactionSent({ action: "buyTicket", args: [lotteryName, amount.toPrettyString()], transactionHash: transactionHash });
 
         const transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        await this.audit.onTransactionCompleted(transactionHash, transactionOnNetwork);
+        await this.audit.onTransactionCompleted({ transactionHash: transactionHash, transaction: transactionOnNetwork });
 
         // In the end, parse the results:
         let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());

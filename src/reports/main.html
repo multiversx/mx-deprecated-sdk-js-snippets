@@ -127,13 +127,13 @@
             </table>
         </div>
 
-        <h3>Interactions</h3>
+        <h3>Audit</h3>
 
         <div class="mt-4">
-            <% interactions.forEach(function(interaction) { %>
+            <% audit.forEach(function(entry) { %>
                 <div class="row">
                     <div class="col-sm-3">
-                        #<%= interaction.id %> <strong><%= interaction.action %></strong>
+                        #<%= entry.id %> <strong><%= interaction.action %></strong>
                         
                         <a target="_blank" href="<%= interaction.transactionHref %>"><%= interaction.transaction %></a>
                     </div>

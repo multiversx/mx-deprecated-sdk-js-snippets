@@ -26,58 +26,73 @@ export class Audit implements IAudit {
         this.networkProvider = params.networkProvider;
     }
 
-    async onContractDeploymentSent(transactionHash: IHash, contractAddress: IAddress): Promise<void> {
-        const transaction = transactionHash.toString();
-        const address = contractAddress.bech32();
+    async onContractDeploymentSent(params: { transactionHash: IHash, contractAddress: IAddress }): Promise<void> {
+        const transaction = params.transactionHash.toString();
+        const address = params.contractAddress.bech32();
+
+        const payload =  {
+            transaction: transaction,
+            address: address
+        };
 
         await this.storage.storeAuditEntry({
             id: 0,
             correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             event: EventKind.ContractDeploymentSent,
-            summary: `deployment transaction sent, transaction = ${transaction}, contract = ${address}`,
-            payload: {
-                transaction: transaction,
-                address: address
-            },
+            summary: `deployment, transaction = ${transaction}, contract = ${address}`,
+            payload: payload,
             comparableTo: null
         });
     }
 
-    async onTransactionSent(transactionHash: IHash): Promise<void> {
+    async onTransactionSent(params: { action?: string, args?: any[], transactionHash: IHash }): Promise<void> {
+        const payload = {
+            action: params.action,
+            args: params.args,
+            transactionHash: params.transactionHash,
+        };
+
         await this.storage.storeAuditEntry({
             id: 0,
             correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             event: EventKind.TransactionSent,
-            summary: `transaction sent, transaction = ${transactionHash}`,
-            payload: {
-                transaction: transactionHash,
-            },
+            summary: `action = ${params.action}, transaction = ${params.transactionHash}`,
+            payload: payload,
             comparableTo: null
         });
     }
 
-    async onTransactionCompleted(transactionHash: IHash, transactionOnNetwork: ITransactionOnNetwork): Promise<void> {
-        const payload = prettifyObject(transactionOnNetwork);
+    async onTransactionCompleted(params: { transactionHash: IHash, transaction: ITransactionOnNetwork }): Promise<void> {
+        const payload = {
+            transactionHash: params.transactionHash,
+            transaction: prettifyObject(params.transaction)
+        };
 
         await this.storage.storeAuditEntry({
             id: 0,
             correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             event: EventKind.TransactionCompleted,
-            summary: `transaction completed, transaction = ${transactionHash.toString()}`,
+            summary: `transaction = ${params.transactionHash}`,
             payload: payload,
             comparableTo: null
         });
     }
 
     async onContractOutcome(params: {
+        transactionHash?: IHash,
         returnCode?: IReturnCode,
         returnMessage?: string,
         values?: any[]
     }): Promise<void> {
-        const payload = prettifyObject(params);
+        const payload = {
+            transactionHash: params.transactionHash,
+            returnCode: params.returnCode,
+            returnMessage: params.returnMessage,
+            values: prettifyObject(params.values)
+        };
 
         await this.storage.storeAuditEntry({
             id: 0,
