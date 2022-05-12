@@ -117,7 +117,10 @@ export class TestSession implements ITestSession {
         await Promise.all(promises);
     }
 
-    async saveAddress(name: string, address: Address): Promise<void> {
+    async saveAddress(params: { name: string, address: Address }): Promise<void> {
+        const name = params.name;
+        const address = params.address;
+
         console.log(`TestSession.saveAddress(): name = [${name}], address = ${address.bech32()}`);
 
         await this.storage.storeBreadcrumb({
@@ -136,7 +139,10 @@ export class TestSession implements ITestSession {
         return address;
     }
 
-    async saveToken(name: string, token: IToken): Promise<void> {
+    async saveToken(params: { name: string, token: IToken }): Promise<void> {
+        const name = params.name;
+        const token = params.token;
+        
         console.log(`TestSession.saveToken(): name = [${name}], token = ${token.identifier}`);
 
         await this.storage.storeBreadcrumb({

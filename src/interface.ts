@@ -66,9 +66,9 @@ export interface ITestSession {
     syncNetworkConfig(): Promise<void>;
     getNetworkConfig(): INetworkConfig;
     syncUsers(users: ITestUser[]): Promise<void>;
-    saveAddress(name: string, address: IAddress): Promise<void>;
+    saveAddress(params: { name: string, address: IAddress }): Promise<void>;
     loadAddress(name: string): Promise<IAddress>;
-    saveToken(name: string, token: IToken): Promise<void>;
+    saveToken(params: { name: string, token: IToken }): Promise<void>;
     loadToken(name: string): Promise<IToken>;
     saveBreadcrumb(params: { type?: string, name: string, value: any }): Promise<void>;
     loadBreadcrumb(name: string): Promise<any>;
@@ -159,7 +159,7 @@ export interface ITokenPayment {
 
 export interface IAudit {
     onContractDeploymentSent(params: { transactionHash: IHash, contractAddress: IAddress }): Promise<void>;
-    
+
     onTransactionSent(params: {
         action?: string,
         args?: any[],

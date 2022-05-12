@@ -47,7 +47,7 @@ describe("lottery snippet", async function () {
         let interactor = await createESDTInteractor(session);
         await session.syncUsers([owner]);
         let token = await interactor.issueFungibleToken(owner, { name: "FOO", ticker: "FOO", decimals: 0, supply: "100000000" });
-        await session.saveToken("lotteryToken", token);
+        await session.saveToken({ name: "lotteryToken", token: token });
     });
 
     it("airdrop lottery token", async function () {
@@ -72,7 +72,7 @@ describe("lottery snippet", async function () {
 
         assert.isTrue(returnCode.isSuccess());
 
-        await session.saveAddress("lottery", address);
+        await session.saveAddress({ name: "lottery", address: address });
     });
 
     it("start lottery", async function () {

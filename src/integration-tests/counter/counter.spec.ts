@@ -36,7 +36,7 @@ describe("counter snippet", async function () {
         let interactor = await createESDTInteractor(session);
         await session.syncUsers([owner]);
         let token = await interactor.issueFungibleToken(owner, { name: "COUNTER", ticker: "COUNTER", decimals: 0, supply: "100000000" });
-        await session.saveToken("counterToken", token);
+        await session.saveToken({ name: "counterToken", token: token });
     });
 
     it("airdrop counter token", async function () {
@@ -58,7 +58,7 @@ describe("counter snippet", async function () {
 
         assert.isTrue(returnCode.isSuccess());
 
-        await session.saveAddress("counter", address);
+        await session.saveAddress({ name: "counter", address: address });
     });
 
     it("increment with single ESDT transfer", async function () {

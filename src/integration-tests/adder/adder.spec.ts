@@ -47,7 +47,7 @@ describe("adder snippet", async function () {
 
         assert.isTrue(returnCode.isSuccess());
 
-        await session.saveAddress("adder", address);
+        await session.saveAddress({ name: "adder", address: address });
     });
 
     it("add", async function () {
