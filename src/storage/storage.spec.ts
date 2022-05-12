@@ -32,92 +32,12 @@ describe("test storage", async function () {
         await storage.destroy();
     });
 
-    it("store & update interactions", async function () {
+    it("store & load audit entries", async function () {
         this.timeout(Timeout);
 
         let storage = await Storage.create(createDatabaseName(this));
 
-        let reference = await storage.storeInteraction({
-            id: 0,
-            correlationTag: "test",
-            action: "stake",
-            userAddress: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            contractAddress: new Address("erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu"),
-            transactionHash: new TransactionHash(""),
-            timestamp: "friday",
-            round: 42,
-            epoch: 1,
-            blockNonce: 7,
-            hyperblockNonce: 9,
-            input: { foo: "bar" },
-            transfers: {},
-            output: {}
-        });
-
-        assert.isTrue(reference.valueOf() > 0);
-
-        await storage.updateInteractionSetOutput(reference, { something: "something" });
-
-        await storage.destroy();
-    });
-
-    it("store account snapshots", async function () {
-        this.timeout(Timeout);
-
-        let storage = await Storage.create(createDatabaseName(this));
-
-        // Without reference to "before" / "after" interaction
-        await storage.storeAccountSnapshot({
-            id: 0,
-            correlationTag: "test",
-            address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            nonce: 42,
-            balance: TokenPayment.egldFromAmount(1),
-            fungibleTokens: [{ identifier: "RIDE", balance: 1000 }, { identifier: "MEX", balance: 1000 }],
-        });
-
-        // With references to "before" / "after" interaction
-        let interactionReference = await storage.storeInteraction({
-            id: 0,
-            correlationTag: "test",
-            action: "doSomething",
-            userAddress: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            contractAddress: new Address("erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu"),
-            transactionHash: new TransactionHash(""),
-            timestamp: "friday",
-            round: 42,
-            epoch: 1,
-            blockNonce: 7,
-            hyperblockNonce: 9,
-            input: { foo: "bar" },
-            transfers: {},
-            output: { bar: "foo" }
-        });
-
-        let snapshotBefore = {
-            id: 0,
-            correlationTag: "test",
-            address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            nonce: 42,
-            balance: TokenPayment.egldFromAmount(1),
-            fungibleTokens: [{ identifier: "RIDE", balance: 1000 }, { identifier: "MEX", balance: 1000 }],
-            takenBeforeInteraction: interactionReference
-        };
-
-        let snapshotAfter = {
-            id: 0,
-            correlationTag: "test",
-            address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            nonce: 43,
-            balance: TokenPayment.egldFromAmount(2),
-            fungibleTokens: [{ identifier: "RIDE", balance: 500 }, { identifier: "MEX", balance: 500 }],
-            takenAfterInteraction: interactionReference
-        };
-
-        await storage.storeAccountSnapshot(snapshotBefore);
-        await storage.storeAccountSnapshot(snapshotAfter);
-
-        // TODO: Add some assertions.
+        // TODO
 
         await storage.destroy();
     });

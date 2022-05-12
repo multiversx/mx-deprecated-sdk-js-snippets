@@ -57,12 +57,18 @@ describe("adder snippet", async function () {
 
         await session.syncUsers([owner]);
 
-        let contractAddress = await session.loadAddress("adder");
-        let interactor = await createInteractor(session, contractAddress);
+        const contractAddress = await session.loadAddress("adder");
+        const interactor = await createInteractor(session, contractAddress);
 
-        let sumBefore = await interactor.getSum();
-        let returnCode = await interactor.add(owner, 3);
-        let sumAfter = await interactor.getSum();
+        const sumBefore = await interactor.getSum();
+        const snapshotBefore = await session.audit.onSnapshot({ state: { sum: sumBefore } });
+
+        const returnCode = await interactor.add(owner, 3);
+        await session.audit.onContractOutcome({ returnCode });
+
+        const sumAfter = await interactor.getSum();
+        await session.audit.onSnapshot({ state: { sum: sumBefore }, comparableTo: snapshotBefore });
+
         assert.isTrue(returnCode.isSuccess());
         assert.equal(sumAfter, sumBefore + 3);
     });

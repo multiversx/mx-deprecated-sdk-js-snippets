@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as sql from "./sql";
 import DatabaseConstructor, { Database } from "better-sqlite3";
-import { IAccountSnapshotRecord, IBreadcrumbRecord, IEventRecord, IInteractionRecord, IStorage } from "../interface";
+import { IBreadcrumbRecord, IAuditRecord, IStorage } from "../interface";
 import { ErrBreadcrumbNotFound } from "../errors";
 
 export class Storage implements IStorage {
@@ -19,9 +19,7 @@ export class Storage implements IStorage {
 
         if (shouldCreateSchema) {
             db.prepare(sql.Breadcrumb.CreateTable).run();
-            db.prepare(sql.Interaction.CreateTable).run();
-            db.prepare(sql.AccountSnapshot.CreateTable).run();
-            db.prepare(sql.Log.CreateTable).run();
+            db.prepare(sql.Audit.CreateTable).run();
         }
 
         return new Storage(file, db);
@@ -32,21 +30,21 @@ export class Storage implements IStorage {
         await fs.promises.unlink(this.file);
     }
 
-    async storeBreadcrumb(breadcrumb: IBreadcrumbRecord): Promise<void> {
-        const serializedPayload = this.serializeItem(breadcrumb.payload);
+    async storeBreadcrumb(record: IBreadcrumbRecord): Promise<void> {
+        const serializedPayload = this.serializeItem(record.payload);
         const find = this.db.prepare(sql.Breadcrumb.GetByName);
         const insert = this.db.prepare(sql.Breadcrumb.Insert);
         const delete_ = this.db.prepare(sql.Breadcrumb.Delete);
-        const existingRow = find.get({ name: breadcrumb.name });
+        const existingRow = find.get({ name: record.name });
 
         if (existingRow) {
             delete_.run({ id: existingRow.id });
         }
 
         insert.run({
-            correlationTag: breadcrumb.correlationTag,
-            type: breadcrumb.type,
-            name: breadcrumb.name,
+            correlationTag: record.correlationTag,
+            type: record.type,
+            name: record.name,
             payload: serializedPayload
         });
     }
@@ -87,126 +85,35 @@ export class Storage implements IStorage {
         return records;
     }
 
-    async storeInteraction(interaction: IInteractionRecord): Promise<number> {
-        const row = {
-            correlationTag: interaction.correlationTag,
-            action: interaction.action,
-            user: interaction.userAddress.bech32(),
-            contract: interaction.contractAddress.bech32(),
-            transaction: interaction.transactionHash.toString(),
-            timestamp: interaction.timestamp,
-            round: interaction.round,
-            epoch: interaction.epoch,
-            blockNonce: interaction.blockNonce.valueOf(),
-            hyperblockNonce: interaction.hyperblockNonce.valueOf(),
-            input: this.serializeItem(interaction.input),
-            transfers: this.serializeItem(interaction.transfers),
-            output: this.serializeItem(interaction.output),
-        };
+    async storeEvent(record: IAuditRecord): Promise<number> {
+        const row: any = {
+            correlationTag: record.correlationTag,
+            event: record.event,
+            summary: record.summary,
+            payload: this.serializeItem(record.payload),
+            comparableTo: record.comparableTo
+        }
 
-        const insert = this.db.prepare(sql.Interaction.Insert);
+        const insert = this.db.prepare(sql.Audit.Insert);
         const result = insert.run(row);
-        const id = Number(result.lastInsertRowid);
-        return id;
+        return Number(result.lastInsertRowid);
     }
 
-    async updateInteractionSetOutput(id: number, output: any) {
-        const outputJson = JSON.stringify(output);
-        const update = this.db.prepare(sql.Interaction.UpdateSetOutput);
-        update.run({ id: id, output: outputJson });
-    }
-
-    async loadInteractions(): Promise<IInteractionRecord[]> {
-        const find = this.db.prepare(sql.Interaction.GetAll);
-        const rows = find.all();
-        const records = rows.map(row => this.hydrateInteraction(row));
-        return records;
-    }
-
-    private hydrateInteraction(row: any): IInteractionRecord {
-        return {
-            id: row.id,
-            correlationTag: row.correlation_tag,
-            action: row.action,
-            userAddress: { bech32: () => row.user },
-            contractAddress: { bech32: () => row.contract },
-            transactionHash: row.transaction,
-            timestamp: row.timestamp,
-            round: row.round,
-            epoch: row.epoch,
-            blockNonce: row.block_nonce,
-            hyperblockNonce: row.hyperblock_nonce,
-            input: this.deserializeItem(row.input),
-            transfers: this.deserializeItem(row.transfers),
-            output: this.deserializeItem(row.output)
-        };
-    }
-
-    async storeAccountSnapshot(snapshot: IAccountSnapshotRecord): Promise<void> {
-        const row: any = {
-            correlationTag: snapshot.correlationTag,
-            address: snapshot.address.bech32(),
-            nonce: snapshot.nonce.valueOf(),
-            balance: snapshot.balance.toString(),
-            fungibleTokens: this.serializeItem(snapshot.fungibleTokens || []),
-            nonFungibleTokens: this.serializeItem(snapshot.nonFungibleTokens || []),
-            takenBeforeInteraction: snapshot.takenBeforeInteraction || null,
-            takenAfterInteraction: snapshot.takenAfterInteraction || null
-        }
-
-        const insert = this.db.prepare(sql.AccountSnapshot.Insert);
-        insert.run(row);
-    }
-
-    async loadAccountSnapshots(): Promise<IAccountSnapshotRecord[]> {
-        const find = this.db.prepare(sql.AccountSnapshot.GetAll);
-        const rows = find.all();
-        const records = rows.map(row => this.hydrateAccountSnapshot(row));
-        return records;
-    }
-
-    private hydrateAccountSnapshot(row: any): IAccountSnapshotRecord {
-        return {
-            id: row.id,
-            correlationTag: row.correlation_tag,
-            address: { bech32: () => row.address },
-            nonce: row.nonce,
-            balance: row.balance,
-            fungibleTokens: this.deserializeItem(row.fungible_tokens),
-            nonFungibleTokens: this.deserializeItem(row.non_fungible_tokens),
-            takenBeforeInteraction: row.taken_before_interaction,
-            takenAfterInteraction: row.taken_after_interaction
-        };
-    }
-
-    async logEvent(event: IEventRecord): Promise<void> {
-        const row: any = {
-            correlationTag: event.correlationTag,
-            event: event.kind,
-            summary: event.summary,
-            payload: this.serializeItem(event.payload),
-            interaction: event.interaction
-        }
-
-        const insert = this.db.prepare(sql.Log.Insert);
-        insert.run(row);
-    }
-
-    async loadEvents(): Promise<IEventRecord[]> {
-        const find = this.db.prepare(sql.Log.GetAll);
+    async loadEvents(): Promise<IAuditRecord[]> {
+        const find = this.db.prepare(sql.Audit.GetAll);
         const rows = find.all();
         const records = rows.map(row => this.hydrateEvent(row));
         return records;
     }
 
-    private hydrateEvent(row: any): IEventRecord {
+    private hydrateEvent(row: any): IAuditRecord {
         return {
             id: row.id,
             correlationTag: row.correlation_tag,
-            kind: row.kind,
+            event: row.event,
             summary: row.summary,
             payload: this.deserializeItem(row.payload),
-            interaction: row.interaction
+            comparableTo: row.comparable_to
         };
     }
 

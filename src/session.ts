@@ -3,13 +3,12 @@ import { existsSync, PathLike, readFileSync } from "fs";
 import { Address } from "@elrondnetwork/erdjs";
 import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
 import { ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, ICorrelationHolder, IEventLog, INetworkProviderConfig, ISnapshottingService, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
+import { IBunchOfUsers, ICorrelationHolder, IAudit, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
 import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
 import { resolvePath } from "./filesystem";
-import { EventLog } from "./eventLog";
-import { SnapshottingService } from "./snapshotting";
+import { Audit } from "./audit";
 import { Report } from "./reports/report";
 import { CorrelationHolder } from "./correlationHolder";
 import { BreadcrumbTypeAddress, BreadcrumbTypeArbitrary, BreadcrumbTypeToken } from "./constants";
@@ -21,8 +20,7 @@ export class TestSession implements ITestSession {
     readonly networkProvider: INetworkProvider;
     readonly users: IBunchOfUsers;
     readonly storage: IStorage;
-    readonly snapshots: ISnapshottingService;
-    readonly log: IEventLog;
+    readonly audit: IAudit;
     private networkConfig: INetworkConfig = new NetworkConfig();
 
     constructor(args: {
@@ -32,8 +30,7 @@ export class TestSession implements ITestSession {
         provider: INetworkProvider,
         users: IBunchOfUsers,
         storage: IStorage,
-        snapshots: ISnapshottingService,
-        log: IEventLog
+        log: IAudit
     }) {
         this.config = args.config;
         this.name = args.name;
@@ -41,8 +38,7 @@ export class TestSession implements ITestSession {
         this.networkProvider = args.provider;
         this.users = args.users;
         this.storage = args.storage;
-        this.snapshots = args.snapshots;
-        this.log = args.log;
+        this.audit = args.log;
     }
 
     static async load(sessionName: string, folder: string): Promise<ITestSession> {
@@ -56,8 +52,11 @@ export class TestSession implements ITestSession {
         const users = await BunchOfUsers.create(config.users);
         const storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
         const storage = await Storage.create(storageName.toString());
-        const snapshots = new SnapshottingService(networkprovider, storage, correlation);
-        const log = new EventLog(storage, correlation);
+        const log = new Audit({
+            storage: storage,
+            correlation: correlation,
+            networkProvider: networkprovider
+        });
 
         let session = new TestSession({
             config: config,
@@ -66,7 +65,6 @@ export class TestSession implements ITestSession {
             provider: networkprovider,
             users: users,
             storage: storage,
-            snapshots: snapshots,
             log: log
         });
 

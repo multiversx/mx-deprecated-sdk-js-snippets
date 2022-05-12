@@ -8,7 +8,7 @@
  */
 import path from "path";
 import { BigUIntValue, CodeMetadata, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher } from "@elrondnetwork/erdjs";
-import { IEventLog, ITestSession, ITestUser } from "../../interface";
+import { IAudit, ITestSession, ITestUser } from "../../interface";
 import { loadAbiRegistry, loadCode } from "../../contracts";
 import { INetworkConfig, INetworkProvider } from "../../interfaceOfNetwork";
 
@@ -21,8 +21,8 @@ export async function createInteractor(session: ITestSession, contractAddress?: 
     const contract = new SmartContract({ address: contractAddress, abi: abi });
     const networkProvider = session.networkProvider;
     const networkConfig = session.getNetworkConfig();
-    const log = session.log;
-    const interactor = new AdderInteractor(contract, networkProvider, networkConfig, log);
+    const audit = session.audit;
+    const interactor = new AdderInteractor(contract, networkProvider, networkConfig, audit);
     return interactor;
 }
 
@@ -32,15 +32,15 @@ export class AdderInteractor {
     private readonly networkConfig: INetworkConfig;
     private readonly transactionWatcher: TransactionWatcher;
     private readonly resultsParser: ResultsParser;
-    private readonly log: IEventLog;
+    private readonly audit: IAudit;
 
-    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig, log: IEventLog) {
+    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig, audit: IAudit) {
         this.contract = contract;
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;
         this.transactionWatcher = new TransactionWatcher(networkProvider);
         this.resultsParser = new ResultsParser();
-        this.log = log;
+        this.audit = audit;
     }
 
     async deploy(deployer: ITestUser, initialValue: number): Promise<{ address: IAddress, returnCode: ReturnCode }> {
@@ -68,10 +68,10 @@ export class AdderInteractor {
 
         // Let's broadcast the transaction and await its completion:
         const transactionHash = await this.networkProvider.sendTransaction(transaction);
-        await this.log.onContractDeploymentSent(transactionHash, address);
+        await this.audit.onContractDeploymentSent(transactionHash, address);
         
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        await this.log.onTransactionCompleted(transactionHash, transactionOnNetwork);
+        await this.audit.onTransactionCompleted(transactionHash, transactionOnNetwork);
 
         // In the end, parse the results:
         const { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
@@ -96,10 +96,10 @@ export class AdderInteractor {
 
         // Let's broadcast the transaction and await its completion:
         const transactionHash = await this.networkProvider.sendTransaction(transaction);
-        await this.log.onTransactionSent(transactionHash);
+        await this.audit.onTransactionSent(transactionHash);
 
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        await this.log.onTransactionCompleted(transactionHash, transactionOnNetwork);
+        await this.audit.onTransactionCompleted(transactionHash, transactionOnNetwork);
 
         // In the end, parse the results:
         let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());

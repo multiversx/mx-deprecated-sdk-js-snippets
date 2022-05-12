@@ -61,8 +61,7 @@ export interface ITestSession {
     readonly networkProvider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
-    readonly log: IEventLog;
-    readonly snapshots: ISnapshottingService;
+    readonly audit: IAudit;
 
     syncNetworkConfig(): Promise<void>;
     getNetworkConfig(): INetworkConfig;
@@ -104,17 +103,12 @@ export interface ITestUser {
  * It will be split once it grows a little bit more.
  */
 export interface IStorage {
-    storeBreadcrumb(breadcrumb: IBreadcrumbRecord): Promise<void>;
+    storeBreadcrumb(record: IBreadcrumbRecord): Promise<void>;
     loadBreadcrumb(name: string): Promise<IBreadcrumbRecord>;
     loadBreadcrumbs(): Promise<IBreadcrumbRecord[]>;
     loadBreadcrumbsByType(type: string): Promise<IBreadcrumbRecord[]>;
-    storeInteraction(interaction: IInteractionRecord): Promise<number>;
-    updateInteractionSetOutput(id: number, output: any): Promise<void>;
-    loadInteractions(): Promise<IInteractionRecord[]>;
-    storeAccountSnapshot(snapshot: IAccountSnapshotRecord): Promise<void>;
-    loadAccountSnapshots(): Promise<IAccountSnapshotRecord[]>;
-    logEvent(event: IEventRecord): Promise<void>;
-    loadEvents(): Promise<IEventRecord[]>;
+    storeEvent(record: IAuditRecord): Promise<number>;
+    loadEvents(): Promise<IAuditRecord[]>;
     destroy(): Promise<void>;
 }
 
@@ -126,42 +120,13 @@ export interface IBreadcrumbRecord {
     payload: any;
 }
 
-export interface IInteractionRecord {
+export interface IAuditRecord {
     id: number;
     correlationTag: string;
-    action: string;
-    userAddress: IAddress;
-    contractAddress: IAddress;
-    transactionHash: IHash;
-    timestamp: string;
-    round: number;
-    epoch: number;
-    blockNonce: number;
-    hyperblockNonce: number;
-    input: any;
-    transfers: any;
-    output: any;
-}
-
-export interface IAccountSnapshotRecord {
-    id: number;
-    correlationTag: string;
-    address: IAddress;
-    nonce: number;
-    balance: IAccountBalance;
-    fungibleTokens?: any[];
-    nonFungibleTokens?: any[];
-    takenBeforeInteraction?: number;
-    takenAfterInteraction?: number;
-}
-
-export interface IEventRecord {
-    id: number;
-    correlationTag: string;
-    kind: string;
+    event: string;
     summary: string;
     payload: any;
-    interaction?: number;
+    comparableTo?: number;
 }
 
 export interface IAccount {
@@ -178,6 +143,7 @@ export interface IAddress { bech32(): string; }
 export interface IHash { toString(): string; }
 export interface IAccountBalance { toString(): string; }
 export interface IToken { identifier: string, decimals: number; }
+export interface IReturnCode { toString(): string; }
 
 export interface ITokenPayment {
     readonly tokenIdentifier: string;
@@ -188,14 +154,13 @@ export interface ITokenPayment {
     valueOf(): BigNumber.Value;
 }
 
-export interface IEventLog {
+export interface IAudit {
     onContractDeploymentSent(transactionHash: IHash, contractAddress: IAddress): Promise<void>;
     onTransactionSent(transactionHash: IHash): Promise<void>;
     onTransactionCompleted(transactionHash: IHash, transactionOnNetwork: ITransactionOnNetwork): Promise<void>;
-}
-
-export interface ISnapshottingService {
-    takeSnapshotsOfUsers(users: ITestUser[]): Promise<void>;
-    takeSnapshotsOfAccounts(addresses: IAddress[]): Promise<void>;
-    takeSnapshotOfAccount(address: IAddress): Promise<void>;
+    onContractOutcome(params: { returnCode?: IReturnCode, returnMessage?: string, values?: any[] }): Promise<void>
+    onSnapshot(params: { state: any, summary?: string, comparableTo?: number }): Promise<number>;
+    
+    emitSnapshotOfUsers(params: { users: ITestUser[], comparableTo?: number }): Promise<number>;
+    emitSnapshotOfAccounts(params: { addresses: IAddress[], comparableTo?: number }): Promise<number>;
 }
