@@ -32,6 +32,7 @@ export class Audit implements IAudit {
 
         await this.storage.storeAuditEntry({
             id: 0,
+            correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             event: EventKind.ContractDeploymentSent,
             summary: `deployment transaction sent, transaction = ${transaction}, contract = ${address}`,
@@ -46,6 +47,7 @@ export class Audit implements IAudit {
     async onTransactionSent(transactionHash: IHash): Promise<void> {
         await this.storage.storeAuditEntry({
             id: 0,
+            correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             event: EventKind.TransactionSent,
             summary: `transaction sent, transaction = ${transactionHash}`,
@@ -61,6 +63,7 @@ export class Audit implements IAudit {
 
         await this.storage.storeAuditEntry({
             id: 0,
+            correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             event: EventKind.TransactionCompleted,
             summary: `transaction completed, transaction = ${transactionHash.toString()}`,
@@ -78,6 +81,7 @@ export class Audit implements IAudit {
 
         await this.storage.storeAuditEntry({
             id: 0,
+            correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             event: EventKind.ContractOutcomeReceived,
             summary: `returnCode = ${params.returnCode?.toString()}, returnMessage = ${params.returnMessage}`,
@@ -89,6 +93,7 @@ export class Audit implements IAudit {
     async onSnapshot(params: { state: any, summary?: string, comparableTo?: number }): Promise<number> {
         return await this.storage.storeAuditEntry({
             id: 0,
+            correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             event: EventKind.ArbitrarySnapshot,
             summary: params.summary || "",
@@ -137,8 +142,6 @@ export class Audit implements IAudit {
         });
 
         const snapshot = {
-            id: 0,
-            correlationTag: this.correlation.tag,
             address: address,
             nonce: account.nonce,
             balance: account.balance,
@@ -153,6 +156,7 @@ export class Audit implements IAudit {
     private async onAccountsSnapshot(params: { state: any, summary?: string, comparableTo?: number }): Promise<number> {
         return await this.storage.storeAuditEntry({
             id: 0,
+            correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             event: EventKind.AccountsSnapshot,
             summary: params.summary || "",

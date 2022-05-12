@@ -64,6 +64,7 @@ class AddressBreadcrumbModel {
     readonly value: string;
     readonly explorerHref: string;
     readonly apiHref: string;
+    readonly step: string;
     readonly tag: string;
 
     constructor(breadcrumb: IBreadcrumbRecord, config: IReportingConfig) {
@@ -71,6 +72,7 @@ class AddressBreadcrumbModel {
         this.value = breadcrumb.payload;
         this.explorerHref = `${config.explorerUrl}/accounts/${this.value}`;
         this.apiHref = `${config.apiUrl}/accounts/${this.value}`;
+        this.step = breadcrumb.correlationStep;
         this.tag = breadcrumb.correlationTag;
     }
 }
@@ -78,11 +80,13 @@ class AddressBreadcrumbModel {
 class TokenBreadcrumbModel {
     readonly name: string;
     readonly identifier: string;
+    readonly step: string;
     readonly tag: string;
 
     constructor(breadcrumb: IBreadcrumbRecord) {
         this.name = breadcrumb.name;
         this.identifier = breadcrumb.payload;
+        this.step = breadcrumb.correlationStep;
         this.tag = breadcrumb.correlationTag;
     }
 }
@@ -91,12 +95,14 @@ class ArbitraryBreadcrumbModel {
     readonly name: string;
     readonly type: string;
     readonly payload: string;
+    readonly step: string;
     readonly tag: string;
 
     constructor(breadcrumb: IBreadcrumbRecord) {
         this.name = breadcrumb.name;
         this.type = breadcrumb.type;
         this.payload = stringifyObject(breadcrumb.payload);
+        this.step = breadcrumb.correlationStep;
         this.tag = breadcrumb.correlationTag;
     }
 }

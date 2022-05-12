@@ -27,7 +27,7 @@ describe("counter snippet", async function () {
     });
 
     this.beforeEach(async function () {
-        session.correlation.tag = this.currentTest?.fullTitle() || "";
+        session.correlation.step = this.currentTest?.fullTitle() || "";
     });
 
     it("issue counter token", async function () {

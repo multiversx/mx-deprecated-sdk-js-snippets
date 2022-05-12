@@ -26,7 +26,7 @@ describe("adder snippet", async function () {
     });
 
     this.beforeEach(async function () {
-        session.correlation.tag = this.currentTest?.fullTitle() || "";
+        session.correlation.step = this.currentTest?.fullTitle() || "";
     });
 
     it("airdrop", async function () {

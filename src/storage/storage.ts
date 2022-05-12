@@ -42,6 +42,7 @@ export class Storage implements IStorage {
         }
 
         const result = insert.run({
+            correlationStep: record.correlationStep,
             correlationTag: record.correlationTag,
             type: record.type,
             name: record.name,
@@ -68,6 +69,7 @@ export class Storage implements IStorage {
     private hydrateBreadcrumb(row: any): IBreadcrumbRecord {
         return {
             id: row.id,
+            correlationStep: row.correlation_step,
             correlationTag: row.correlation_tag,
             name: row.name,
             type: row.type,
@@ -91,6 +93,7 @@ export class Storage implements IStorage {
 
     async storeAuditEntry(record: IAuditEntryRecord): Promise<number> {
         const row: any = {
+            correlationStep: record.correlationStep,
             correlationTag: record.correlationTag,
             event: record.event,
             summary: record.summary,
@@ -115,6 +118,7 @@ export class Storage implements IStorage {
     private hydrateAuditEntry(row: any): IAuditEntryRecord {
         return {
             id: row.id,
+            correlationStep: row.correlation_step,
             correlationTag: row.correlation_tag,
             event: row.event,
             summary: row.summary,

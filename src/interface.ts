@@ -78,6 +78,7 @@ export interface ITestSession {
 }
 
 export interface ICorrelationHolder {
+    step: string;
     tag: string;
 }
 
@@ -114,6 +115,7 @@ export interface IStorage {
 
 export interface IBreadcrumbRecord {
     id: number;
+    correlationStep: string;
     correlationTag: string;
     type: string;
     name: string;
@@ -122,6 +124,7 @@ export interface IBreadcrumbRecord {
 
 export interface IAuditEntryRecord {
     id: number;
+    correlationStep: string;
     correlationTag: string;
     event: string;
     summary: string;

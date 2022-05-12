@@ -26,6 +26,7 @@
                         <th scope="col">Address</th>
                         <th scope="col">Explorer</th>
                         <th scope="col">API</th>
+                        <th scope="col">Step</th>
                         <th scope="col">Tag</th>
                     </tr>
                 </thead>
@@ -45,6 +46,9 @@
                                 <a target="_blank" href="<%= address.apiHref %>">API</a>
                             </td>
                             <td>
+                                <pre><%= address.step %></pre>
+                            </td>
+                            <td>
                                 <pre><%= address.tag %></pre>
                             </td>
                         </tr>
@@ -61,6 +65,7 @@
                     <tr>
                         <th scope="col">Name</th>
                         <th scope="col">Identifier</th>
+                        <th scope="col">Step</th>
                         <th scope="col">Tag</th>
                     </tr>
                 </thead>
@@ -72,6 +77,9 @@
                             </th>
                             <td>
                                 <%= token.identifier %>
+                            </td>
+                            <td>
+                                <pre><%= token.step %></pre>
                             </td>
                             <td>
                                 <pre><%= token.tag %></pre>
@@ -91,6 +99,7 @@
                         <th scope="col">Name</th>
                         <th scope="col">Type</th>
                         <th scope="col">Payload</th>
+                        <th scope="col">Step</th>
                         <th scope="col">Tag</th>
                     </tr>
                 </thead>
@@ -105,6 +114,9 @@
                             </th>
                             <td>
                                 <pre><%= breadcrumb.payload %></pre>
+                            </td>
+                            <td>
+                                <pre><%= breadcrumb.step %></pre>
                             </td>
                             <td>
                                 <pre><%= breadcrumb.tag %></pre>

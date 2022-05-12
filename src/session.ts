@@ -122,6 +122,7 @@ export class TestSession implements ITestSession {
 
         await this.storage.storeBreadcrumb({
             id: 0,
+            correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             type: BreadcrumbTypeAddress,
             name: name,
@@ -140,6 +141,7 @@ export class TestSession implements ITestSession {
 
         await this.storage.storeBreadcrumb({
             id: 0,
+            correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             type: BreadcrumbTypeToken,
             name: name,
@@ -158,6 +160,7 @@ export class TestSession implements ITestSession {
 
         await this.storage.storeBreadcrumb({
             id: 0,
+            correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             type: params.type || BreadcrumbTypeArbitrary,
             name: params.name,

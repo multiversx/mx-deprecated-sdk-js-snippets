@@ -30,7 +30,7 @@ describe("lottery snippet", async function () {
     });
 
     this.beforeEach(async function () {
-        session.correlation.tag = this.currentTest?.fullTitle() || "";
+        session.correlation.step = this.currentTest?.fullTitle() || "";
     });
 
     it("airdrop EGLD", async function () {
