@@ -17,6 +17,7 @@ export class Report {
 
     async prepare() {
         const breadcrumbs = await this.storage.loadBreadcrumbs();
+        const auditEntries = await this.storage.loadAuditEntries();
 
         this.model.breadcrumbs = breadcrumbs
             .map(e => new ArbitraryBreadcrumbModel(e));
@@ -28,6 +29,9 @@ export class Report {
         this.model.tokens = breadcrumbs
             .filter(e => e.type == BreadcrumbTypeToken)
             .map(e => new TokenBreadcrumbModel(e));
+
+        this.model.audit = auditEntries
+            .map(e => new AuditEntryModel(e));
     }
 
     async generate(tag?: string) {
@@ -67,13 +71,13 @@ class AddressBreadcrumbModel {
     readonly step: string;
     readonly tag: string;
 
-    constructor(breadcrumb: IBreadcrumbRecord, config: IReportingConfig) {
-        this.name = breadcrumb.name;
-        this.value = breadcrumb.payload;
+    constructor(record: IBreadcrumbRecord, config: IReportingConfig) {
+        this.name = record.name;
+        this.value = record.payload;
         this.explorerHref = `${config.explorerUrl}/accounts/${this.value}`;
         this.apiHref = `${config.apiUrl}/accounts/${this.value}`;
-        this.step = breadcrumb.correlationStep;
-        this.tag = breadcrumb.correlationTag;
+        this.step = record.correlationStep || "N / A";
+        this.tag = record.correlationTag || "N / A";
     }
 }
 
@@ -83,11 +87,11 @@ class TokenBreadcrumbModel {
     readonly step: string;
     readonly tag: string;
 
-    constructor(breadcrumb: IBreadcrumbRecord) {
-        this.name = breadcrumb.name;
-        this.identifier = breadcrumb.payload;
-        this.step = breadcrumb.correlationStep;
-        this.tag = breadcrumb.correlationTag;
+    constructor(record: IBreadcrumbRecord) {
+        this.name = record.name;
+        this.identifier = stringifyObject(record.payload);
+        this.step = record.correlationStep || "N / A";
+        this.tag = record.correlationTag || "N / A";
     }
 }
 
@@ -98,17 +102,35 @@ class ArbitraryBreadcrumbModel {
     readonly step: string;
     readonly tag: string;
 
-    constructor(breadcrumb: IBreadcrumbRecord) {
-        this.name = breadcrumb.name;
-        this.type = breadcrumb.type;
-        this.payload = stringifyObject(breadcrumb.payload);
-        this.step = breadcrumb.correlationStep;
-        this.tag = breadcrumb.correlationTag;
+    constructor(record: IBreadcrumbRecord) {
+        this.name = record.name;
+        this.type = record.type;
+        this.payload = stringifyObject(record.payload);
+        this.step = record.correlationStep || "N / A";
+        this.tag = record.correlationTag || "N / A";
     }
 }
 
 class AuditEntryModel {
+    id: number;
+    step: string;
+    tag: string;
+    event: string;
+    summary: string;
+    payload: any;
+    showPayload: boolean;
+    comparableTo: number | null;
 
+    constructor(record: IAuditEntryRecord) {
+        this.id = record.id;
+        this.step = record.correlationStep || "N / A";
+        this.tag = record.correlationTag || "N / A";
+        this.event = record.event;
+        this.summary = record.summary;
+        this.payload = stringifyObject(record.payload);
+        this.showPayload = this.payload.length < 100;
+        this.comparableTo = record.comparableTo;
+    }
 }
 
 function stringifyObject(obj: any) {

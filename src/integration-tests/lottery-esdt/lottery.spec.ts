@@ -137,6 +137,10 @@ describe("lottery snippet", async function () {
         });
     });
 
+    it("generate report", async function () {
+        await session.generateReport();
+    });
+
     it("destroy session", async function () {
         await session.destroy();
     });

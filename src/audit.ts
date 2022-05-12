@@ -40,7 +40,7 @@ export class Audit implements IAudit {
             correlationStep: this.correlation.step,
             correlationTag: this.correlation.tag,
             event: EventKind.ContractDeploymentSent,
-            summary: `deployment, transaction = ${transaction}, contract = ${address}`,
+            summary: `transaction = ${transaction}, contract = ${address}`,
             payload: payload,
             comparableTo: null
         });
@@ -91,7 +91,7 @@ export class Audit implements IAudit {
             transactionHash: params.transactionHash,
             returnCode: params.returnCode,
             returnMessage: params.returnMessage,
-            values: prettifyObject(params.values)
+            values: params.values ? prettifyObject(params.values) : undefined
         };
 
         await this.storage.storeAuditEntry({
