@@ -71,6 +71,8 @@ export class TestSession implements ITestSession {
     }
 
     private static createNetworkProvider(sessionName: string, config: INetworkProviderConfig): INetworkProvider {
+        const Timeout = 10000;
+
         if (!config.url) {
             throw new ErrBadSessionConfig(sessionName, "missing networkProvider.url");
         }
@@ -79,10 +81,10 @@ export class TestSession implements ITestSession {
         }
 
         if (config.type == ProxyNetworkProvider.name) {
-            return new ProxyNetworkProvider(config.url);
+            return new ProxyNetworkProvider(config.url, { timeout: Timeout });
         }
         if (config.type == ApiNetworkProvider.name) {
-            return new ApiNetworkProvider(config.url);
+            return new ApiNetworkProvider(config.url, { timeout: Timeout });
         }
 
         throw new ErrBadSessionConfig(sessionName, "bad networkProvider.type");
