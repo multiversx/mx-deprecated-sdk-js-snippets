@@ -1,6 +1,6 @@
 {
   "name": "@elrondnetwork/erdjs-snippets",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Base library for (mocha-style) Smart Contract interaction snippets. Based on erdjs. Runnable in VSCode.",
   "main": "out/index.js",
   "types": "out/index.d.js",
@@ -12,7 +12,9 @@
     "pretest": "npm run compile",
     "prepare": "npm run compile",
     "lint": "tslint --project .",
-    "copy-files": "cp src/system/*.json out/system/",
+    "copy-files": "npm run copy-abi && npm run copy-reports",
+    "copy-abi": "cp src/system/*.json out/system/",
+    "copy-reports": "cp src/reports/*.html out/reports",
     "mocha-grep": "mocha --grep ${PATTERN}"
   },
   "author": "ElrondNetwork",
