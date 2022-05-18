@@ -2,77 +2,76 @@ import path from "path";
 import { existsSync, PathLike, readFileSync } from "fs";
 import { Address } from "@elrondnetwork/erdjs";
 import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
-import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, IMochaSuite, IMochaTest, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
-import { INetworkProvider } from "./interfaceOfNetwork";
+import { ErrBadSessionConfig } from "./errors";
+import { IBunchOfUsers, ICorrelationHolder, IAudit, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
+import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
-import { resolvePath } from "./utils";
-
-const TypeToken = "token";
-const TypeAddress = "address";
-const TypeArbitraryBreadcrumb = "breadcrumb";
-const OneMinuteInMilliseconds = 60 * 1000;
+import { resolvePath } from "./filesystem";
+import { Audit } from "./audit";
+import { Report } from "./reports/report";
+import { CorrelationHolder } from "./correlationHolder";
+import { BreadcrumbTypeAddress, BreadcrumbTypeArbitrary, BreadcrumbTypeToken } from "./constants";
 
 export class TestSession implements ITestSession {
+    readonly config: ITestSessionConfig;
     readonly name: string;
-    readonly scope: string;
+    readonly correlation: ICorrelationHolder;
     readonly networkProvider: INetworkProvider;
     readonly users: IBunchOfUsers;
     readonly storage: IStorage;
-    private networkConfig: NetworkConfig = new NetworkConfig();
+    readonly audit: IAudit;
+    private networkConfig: INetworkConfig = new NetworkConfig();
 
     constructor(args: {
+        config: ITestSessionConfig,
         name: string,
-        scope: string,
+        correlation: ICorrelationHolder,
         provider: INetworkProvider,
         users: IBunchOfUsers,
         storage: IStorage,
-        config: ITestSessionConfig
+        log: IAudit
     }) {
+        this.config = args.config;
         this.name = args.name;
-        this.scope = args.scope;
+        this.correlation = args.correlation;
         this.networkProvider = args.provider;
         this.users = args.users;
         this.storage = args.storage;
+        this.audit = args.log;
     }
 
-    static async loadOnSuite(sessionName: string, mochaSuite: IMochaSuite): Promise<ITestSession> {
-        if (!mochaSuite.file) {
-            throw new ErrBadArgument("file of mocha suite isn't known");
-        }
+    static async load(sessionName: string, folder: string): Promise<ITestSession> {
+        const configFile = this.findSessionConfigFile(sessionName, folder);
+        const folderOfConfigFile = path.dirname(configFile.toString());
+        const configJson = readFileSync(configFile, { encoding: "utf8" });
+        const config = <ITestSessionConfig>JSON.parse(configJson);
 
-        let folder = path.dirname(mochaSuite.file);
-        let scope = mochaSuite.fullTitle();
-        return await TestSession.load(sessionName, scope, folder);
-    }
-
-    static async load(sessionName: string, scope: string, folder: string): Promise<ITestSession> {
-        let configFile = this.findSessionConfigFile(sessionName, folder);
-        let folderOfConfigFile = path.dirname(configFile.toString());
-        let configJson = readFileSync(configFile, { encoding: "utf8" });
-        let config = <ITestSessionConfig>JSON.parse(configJson);
-
-        let provider = this.createNetworkProvider(sessionName, config.networkProvider);
-        let users = new BunchOfUsers(config.users);
-        let storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
-        let storage = await Storage.create(storageName.toString());
+        const correlation = new CorrelationHolder();
+        const networkprovider = this.createNetworkProvider(sessionName, config.networkProvider);
+        const users = await BunchOfUsers.create(config.users);
+        const storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
+        const storage = await Storage.create(storageName.toString());
+        const log = new Audit({
+            storage: storage,
+            correlation: correlation,
+            networkProvider: networkprovider
+        });
 
         let session = new TestSession({
+            config: config,
             name: sessionName,
-            scope: scope,
-            provider: provider,
+            correlation: correlation,
+            provider: networkprovider,
             users: users,
             storage: storage,
-            config: config
+            log: log
         });
 
         return session;
     }
 
     private static createNetworkProvider(sessionName: string, config: INetworkProviderConfig): INetworkProvider {
-        const Timeout = 10000;
-
         if (!config.url) {
             throw new ErrBadSessionConfig(sessionName, "missing networkProvider.url");
         }
@@ -81,10 +80,10 @@ export class TestSession implements ITestSession {
         }
 
         if (config.type == ProxyNetworkProvider.name) {
-            return new ProxyNetworkProvider(config.url, { timeout: Timeout });
+            return new ProxyNetworkProvider(config.url, { timeout: config.timeout });
         }
         if (config.type == ApiNetworkProvider.name) {
-            return new ApiNetworkProvider(config.url, { timeout: Timeout });
+            return new ApiNetworkProvider(config.url, { timeout: config.timeout });
         }
 
         throw new ErrBadSessionConfig(sessionName, "bad networkProvider.type");
@@ -105,15 +104,11 @@ export class TestSession implements ITestSession {
         throw new ErrBadSessionConfig(sessionName, "file not found");
     }
 
-    expectLongInteraction(mochaTest: IMochaTest, minutes: number = 5) {
-        mochaTest.timeout(minutes * OneMinuteInMilliseconds);
-    }
-
     async syncNetworkConfig(): Promise<void> {
         this.networkConfig = await this.networkProvider.getNetworkConfig();
     }
 
-    getNetworkConfig(): NetworkConfig {
+    getNetworkConfig(): INetworkConfig {
         return this.networkConfig;
     }
 
@@ -122,34 +117,81 @@ export class TestSession implements ITestSession {
         await Promise.all(promises);
     }
 
-    async saveAddress(name: string, address: Address): Promise<void> {
+    async saveAddress(params: { name: string, address: Address }): Promise<void> {
+        const name = params.name;
+        const address = params.address;
+
         console.log(`TestSession.saveAddress(): name = [${name}], address = ${address.bech32()}`);
-        await this.storage.storeBreadcrumb(this.scope, TypeAddress, name, address.bech32());
+
+        await this.storage.storeBreadcrumb({
+            id: 0,
+            correlationStep: this.correlation.step,
+            correlationTag: this.correlation.tag,
+            type: BreadcrumbTypeAddress,
+            name: name,
+            payload: address.bech32()
+        });
     }
 
     async loadAddress(name: string): Promise<Address> {
-        let payload = await this.storage.loadBreadcrumb(this.scope, name);
-        let address = new Address(payload);
+        const breadcrumb = await this.storage.loadBreadcrumb(name);
+        const address = new Address(breadcrumb.payload);
         return address;
     }
 
-    async saveToken(name: string, token: IToken): Promise<void> {
-        await this.storage.storeBreadcrumb(this.scope, TypeToken, name, token);
+    async saveToken(params: { name: string, token: IToken }): Promise<void> {
+        const name = params.name;
+        const token = params.token;
+        
+        console.log(`TestSession.saveToken(): name = [${name}], token = ${token.identifier}`);
+
+        await this.storage.storeBreadcrumb({
+            id: 0,
+            correlationStep: this.correlation.step,
+            correlationTag: this.correlation.tag,
+            type: BreadcrumbTypeToken,
+            name: name,
+            payload: token
+        });
     }
 
     async loadToken(name: string): Promise<IToken> {
-        let payload = await this.storage.loadBreadcrumb(this.scope, name);
-        let token = { identifier: payload.identifier, decimals: payload.decimals };
+        const breadcrumb = await this.storage.loadBreadcrumb(name);
+        const token = { identifier: breadcrumb.payload.identifier, decimals: breadcrumb.payload.decimals };
         return token;
     }
 
-    async saveBreadcrumb(name: string, breadcrumb: any): Promise<void> {
-        await this.storage.storeBreadcrumb(this.scope, TypeArbitraryBreadcrumb, name, breadcrumb);
+    async saveBreadcrumb(params: { type?: string, name: string, value: any }): Promise<void> {
+        console.log(`TestSession.saveBreadcrumb(): name = [${params.name}], type = ${params.type}`);
+
+        await this.storage.storeBreadcrumb({
+            id: 0,
+            correlationStep: this.correlation.step,
+            correlationTag: this.correlation.tag,
+            type: params.type || BreadcrumbTypeArbitrary,
+            name: params.name,
+            payload: params.value,
+        });
     }
 
     async loadBreadcrumb(name: string): Promise<any> {
-        let payload = await this.storage.loadBreadcrumb(this.scope, name);
-        return payload;
+        const breadcrumb = await this.storage.loadBreadcrumb(name);
+        return breadcrumb.payload;
+    }
+
+    async loadBreadcrumbsByType(type: string): Promise<any[]> {
+        const breadcrumbs = await this.storage.loadBreadcrumbsByType(type);
+        const payloads = breadcrumbs.map(breadcrumb => breadcrumb.payload);
+        return payloads;
+    }
+
+    async generateReport(tag?: string): Promise<void> {
+        const report = new Report(this.config.reporting, this.storage);
+        await report.prepare();
+        await report.generate(tag);
+    }
+
+    async destroy(): Promise<void> {
+        await this.storage.destroy();
     }
 }
-

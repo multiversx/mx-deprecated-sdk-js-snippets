@@ -1,28 +1,24 @@
 {
     "networkProvider": {
         "type": "ProxyNetworkProvider",
-        "url": "https://testnet-gateway.elrond.com",
+        "url": "http://localhost:7950",
         "timeout": 5000
     },
     "users": {
         "individuals": [
             {
-                "name": "whale",
+                "name": "alice",
                 "pem": "~/elrondsdk/testwallets/latest/users/alice.pem"
             },
             {
-                "name": "alice",
-                "pem": "~/elrondsdk/testwallets/latest/users/alice.pem"
+                "name": "bob",
+                "pem": "~/elrondsdk/testwallets/latest/users/bob.pem"
             }
         ],
         "groups": [
             {
                 "name": "friends",
                 "folder": "~/elrondsdk/testwallets/latest/users"
-            },
-            {
-                "name": "quartet",
-                "pem": "~/test-wallets/quartet.pem"
             }
         ]
     }

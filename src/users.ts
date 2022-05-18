@@ -1,25 +1,28 @@
 import { Account, IAddress } from "@elrondnetwork/erdjs";
-import { parseUserKeys, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs-walletcore";
-import { PathLike, readFileSync, readdirSync } from "fs";
+import { UserPublicKey, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs-walletcore";
+import { PathLike, readdirSync, readFileSync } from "fs";
 import { ErrMissingUserOrGroup } from "./errors";
-import { IBunchOfUsers, ITestUser as ITestUser, IUsersConfig } from "./interface";
+import { IAccount, IBunchOfUsers, ITestUser, IUsersConfig } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
-import { resolvePath } from "./utils";
+import { resolvePath } from "./filesystem";
+import { parseUserKeys } from "./erdjsPatching/walletcore";
 
 export class TestUser implements ITestUser {
     readonly name: string;
     readonly group: string;
+    readonly secretKey: UserSecretKey;
+    readonly pubkey: UserPublicKey;
     readonly address: IAddress;
-    readonly account: Account;
+    readonly account: IAccount;
     readonly signer: ISigner;
 
-    constructor(name: string, group: string, secretKey: UserSecretKey) {
-        let publicKey = secretKey.generatePublicKey();
-
+    constructor(name: string, group: string, secretKey: UserSecretKey, pubkey: UserPublicKey) {
         this.name = name;
         this.group = group;
-        this.address = publicKey.toAddress();
+        this.secretKey = secretKey;
+        this.pubkey = pubkey;
+        this.address = pubkey.toAddress();
         this.account = new Account(this.address);
         this.signer = new UserSigner(secretKey);
     }
@@ -34,46 +37,62 @@ export class BunchOfUsers implements IBunchOfUsers {
     readonly individuals: Map<string, ITestUser> = new Map<string, ITestUser>();
     readonly groups: Map<string, ITestUser[]> = new Map<string, ITestUser[]>();
 
-    constructor(config: IUsersConfig) {
-        // Load individuals
-        for (const individual of config.individuals) {
-            let key = loadKeyFromPemFile(individual.pem);
-            let user = new TestUser(individual.name, "", key);
+    constructor(individuals: Map<string, ITestUser>, groups: Map<string, ITestUser[]>) {
+        this.individuals = individuals;
+        this.groups = groups;
+    }
 
-            this.individuals.set(individual.name, user);
+    static async create(config: IUsersConfig): Promise<BunchOfUsers> {
+        const individuals = new Map<string, ITestUser>();
+        const groups = new Map<string, ITestUser[]>();
+
+        const timeStart = new Date();
+
+        // Load individuals
+        for (const individualConfig of config.individuals) {
+            const { sk, pk } = loadKeyFromPemFile(individualConfig.pem);
+            const user = new TestUser(individualConfig.name, "", sk, pk);
+
+            individuals.set(individualConfig.name, user);
         }
 
         // Load groups
-        for (const group of config.groups) {
+        for (const groupConfig of config.groups) {
             // From a single file
-            if (group.pem) {
-                let keys = loadMoreKeysFromPemFile(group.pem);
-                let users = keys.map(key => new TestUser("", group.name, key));
+            if (groupConfig.pem) {
+                const keyPairs = loadMoreKeysFromPemFile(groupConfig.pem);
+                const users = keyPairs.map(keyPair => new TestUser("", groupConfig.name, keyPair.sk, keyPair.pk));
 
-                this.groups.set(group.name, users);
+                groups.set(groupConfig.name, users);
                 continue;
             }
 
             // From a folder
-            if (group.folder) {
-                let files = readdirSync(resolvePath(group.folder));
-                let groupOfUsers: ITestUser[] = [];
+            if (groupConfig.folder) {
+                const files = readdirSync(resolvePath(groupConfig.folder));
+                const groupOfUsers: ITestUser[] = [];
 
                 for (const file of files) {
                     if (!file.endsWith(".pem")) {
                         continue;
                     }
-                    
-                    let keys = loadMoreKeysFromPemFile(resolvePath(group.folder, file));
-                    let users = keys.map(key => new TestUser("", group.name, key));
+
+                    const keyPairs = loadMoreKeysFromPemFile(resolvePath(groupConfig.folder, file));
+                    const users = keyPairs.map(keyPair => new TestUser("", groupConfig.name, keyPair.sk, keyPair.pk));
 
                     groupOfUsers.push(...users);
                 }
 
-                this.groups.set(group.name, groupOfUsers);
+                groups.set(groupConfig.name, groupOfUsers);
                 continue;
             }
         }
+
+        const timeEnd = new Date();
+
+        console.info(`BunchOfUsers.create() took ${timeEnd.getTime() - timeStart.getTime()} ms.`);
+
+        return new BunchOfUsers(individuals, groups);
     }
 
     getUser(name: string): ITestUser {
@@ -95,16 +114,18 @@ export class BunchOfUsers implements IBunchOfUsers {
     }
 }
 
-function loadKeyFromPemFile(file: PathLike): UserSecretKey {
-    file = resolvePath(file);
-    let text = readFileSync(file, { encoding: "utf8" });
-    let secretKey = UserSecretKey.fromPem(text);
-    return secretKey;
+function loadKeyFromPemFile(file: PathLike) {
+    const text = readFileSync(resolvePath(file), { encoding: "utf8" });
+    const keys = parseUserKeys(text);
+
+    return {
+        sk: keys[0].sk,
+        pk: keys[0].pk
+    };
 }
 
-function loadMoreKeysFromPemFile(file: PathLike): UserSecretKey[] {
-    file = resolvePath(file);
-    let text = readFileSync(file, { encoding: "utf8" });
-    let secretKeys: UserSecretKey[] = parseUserKeys(text);
-    return secretKeys;
+function loadMoreKeysFromPemFile(file: PathLike) {
+    let text = readFileSync(resolvePath(file), { encoding: "utf8" });
+    const keys = parseUserKeys(text);
+    return keys;
 }

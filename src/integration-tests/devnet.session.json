@@ -1,7 +1,13 @@
 {
     "networkProvider": {
         "type": "ProxyNetworkProvider",
-        "url": "https://devnet-gateway.elrond.com"
+        "url": "https://devnet-gateway.elrond.com",
+        "timeout": 5000
+    },
+    "reporting": {
+        "explorerUrl": "https://devnet-explorer.elrond.com",
+        "apiUrl": "https://devnet-api.elrond.com",
+        "outputFolder": "~/reports"
     },
     "users": {
         "individuals": [
@@ -12,6 +18,18 @@
             {
                 "name": "alice",
                 "pem": "~/elrondsdk/testwallets/latest/users/alice.pem"
+            },
+            {
+                "name": "zero",
+                "pem": "~/test-wallets/zero.pem"
+            },
+            {
+                "name": "one",
+                "pem": "~/test-wallets/one.pem"
+            },
+            {
+                "name": "two",
+                "pem": "~/test-wallets/two.pem"
             }
         ],
         "groups": [
@@ -22,6 +40,18 @@
             {
                 "name": "quartet",
                 "pem": "~/test-wallets/quartet.pem"
+            },
+            {
+                "name": "manyZero",
+                "pem": "~/test-wallets/manyZero.pem"
+            },
+            {
+                "name": "manyOne",
+                "pem": "~/test-wallets/manyOne.pem"
+            },
+            {
+                "name": "manyTwo",
+                "pem": "~/test-wallets/manyTwo.pem"
             }
         ]
     }

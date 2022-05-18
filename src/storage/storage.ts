@@ -1,118 +1,130 @@
 import * as fs from "fs";
-import { Connection, createConnection } from "typeorm";
-import { IAccountSnapshotWithinStorage, IInteractionWithinStorage, IReferenceOfInteractionWithinStorage, IStorage } from "../interface";
-import { AccountSnapshotRecord, BreadcrumbRecord, InteractionRecord, ReferenceOfInteractionWithinStorage } from "./records";
+import * as sql from "./sql";
+import DatabaseConstructor, { Database } from "better-sqlite3";
+import { IBreadcrumbRecord, IAuditEntryRecord, IStorage } from "../interface";
+import { ErrBreadcrumbNotFound } from "../errors";
 
 export class Storage implements IStorage {
     private readonly file: string;
-    private readonly connection: Connection;
+    private readonly db: Database;
 
-    private static connections: Map<string, Connection> = new Map();
-
-    constructor(file: string, connection: Connection) {
+    constructor(file: string, connection: Database) {
         this.file = file;
-        this.connection = connection;
+        this.db = connection;
     }
 
     static async create(file: string): Promise<Storage> {
-        let exists = fs.existsSync(file);
-        let synchronize = !exists;
+        let shouldCreateSchema = !fs.existsSync(file);
+        let db = new DatabaseConstructor(file, {});
 
-        if (Storage.connections.has(file)) {
-            let connection = Storage.connections.get(file);
-            return new Storage(file, connection!);
+        if (shouldCreateSchema) {
+            db.prepare(sql.Breadcrumb.CreateTable).run();
+            db.prepare(sql.Audit.CreateTable).run();
         }
 
-        let connection = await createConnection({
-            type: "better-sqlite3",
-            database: file,
-            name: file,
-            entities: [BreadcrumbRecord, InteractionRecord, AccountSnapshotRecord],
-            logging: false,
-            synchronize: synchronize
-        });
-
-        Storage.connections.set(file, connection);
-        return new Storage(file, connection);
+        return new Storage(file, db);
     }
 
     async destroy() {
-        await this.connection.dropDatabase();
-        await this.connection.close();
+        this.db.close();
         await fs.promises.unlink(this.file);
     }
 
-    async storeBreadcrumb(scope: string, type: string, name: string, payload: any): Promise<void> {
-        let record = await this.connection.manager.findOne(BreadcrumbRecord, { scope: scope, name: name });
+    async storeBreadcrumb(record: IBreadcrumbRecord): Promise<number> {
+        const serializedPayload = this.serializeItem(record.payload);
+        const find = this.db.prepare(sql.Breadcrumb.GetByName);
+        const insert = this.db.prepare(sql.Breadcrumb.Insert);
+        const delete_ = this.db.prepare(sql.Breadcrumb.Delete);
+        const existingRow = find.get({ name: record.name });
 
-        if (!record) {
-            record = new BreadcrumbRecord();
-            record.scope = scope;
-            record.type = type;
-            record.name = name;
+        if (existingRow) {
+            delete_.run({ id: existingRow.id });
         }
 
-        record.payload = this.serializeItem(payload);
+        const result = insert.run({
+            correlationStep: record.correlationStep,
+            correlationTag: record.correlationTag,
+            type: record.type,
+            name: record.name,
+            payload: serializedPayload
+        });
 
-        await this.connection.manager.save(record);
+        const id = Number(result.lastInsertRowid);
+        record.id = id;
+        return id;
     }
 
-    async loadBreadcrumb(scope: string, name: string): Promise<any> {
-        let record = await this.connection.manager.findOne(BreadcrumbRecord, { scope: scope, name: name });
-        let payload = this.deserializeItem(record!.payload);
-        return payload;
-    }
+    async loadBreadcrumb(name: string): Promise<IBreadcrumbRecord> {
+        const find = this.db.prepare(sql.Breadcrumb.GetByName);
+        const row = find.get({ name: name });
 
-    async loadBreadcrumbsByType(scope: string, type: string): Promise<any[]> {
-        let records: BreadcrumbRecord[] = await this.connection.manager.find(BreadcrumbRecord, { scope: scope, type: type });
-        let payloads = records.map(record => this.deserializeItem(record.payload));
-        return payloads;
-    }
-
-    async storeInteraction(scope: string, interaction: IInteractionWithinStorage): Promise<IReferenceOfInteractionWithinStorage> {
-        let record = new InteractionRecord();
-        record.scope = scope;
-        record.action = interaction.action;
-        record.user = interaction.userAddress.bech32();
-        record.contract = interaction.contractAddress.bech32();
-        record.transaction = interaction.transactionHash.toString();
-        record.timestamp = interaction.timestamp;
-        record.round = interaction.round;
-        record.epoch = interaction.epoch;
-        record.blockNonce = interaction.blockNonce.valueOf();
-        record.hyperblockNonce = interaction.hyperblockNonce.valueOf();
-        record.input = this.serializeItem(interaction.input);
-        record.transfers = this.serializeItem(interaction.transfers);
-        record.output = this.serializeItem(interaction.output);
-
-        let result = await this.connection.manager.insert(InteractionRecord, record);
-        let reference = new ReferenceOfInteractionWithinStorage(result.raw);
-        return reference;
-    }
-
-    async updateInteractionSetOutput(reference: IReferenceOfInteractionWithinStorage, output: any) {
-        let interactionId = (<ReferenceOfInteractionWithinStorage>reference).id;
-        let outputJson = JSON.stringify(output);
-        await this.connection.manager.update(InteractionRecord, interactionId, { output: outputJson });
-    }
-
-    async storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotWithinStorage): Promise<void> {
-        let record = new AccountSnapshotRecord();
-        record.scope = scope;
-        record.timestamp = snapshot.timestamp;
-        record.address = snapshot.address.bech32();
-        record.nonce = snapshot.nonce.valueOf();
-        record.balance = snapshot.balance.toString();
-        record.tokens = this.serializeItem(snapshot.tokens);
-
-        if (snapshot.takenBeforeInteraction) {
-            record.takenBeforeInteraction = (<ReferenceOfInteractionWithinStorage>snapshot.takenBeforeInteraction).getRecord();
-        }
-        if (snapshot.takenAfterInteraction) {
-            record.takenAfterInteraction = (<ReferenceOfInteractionWithinStorage>snapshot.takenAfterInteraction).getRecord();
+        if (!row) {
+            throw new ErrBreadcrumbNotFound(name);
         }
 
-        await this.connection.manager.insert(AccountSnapshotRecord, record);
+        const record = this.hydrateBreadcrumb(row);
+        return record;
+    }
+
+    private hydrateBreadcrumb(row: any): IBreadcrumbRecord {
+        return {
+            id: row.id,
+            correlationStep: row.correlation_step,
+            correlationTag: row.correlation_tag,
+            name: row.name,
+            type: row.type,
+            payload: this.deserializeItem(row.payload)
+        };
+    }
+
+    async loadBreadcrumbs(): Promise<IBreadcrumbRecord[]> {
+        const find = this.db.prepare(sql.Breadcrumb.GetAll);
+        const rows = find.all();
+        const records = rows.map(row => this.hydrateBreadcrumb(row));
+        return records;
+    }
+
+    async loadBreadcrumbsByType(type: string): Promise<IBreadcrumbRecord[]> {
+        const find = this.db.prepare(sql.Breadcrumb.GetByType);
+        const rows = find.all({ type: type });
+        const records = rows.map(row => this.hydrateBreadcrumb(row));
+        return records;
+    }
+
+    async storeAuditEntry(record: IAuditEntryRecord): Promise<number> {
+        const row: any = {
+            correlationStep: record.correlationStep,
+            correlationTag: record.correlationTag,
+            event: record.event,
+            summary: record.summary,
+            payload: this.serializeItem(record.payload),
+            comparableTo: record.comparableTo
+        }
+
+        const insert = this.db.prepare(sql.Audit.Insert);
+        const result = insert.run(row);
+        const id = Number(result.lastInsertRowid);
+        record.id = id;
+        return id;
+    }
+
+    async loadAuditEntries(): Promise<IAuditEntryRecord[]> {
+        const find = this.db.prepare(sql.Audit.GetAll);
+        const rows = find.all();
+        const records = rows.map(row => this.hydrateAuditEntry(row));
+        return records;
+    }
+
+    private hydrateAuditEntry(row: any): IAuditEntryRecord {
+        return {
+            id: row.id,
+            correlationStep: row.correlation_step,
+            correlationTag: row.correlation_tag,
+            event: row.event,
+            summary: row.summary,
+            payload: this.deserializeItem(row.payload),
+            comparableTo: row.comparable_to
+        };
     }
 
     private serializeItem(item: any) {
