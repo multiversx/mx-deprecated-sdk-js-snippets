@@ -8,17 +8,16 @@
  */
 import path from "path";
 import { BigUIntValue, CodeMetadata, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher, U64Value } from "@elrondnetwork/erdjs";
-import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import { ITestSession, ITestUser } from "../../interface";
 import { loadAbiRegistry, loadCode } from "../../contracts";
-import { INetworkProvider } from "../../interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider } from "../../interfaceOfNetwork";
 
 const PathToWasm = path.resolve(__dirname, "counter.wasm");
 const PathToAbi = path.resolve(__dirname, "counter.abi.json");
 
 export async function createInteractor(session: ITestSession, contractAddress?: IAddress): Promise<CounterInteractor> {
     let registry = await loadAbiRegistry(PathToAbi);
-    let abi = new SmartContractAbi(registry, ["Counter"]);
+    let abi = new SmartContractAbi(registry);
     let contract = new SmartContract({ address: contractAddress, abi: abi });
     let networkProvider = session.networkProvider;
     let networkConfig = session.getNetworkConfig();
@@ -29,11 +28,11 @@ export async function createInteractor(session: ITestSession, contractAddress?: 
 export class CounterInteractor {
     private readonly contract: SmartContract;
     private readonly networkProvider: INetworkProvider;
-    private readonly networkConfig: NetworkConfig;
+    private readonly networkConfig: INetworkConfig;
     private readonly transactionWatcher: TransactionWatcher;
     private readonly resultsParser: ResultsParser;
 
-    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
+    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig) {
         this.contract = contract;
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;

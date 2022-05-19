@@ -1,6 +1,7 @@
 import { TokenPayment } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
 import { createAirdropService } from "../../airdrop";
+import { FiveMinutesInMilliseconds } from "../../constants";
 import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
@@ -9,7 +10,6 @@ import { createInteractor } from "./adderInteractor";
 describe("adder snippet", async function () {
     this.bail(true);
 
-    let suite = this;
     let session: ITestSession;
     let provider: INetworkProvider;
     let whale: ITestUser;
@@ -17,7 +17,7 @@ describe("adder snippet", async function () {
     let friends: ITestUser[];
 
     this.beforeAll(async function () {
-        session = await TestSession.loadOnSuite("devnet", suite);
+        session = await TestSession.load("devnet", __dirname);
         provider = session.networkProvider;
         whale = session.users.getUser("whale");
         owner = session.users.getUser("whale");
@@ -25,8 +25,12 @@ describe("adder snippet", async function () {
         await session.syncNetworkConfig();
     });
 
+    this.beforeEach(async function () {
+        session.correlation.step = this.currentTest?.fullTitle() || "";
+    });
+
     it("airdrop", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([whale]);
         let payment = TokenPayment.egldFromAmount(0.1);
@@ -34,7 +38,7 @@ describe("adder snippet", async function () {
     });
 
     it("setup", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner]);
 
@@ -43,28 +47,44 @@ describe("adder snippet", async function () {
 
         assert.isTrue(returnCode.isSuccess());
 
-        await session.saveAddress("contractAddress", address);
+        await session.saveAddress({ name: "adder", address: address });
     });
 
     it("add", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
+        // If the step fails, retry it (using a Mocha utility function).
+        this.retries(5);
 
         await session.syncUsers([owner]);
 
-        let contractAddress = await session.loadAddress("contractAddress");
-        let interactor = await createInteractor(session, contractAddress);
+        const contractAddress = await session.loadAddress("adder");
+        const interactor = await createInteractor(session, contractAddress);
 
-        let sumBefore = await interactor.getSum();
-        let returnCode = await interactor.add(owner, 3);
-        let sumAfter = await interactor.getSum();
+        const sumBefore = await interactor.getSum();
+        const snapshotBefore = await session.audit.onSnapshot({ state: { sum: sumBefore } });
+
+        const returnCode = await interactor.add(owner, 3);
+        await session.audit.onContractOutcome({ returnCode });
+
+        const sumAfter = await interactor.getSum();
+        await session.audit.onSnapshot({ state: { sum: sumBefore }, comparableTo: snapshotBefore });
+
         assert.isTrue(returnCode.isSuccess());
         assert.equal(sumAfter, sumBefore + 3);
     });
 
     it("getSum", async function () {
-        let contractAddress = await session.loadAddress("contractAddress");
+        let contractAddress = await session.loadAddress("adder");
         let interactor = await createInteractor(session, contractAddress);
         let result = await interactor.getSum();
         assert.isTrue(result > 0);
+    });
+
+    it("generate report", async function () {
+        await session.generateReport();
+    });
+
+    it("destroy session", async function () {
+        await session.destroy();
     });
 });

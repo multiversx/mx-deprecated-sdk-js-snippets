@@ -1,17 +1,18 @@
-import { Account, IAccountBalance, IAddress, TransactionHash } from "@elrondnetwork/erdjs";
-import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
-import { INetworkProvider } from "./interfaceOfNetwork";
+import BigNumber from "bignumber.js";
+import { INetworkConfig, INetworkProvider, ITransactionOnNetwork } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
 
 export interface ITestSessionConfig {
     readonly networkProvider: INetworkProviderConfig;
     readonly users: IUsersConfig;
     readonly nodes: INodesConfig;
+    readonly reporting: IReportingConfig;
 }
 
 export interface INetworkProviderConfig {
     readonly type: string;
     readonly url: string;
+    readonly timeout?: number;
 }
 
 export interface IUsersConfig {
@@ -45,42 +46,58 @@ export interface IGroupOfNodesConfig {
     readonly pem?: string;
     readonly folder?: string;
 }
+    
+export interface IReportingConfig {
+    explorerUrl: string;
+    apiUrl: string;
+    outputFolder: string;
+}
+
+export interface ISecretKeysGeneratorConfig {
+    readonly mnemonic: string;
+    readonly individuals: IGeneratedUserConfig[];
+    readonly groups: IGeneratedGroupOfUsersConfig[];
+}
+
+export interface IGeneratedUserConfig {
+    readonly name: string;
+    readonly shard?: number;
+    readonly pem: string;
+}
+
+export interface IGeneratedGroupOfUsersConfig {
+    readonly name: string;
+    readonly size: number;
+    readonly shard?: number;
+    readonly pem: string;
+}
 
 export interface ITestSession {
     readonly name: string;
-    readonly scope: string;
+    readonly correlation: ICorrelationHolder;
     readonly networkProvider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
     readonly nodes: IBunchOfNodes;
+    readonly audit: IAudit;
 
-    expectLongInteraction(mochaTest: IMochaTest, minutes?: number): void;
     syncNetworkConfig(): Promise<void>;
-    getNetworkConfig(): NetworkConfig;
+    getNetworkConfig(): INetworkConfig;
     syncUsers(users: ITestUser[]): Promise<void>;
-
-    saveAddress(name: string, address: IAddress): Promise<void>;
+    saveAddress(params: { name: string, address: IAddress }): Promise<void>;
     loadAddress(name: string): Promise<IAddress>;
-
-    saveToken(name: string, token: IToken): Promise<void>;
+    saveToken(params: { name: string, token: IToken }): Promise<void>;
     loadToken(name: string): Promise<IToken>;
-
-    saveBreadcrumb(name: string, breadcrumb: any): Promise<void>;
+    saveBreadcrumb(params: { type?: string, name: string, value: any }): Promise<void>;
     loadBreadcrumb(name: string): Promise<any>;
+    loadBreadcrumbsByType(type: string): Promise<any[]>;
+    generateReport(tag?: string): Promise<void>;
+    destroy(): Promise<void>;
 }
 
-export interface IMochaSuite {
-    file?: string | undefined;
-    fullTitle(): string;
-}
-
-export interface IMochaTest {
-    timeout(ms: string | number): void;
-}
-
-export interface IUsersConfig {
-    readonly whalePem: string;
-    readonly othersPem: string;
+export interface ICorrelationHolder {
+    step: string;
+    tag: string;
 }
 
 export interface IBunchOfUsers {
@@ -92,7 +109,7 @@ export interface ITestUser {
     readonly name: string;
     readonly group: string;
     readonly address: IAddress;
-    readonly account: Account;
+    readonly account: IAccount;
     readonly signer: ISigner;
 
     sync(provider: INetworkProvider): Promise<void>;
@@ -125,54 +142,83 @@ export interface ITestNode {
  * The functions are not grouped "by entity" ("by record type") at this point - 
  * that is, the interface isn't segregated into more, smaller interfaces yet (for simplicity).
  * It will be split once it grows a little bit more.
- * 
- * [Design] {@link IStorage} depends on `I{name of record}WithinStorage` interfaces.
- * That is, it does not depend on complex (and somehow unstable) types of erdjs, such as: Interaction, TransactionOnNetwork etc.
- * Though, it depends on simple (and quite stable) types of erdjs, such as: Address, Nonce, TransactionHash etc.
- * 
- * [Design] when necessary, references to record objects may be used as input / output to functions of {@link IStorage}.
- * They should be interfaces as well, e.g. `IReferenceOf{name of record}WithinStorage`
- * Details: in the implementation of storage, these references would usually be surrogate keys (numbers).
  */
 export interface IStorage {
-    storeBreadcrumb(scope: string, type: string, name: string, payload: any): Promise<void>;
-    loadBreadcrumb(scope: string, name: string): Promise<any>;
-    loadBreadcrumbsByType(scope: string, type: string): Promise<any[]>;
-    storeInteraction(scope: string, interaction: IInteractionWithinStorage): Promise<IReferenceOfInteractionWithinStorage>;
-    updateInteractionSetOutput(reference: IReferenceOfInteractionWithinStorage, output: any): Promise<void>;
-    storeAccountSnapshot(scope: string, snapshot: IAccountSnapshotWithinStorage): Promise<void>;
+    storeBreadcrumb(record: IBreadcrumbRecord): Promise<number>;
+    loadBreadcrumb(name: string): Promise<IBreadcrumbRecord>;
+    loadBreadcrumbs(): Promise<IBreadcrumbRecord[]>;
+    loadBreadcrumbsByType(type: string): Promise<IBreadcrumbRecord[]>;
+    storeAuditEntry(record: IAuditEntryRecord): Promise<number>;
+    loadAuditEntries(): Promise<IAuditEntryRecord[]>;
+    destroy(): Promise<void>;
 }
 
-export interface IInteractionWithinStorage {
-    action: string;
-    userAddress: IAddress;
-    contractAddress: IAddress;
-    transactionHash: TransactionHash;
-    timestamp: string;
-    round: number;
-    epoch: number;
-    blockNonce: number;
-    hyperblockNonce: number;
-    input: any;
-    transfers: any;
-    output: any;
+export interface IBreadcrumbRecord {
+    id: number;
+    correlationStep: string;
+    correlationTag: string;
+    type: string;
+    name: string;
+    payload: any;
 }
 
-export interface IReferenceOfInteractionWithinStorage { }
-
-export interface IAccountSnapshotWithinStorage {
-    timestamp: string;
-    address: IAddress;
-    nonce: number;
-    balance: IAccountBalance;
-    tokens: any;
-    takenBeforeInteraction?: IReferenceOfInteractionWithinStorage;
-    takenAfterInteraction?: IReferenceOfInteractionWithinStorage;
+export interface IAuditEntryRecord {
+    id: number;
+    correlationStep: string;
+    correlationTag: string;
+    event: string;
+    summary: string;
+    payload: any;
+    comparableTo: number | null;
 }
 
-export interface IToken {
-    identifier: string,
-    decimals: number;
+export interface IAccount {
+    readonly address: IAddress;
+    readonly nonce: INonce;
+    readonly balance: IAccountBalance;
+    update(obj: { nonce: INonce; balance: IAccountBalance; }): void;
+    incrementNonce(): void;
+    getNonceThenIncrement(): INonce;
+}
+
+export interface INonce { valueOf(): number; }
+export interface IAddress { bech32(): string; }
+export interface IHash { toString(): string; }
+export interface IAccountBalance { toString(): string; }
+export interface IToken { identifier: string, decimals: number; }
+export interface IReturnCode { toString(): string; }
+
+export interface ITokenPayment {
+    readonly tokenIdentifier: string;
+    readonly nonce: number;
+    readonly amountAsBigInteger: BigNumber.Value;
+    isEgld(): boolean;
+    isFungible(): boolean;
+    valueOf(): BigNumber.Value;
+}
+
+export interface IAudit {
+    onContractDeploymentSent(params: { transactionHash: IHash, contractAddress: IAddress }): Promise<void>;
+
+    onTransactionSent(params: {
+        action?: string,
+        args?: any[],
+        transactionHash: IHash
+    }): Promise<void>;
+
+    onTransactionCompleted(params: { transactionHash: IHash, transaction: ITransactionOnNetwork }): Promise<void>;
+
+    onContractOutcome(params: {
+        transactionHash?: IHash,
+        returnCode?: IReturnCode,
+        returnMessage?: string,
+        values?: any[]
+    }): Promise<void>
+
+    onSnapshot(params: { state: any, summary?: string, comparableTo?: number }): Promise<number>;
+
+    emitSnapshotOfUsers(params: { users: ITestUser[], comparableTo?: number }): Promise<number>;
+    emitSnapshotOfAccounts(params: { addresses: IAddress[], comparableTo?: number }): Promise<number>;
 }
 
 export interface IBLS {

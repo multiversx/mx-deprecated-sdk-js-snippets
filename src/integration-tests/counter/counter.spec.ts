@@ -1,6 +1,7 @@
 import { TokenPayment } from "@elrondnetwork/erdjs/out";
 import { assert } from "chai";
 import { createAirdropService } from "../../airdrop";
+import { FiveMinutesInMilliseconds } from "../../constants";
 import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
@@ -10,7 +11,6 @@ import { createInteractor } from "./counterInteractor";
 describe("counter snippet", async function () {
     this.bail(true);
 
-    let suite = this;
     let session: ITestSession;
     let provider: INetworkProvider;
     let whale: ITestUser;
@@ -18,7 +18,7 @@ describe("counter snippet", async function () {
     let alice: ITestUser;
 
     this.beforeAll(async function () {
-        session = await TestSession.loadOnSuite("devnet", suite);
+        session = await TestSession.load("devnet", __dirname);
         provider = session.networkProvider;
         whale = session.users.getUser("whale");
         owner = session.users.getUser("whale");
@@ -26,17 +26,21 @@ describe("counter snippet", async function () {
         await session.syncNetworkConfig();
     });
 
+    this.beforeEach(async function () {
+        session.correlation.step = this.currentTest?.fullTitle() || "";
+    });
+
     it("issue counter token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session);
         await session.syncUsers([owner]);
         let token = await interactor.issueFungibleToken(owner, { name: "COUNTER", ticker: "COUNTER", decimals: 0, supply: "100000000" });
-        await session.saveToken("counterToken", token);
+        await session.saveToken({ name: "counterToken", token: token });
     });
 
     it("airdrop counter token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let token = await session.loadToken("counterToken");
         let payment = TokenPayment.fungibleFromAmount(token.identifier, "100", token.decimals);
@@ -45,7 +49,7 @@ describe("counter snippet", async function () {
     });
 
     it("setup", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner]);
 
@@ -54,15 +58,15 @@ describe("counter snippet", async function () {
 
         assert.isTrue(returnCode.isSuccess());
 
-        await session.saveAddress("contractAddress", address);
+        await session.saveAddress({ name: "counter", address: address });
     });
 
     it("increment with single ESDT transfer", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner, alice]);
 
-        let contractAddress = await session.loadAddress("contractAddress");
+        let contractAddress = await session.loadAddress("counter");
         let token = await session.loadToken("counterToken");
         let interactor = await createInteractor(session, contractAddress);
 
@@ -76,11 +80,11 @@ describe("counter snippet", async function () {
     });
 
     it("increment with multi transfer", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         await session.syncUsers([owner, alice]);
 
-        let contractAddress = await session.loadAddress("contractAddress");
+        let contractAddress = await session.loadAddress("counter");
         let token = await session.loadToken("counterToken");
         let interactor = await createInteractor(session, contractAddress);
 
@@ -91,5 +95,9 @@ describe("counter snippet", async function () {
 
         // Cross-shard
         interactor.incrementWithSingleESDTTransfer(alice, 1, payment);
+    });
+
+    it("destroy session", async function () {
+        await session.destroy();
     });
 });

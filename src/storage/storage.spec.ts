@@ -1,121 +1,108 @@
-import { Address, TokenPayment, TransactionHash } from "@elrondnetwork/erdjs";
 import { assert } from "chai";
 import { Storage } from "./storage";
 
 describe("test storage", async function () {
     const Timeout = 10000;
 
-    it("store and load breadcrumbs", async function () {
+    it("should create and destroy", async function () {
+        const storage = await Storage.create(createDatabaseName(this));
+        await storage.destroy();
+    });
+
+    it("should store and load breadcrumbs", async function () {
         this.timeout(Timeout);
 
-        let storage = await Storage.create(createDatabaseName(this));
+        const storage = await Storage.create(createDatabaseName(this));
 
-        await storage.storeBreadcrumb("foo", "typeX", "A", { value: 42 });
-        await storage.storeBreadcrumb("foo", "typeX", "A", { value: 43 });
-        await storage.storeBreadcrumb("foo", "typeX", "C", { value: 42 });
-        await storage.storeBreadcrumb("foo", "typeY", "B", { value: 44 });
-        await storage.storeBreadcrumb("bar", "typeY", "A", { value: 42 });
+        const breadcrumbOne = {
+            id: 0,
+            correlationStep: "test",
+            correlationTag: "test",
+            type: "typeX",
+            name: "A",
+            payload: { value: 42 }
+        };
 
-        let breadcrumb = await storage.loadBreadcrumb("foo", "A");
-        assert.deepEqual(breadcrumb, { value: 43 });
-        breadcrumb = await storage.loadBreadcrumb("foo", "B");
-        assert.deepEqual(breadcrumb, { value: 44 });
-        breadcrumb = await storage.loadBreadcrumb("bar", "A");
-        assert.deepEqual(breadcrumb, { value: 42 });
+        const breadcrumbTwo = {
+            id: 0,
+            correlationStep: "test",
+            correlationTag: "test",
+            type: "typeX",
+            name: "A",
+            payload: { value: 43 }
+        };
 
-        let breadcrumbs = await storage.loadBreadcrumbsByType("foo", "typeX");
+        const breadcrumbThree = {
+            id: 0,
+            correlationStep: "test",
+            correlationTag: "test",
+            type: "typeX",
+            name: "C",
+            payload: { value: 42 }
+        };
+
+        const breadcrumbFour = {
+            id: 0,
+            correlationStep: "test",
+            correlationTag: "test",
+            type: "typeY",
+            name: "B",
+            payload: { value: 44 }
+        };
+
+        await storage.storeBreadcrumb(breadcrumbOne);
+        await storage.storeBreadcrumb(breadcrumbTwo);
+        await storage.storeBreadcrumb(breadcrumbThree);
+        await storage.storeBreadcrumb(breadcrumbFour);
+
+        let breadcrumb = await storage.loadBreadcrumb("A");
+        assert.deepEqual(breadcrumb, breadcrumbTwo);
+        breadcrumb = await storage.loadBreadcrumb("B");
+        assert.deepEqual(breadcrumb, breadcrumbFour);
+
+        let breadcrumbs = await storage.loadBreadcrumbsByType("typeX");
         assert.lengthOf(breadcrumbs, 2);
-        breadcrumbs = await storage.loadBreadcrumbsByType("foo", "typeY");
+        breadcrumbs = await storage.loadBreadcrumbsByType("typeY");
         assert.lengthOf(breadcrumbs, 1);
-        breadcrumbs = await storage.loadBreadcrumbsByType("bar", "typeY");
+        breadcrumbs = await storage.loadBreadcrumbsByType("typeY");
         assert.lengthOf(breadcrumbs, 1);
-        breadcrumbs = await storage.loadBreadcrumbsByType("foo", "typeMissing");
+        breadcrumbs = await storage.loadBreadcrumbsByType("typeMissing");
         assert.lengthOf(breadcrumbs, 0);
 
         await storage.destroy();
     });
 
-    it("store & update interactions", async function () {
+    it("should store and load audit entries", async function () {
         this.timeout(Timeout);
 
-        let storage = await Storage.create(createDatabaseName(this));
+        const storage = await Storage.create(createDatabaseName(this));
 
-        let reference = await storage.storeInteraction("foo", {
-            action: "stake",
-            userAddress: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            contractAddress: new Address("erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu"),
-            transactionHash: new TransactionHash(""),
-            timestamp: "friday",
-            round: 42,
-            epoch: 1,
-            blockNonce: 7,
-            hyperblockNonce: 9,
-            input: { foo: "bar" },
-            transfers: {},
-            output: {}
-        });
-
-        assert.isTrue(reference.valueOf() > 0);
-        
-
-        await storage.updateInteractionSetOutput(reference, { something: "something" });
-
-
-        await storage.destroy();
-    });
-
-    it("store account snapshots", async function () {
-        this.timeout(Timeout);
-
-        let storage = await Storage.create(createDatabaseName(this));
-
-        // Without reference to "before" / "after" interaction
-        await storage.storeAccountSnapshot("foo", {
-            timestamp: "friday",
-            address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            nonce: 42,
-            balance: TokenPayment.egldFromAmount(1),
-            tokens: { RIDE: 1000, MEX: 1000 }
-        });
-
-        // With references to "before" / "after" interaction
-        let interactionReference = await storage.storeInteraction("foo", {
-            action: "doSomething",
-            userAddress: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            contractAddress: new Address("erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu"),
-            transactionHash: new TransactionHash(""),
-            timestamp: "friday",
-            round: 42,
-            epoch: 1,
-            blockNonce: 7,
-            hyperblockNonce: 9,
-            input: { foo: "bar" },
-            transfers: {},
-            output: { bar: "foo" }
-        });
-
-        let snapshotBefore = {
-            timestamp: "friday",
-            address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            nonce: 42,
-            balance: TokenPayment.egldFromAmount(1),
-            tokens: { RIDE: 1000, MEX: 1000 },
-            takenBeforeInteraction: interactionReference
+        const entryOne = {
+            id: 0,
+            correlationStep: "test",
+            correlationTag: "test",
+            summary: "foobar",
+            event: "StateSnapshot",
+            payload: { a: "b", c: "d", foo: 42 },
+            comparableTo: null
         };
 
-        let snapshotAfter = {
-            timestamp: "friday",
-            address: new Address("erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th"),
-            nonce: 43,
-            balance: TokenPayment.egldFromAmount(2),
-            tokens: { RIDE: 500, MEX: 500 },
-            takenAfterInteraction: interactionReference
+        await storage.storeAuditEntry(entryOne);
+
+        const entryTwo = {
+            id: 0,
+            correlationStep: "test",
+            correlationTag: "test",
+            summary: "foobar",
+            event: "StateSnapshot",
+            payload: { a: "d", c: "b", foo: 43 },
+            comparableTo: entryOne.id
         };
 
-        await storage.storeAccountSnapshot("foo", snapshotBefore);
-        await storage.storeAccountSnapshot("foo", snapshotAfter);
+        await storage.storeAuditEntry(entryTwo);
 
-        // TODO: Add some assertions.
+        const records = await storage.loadAuditEntries();
+        assert.deepEqual(records, [entryOne, entryTwo]);
 
         await storage.destroy();
     });

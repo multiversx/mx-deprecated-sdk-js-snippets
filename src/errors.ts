@@ -6,23 +6,6 @@ export class Err extends Error {
         super(message);
         this.inner = inner;
     }
-
-    /**
-     * Returns a pretty, friendly summary for the error or for the chain of errros (if appropriate).
-     */
-    summary(): any[] {
-        let result = [];
-
-        result.push({ name: this.name, message: this.message });
-
-        let inner: any = this.inner;
-        while (inner) {
-            result.push({ name: inner.name, message: inner.message });
-            inner = inner.inner;
-        }
-
-        return result;
-    }
 }
 
 export class ErrBadSessionConfig extends Err {
@@ -49,8 +32,21 @@ export class ErrMissingUserOrGroup extends Err {
     }
 }
 
+export class ErrNumRetriesExceeded extends Err {
+    public constructor() {
+        super(`Number of retries exceeded.`);
+    }
+} 
+
+export class ErrBreadcrumbNotFound extends Err {
+    public constructor(breadcrumb: string) {
+        super(`Breadcrumb not found: ${breadcrumb}`);
+    }
+}
+
 export class ErrMissingNodeOrGroupOfNodes extends Err {
     public constructor(name: string) {
         super(`Missing node or groupOfNodes: ${name}`);
     }
 }
+
