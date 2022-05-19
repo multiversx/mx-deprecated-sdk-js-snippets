@@ -1,10 +1,10 @@
-import { Address, BigUIntValue, BytesType, BytesValue, ContractFunction, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenIdentifierValue, TokenPayment, TokenProperty, Transaction, TransactionPayload, TransactionWatcher, ESDTTransferPayloadBuilder } from "@elrondnetwork/erdjs";
+import { Address, BigUIntValue, BytesType, BytesValue, ContractFunction, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenIdentifierValue, TokenPayment, Transaction, TransactionPayload, TransactionWatcher, ESDTTransferPayloadBuilder } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import path from "path";
 import { loadAbiRegistry } from "../contracts";
 import { computeGasLimitOnInteraction, computeGasLimit } from "../gasLimit";
 import { IBLS, IBlsKeyOwnerAddress, ITestSession, ITestUser, IToken } from "../interface";
-import { INetworkProvider } from "../interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider } from "../interfaceOfNetwork";
 
 const ValidatorContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllst77y4l");
 const PathToAbi = path.resolve(__dirname, "validator.abi.json");
@@ -23,11 +23,11 @@ export async function createValidatorInteractor(session: ITestSession) {
 export class ValidatorInteractor {
     private readonly contract: SmartContract;
     private readonly networkProvider: INetworkProvider;
-    private readonly networkConfig: NetworkConfig;
+    private readonly networkConfig: INetworkConfig;
     private readonly transactionWatcher: TransactionWatcher;
     private readonly resultsParser: ResultsParser;
 
-    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
+    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig) {
         this.contract = contract;
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;

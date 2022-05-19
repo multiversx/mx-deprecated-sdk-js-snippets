@@ -3,12 +3,11 @@ import { assert } from "chai";
 import { ITestSession, ITestUser, ITestNode, IBlsKeyOwnerAddress, IBLS } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
-import { InteractionRecord } from "../../storage/records";
 import { createStakingInteractor } from "../../system/staking";
 import { BLS, ValidatorSecretKey, parseUserKeys, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs-walletcore";
 import * as path from "path";
 import { PathLike, readFileSync, readdirSync } from "fs";
-import { resolvePath } from "../../utils";
+import { FiveMinutesInMilliseconds } from "../../constants";
 
 describe("staking interactor", async function () {
     this.bail(true);
@@ -23,7 +22,7 @@ describe("staking interactor", async function () {
 
     this.beforeAll(async function () {
         await BLS.initIfNecessary();
-        session = await TestSession.loadOnSuite("testnet", suite);
+        session = await TestSession.load("testnet", __dirname);
         provider = session.networkProvider;
         whale = session.users.getUser("whale");
         owner = session.users.getUser("self");
@@ -36,7 +35,7 @@ describe("staking interactor", async function () {
     it("Get Waiting List Index", async function () {
 
         this.timeout(5000);
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -50,7 +49,7 @@ describe("staking interactor", async function () {
 
     it("Get Waiting List Size", async function () {
         this.timeout(5000);
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -60,7 +59,7 @@ describe("staking interactor", async function () {
 
     it("Get Reward Address", async function () {
         this.timeout(5000);
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -73,7 +72,7 @@ describe("staking interactor", async function () {
 
     it("Get BLS Key Status", async function () {
         this.timeout(5000);
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -86,7 +85,7 @@ describe("staking interactor", async function () {
 
     it("Get Remaining Unbond Period", async function () {
         this.timeout(5000);
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -98,7 +97,7 @@ describe("staking interactor", async function () {
     });
 
     it("Get Waiting List Register Nonce and Reward Address", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -108,7 +107,7 @@ describe("staking interactor", async function () {
 
     it("Get Owner", async function () {
         this.timeout(5000);
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -121,7 +120,7 @@ describe("staking interactor", async function () {
 
     it("Get Total Number of Registered Nodes", async function () {
         this.timeout(5000);
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let bksKey = "testKey"
@@ -131,7 +130,7 @@ describe("staking interactor", async function () {
     });
 
     it("Fix Waiting List Queue Size", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let bksKey = "testKey"
@@ -142,7 +141,7 @@ describe("staking interactor", async function () {
 
     it("Add Missing Node To Queue", async function () {
         this.timeout(5000);
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -157,7 +156,7 @@ describe("staking interactor", async function () {
 
     it("Check if staked", async function () {
         this.timeout(5000);
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -169,7 +168,7 @@ describe("staking interactor", async function () {
     });
 
     it("#ValidatorSC Call -> Stake", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -188,7 +187,7 @@ describe("staking interactor", async function () {
     });
 
     it("#ValidatorSC Call -> Register", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -207,7 +206,7 @@ describe("staking interactor", async function () {
     });
 
     it("#ValidatorSC Call -> Unstake", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -224,7 +223,7 @@ describe("staking interactor", async function () {
     });
 
     it("#ValidatorSC Call -> Unbond", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -240,7 +239,7 @@ describe("staking interactor", async function () {
 
 
     it("#ValidatorSC Call -> Change Owner and Reward Address", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let newOwner = new Address("erd18h5dulxp5zdp80qjndd2w25kufx0rm5yqd2h7ajrfucjhr82y8vqyq0hye")
@@ -256,7 +255,7 @@ describe("staking interactor", async function () {
     });
 
     it("#ValidatorSC Call -> Change Reward Address", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let newRewardAddress = new Address("erd18h5dulxp5zdp80qjndd2w25kufx0rm5yqd2h7ajrfucjhr82y8vqyq0hye")
@@ -272,7 +271,7 @@ describe("staking interactor", async function () {
     });
 
     it("#ValidatorSC Call -> Change Validator Key", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let olbBlsKey = Buffer.from("23f918f98b2e1812bfb964251491446b7ee553cd37ec786fb779e522db7b711138727b6b1dd0c5e41c19e7b22a3d240f4533062b7af9a385c52af4c9442355b989cfc0e73f1a2b46f3f0541470bf2476521c8c0835af4d7b9c42294f89651989")
@@ -287,7 +286,7 @@ describe("staking interactor", async function () {
 
 
     it("#SystemSC Call -> Set Owners on Addresses", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let BlsKeyOwnerAddressPair = {
@@ -303,7 +302,7 @@ describe("staking interactor", async function () {
     });
 
     it("#SystemSC Call -> Stake Nodes from Queue", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let numberOfNodesFromQueue = 5
@@ -316,7 +315,7 @@ describe("staking interactor", async function () {
     });
 
     it("#SystemSC Call -> Unstake at End of Epoch", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let bksKey = "testKey"
@@ -329,7 +328,7 @@ describe("staking interactor", async function () {
     });
 
     it("#SystemSC Call -> Reset Last Unjailed from Queue", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let bksKey = "testKey"
@@ -339,7 +338,7 @@ describe("staking interactor", async function () {
     });
 
     it("#SystemSC Call -> Clean Additional Queue", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let bksKey = "testKey"
@@ -349,7 +348,7 @@ describe("staking interactor", async function () {
     });
 
     it("SystemSC Call -> Switch Jailed With Waiting", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let blsKey = "erd18h5dulxp5zdp80qjndd2w25kufx0rm5yqd2h7ajrfucjhr82y8vqyq0hye"
@@ -362,7 +361,7 @@ describe("staking interactor", async function () {
     });
 
     it("#EndOfEpochSC Call-> Update Config Min Nodes", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let newMinNodes = 3
@@ -375,7 +374,7 @@ describe("staking interactor", async function () {
     });
 
     it("#EndOfEpochSC Call-> Update Config Max Nodes", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
         let maxNodes = 5
@@ -388,7 +387,7 @@ describe("staking interactor", async function () {
     });
 
     it("#EndOfEpochSC Call-> Jail", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 
@@ -399,7 +398,7 @@ describe("staking interactor", async function () {
     });
 
     it("# After EndOfEpochSC Call-> Unjail", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createStakingInteractor(session)
 

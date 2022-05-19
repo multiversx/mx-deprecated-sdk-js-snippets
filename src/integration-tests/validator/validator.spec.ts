@@ -6,7 +6,7 @@ import { TestSession } from "../../session";
 import { createValidatorInteractor } from "../../system/validator";
 import { BLS, ValidatorSecretKey, parseUserKeys, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs-walletcore";
 import { PathLike, readFileSync, readdirSync } from "fs";
-import { resolvePath } from "../../utils";
+import { FiveMinutesInMilliseconds } from "../../constants";
 
 describe("validator interactor", async function () {
     this.bail(true);
@@ -20,7 +20,7 @@ describe("validator interactor", async function () {
 
     this.beforeAll(async function () {
         await BLS.initIfNecessary();
-        session = await TestSession.loadOnSuite("testnet", suite);
+        session = await TestSession.load("devnet", __dirname);
         provider = session.networkProvider;
         owner = session.users.getUser("self");
         node = session.nodes.getNode("staking-node")
@@ -30,8 +30,7 @@ describe("validator interactor", async function () {
     });
 
     it("Stake Individual Node", async function () {
-
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
         let keySignaturePair: Buffer[] = []
 
         let interactor = await createValidatorInteractor(session)
@@ -51,7 +50,7 @@ describe("validator interactor", async function () {
 
     it("Stake Individual Node and Change Reward Address", async function () {
 
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
         let keySignaturePair: Buffer[] = []
 
         let interactor = await createValidatorInteractor(session)
@@ -71,7 +70,7 @@ describe("validator interactor", async function () {
     });
 
     it("Stake Group Of Nodes", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let keySignaturePair: Buffer[] = []
         let numberOfNodes = 0
@@ -95,7 +94,7 @@ describe("validator interactor", async function () {
 
 
     it("Stake Group Of Nodes and Change Reward Address", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let keySignaturePair: Buffer[] = []
         let numberOfNodes = 0
@@ -118,7 +117,7 @@ describe("validator interactor", async function () {
     });
 
     it("Unstake Individual Node", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
 
@@ -133,7 +132,7 @@ describe("validator interactor", async function () {
     });
 
     it("Unstake Group of Nodes", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
         let blsKeyList: Buffer[] = []
 
         let interactor = await createValidatorInteractor(session)
@@ -152,7 +151,7 @@ describe("validator interactor", async function () {
     });
 
     it("UnstakeNodes for Individual Node", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
 
@@ -167,7 +166,7 @@ describe("validator interactor", async function () {
     });
 
     it("UnstakeNodes for Group of Nodes", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
         let blsKeyList: Buffer[] = []
 
         let interactor = await createValidatorInteractor(session)
@@ -185,7 +184,7 @@ describe("validator interactor", async function () {
     });
 
     it("UnStake Tokens", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
         let unStakeValue = 200000000000000000000;
@@ -198,7 +197,7 @@ describe("validator interactor", async function () {
     });
 
     it("Unbond for Individual Node", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
 
@@ -213,7 +212,7 @@ describe("validator interactor", async function () {
     });
 
     it("Unbond for Group Of Nodes", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
         let blsKeyList: Buffer[] = []
 
         let interactor = await createValidatorInteractor(session)
@@ -231,7 +230,7 @@ describe("validator interactor", async function () {
     });
 
     it("Unbond Nodes", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
 
@@ -246,7 +245,7 @@ describe("validator interactor", async function () {
     });
 
     it("Unbond Tokens", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
 
@@ -255,7 +254,7 @@ describe("validator interactor", async function () {
     });
 
     it("Unjail", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
 
@@ -270,7 +269,7 @@ describe("validator interactor", async function () {
     });
 
     it("Change Reward Address", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
         let newRewardAddress = new Address("erd19uv7xe40k399jl4shr0tynxj3uq58syzg6f5vs9k75dgyuvpmzds6s5juk")
@@ -287,7 +286,7 @@ describe("validator interactor", async function () {
     });
 
     it("Get Total Staked", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
         let address = new Address("erd18h5dulxp5zdp80qjndd2w25kufx0rm5yqd2h7ajrfucjhr82y8vqyq0hye")
@@ -297,7 +296,7 @@ describe("validator interactor", async function () {
     });
 
     it("Get Total Staked Topup Staked Bls Keys", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
         let address = new Address("erd18h5dulxp5zdp80qjndd2w25kufx0rm5yqd2h7ajrfucjhr82y8vqyq0hye")
@@ -307,7 +306,7 @@ describe("validator interactor", async function () {
     });
 
     it("Get Bls Key Status", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
         let address = new Address("erd18h5dulxp5zdp80qjndd2w25kufx0rm5yqd2h7ajrfucjhr82y8vqyq0hye")
@@ -317,7 +316,7 @@ describe("validator interactor", async function () {
     });
 
     it("Clean Registered Data", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
 
@@ -326,7 +325,7 @@ describe("validator interactor", async function () {
     });
 
     it("Get UnStaked Tokens List", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
         let address = new Address("erd18h5dulxp5zdp80qjndd2w25kufx0rm5yqd2h7ajrfucjhr82y8vqyq0hye")
@@ -336,7 +335,7 @@ describe("validator interactor", async function () {
     });
 
     it("ReStake UnStaked Nodes", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createValidatorInteractor(session)
 

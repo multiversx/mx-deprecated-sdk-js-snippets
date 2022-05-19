@@ -5,7 +5,7 @@ import { ErrMissingNodeOrGroupOfNodes } from "./errors";
 import { IBunchOfNodes, ITestNode, INodesConfig} from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
-import { resolvePath } from "./utils";
+import { resolvePath } from "./filesystem";
 
 export class TestNode implements ITestNode {
     readonly name: string;

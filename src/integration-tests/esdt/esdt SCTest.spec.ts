@@ -3,9 +3,9 @@ import { assert } from "chai";
 import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
-import { InteractionRecord } from "../../storage/records";
 import { BLS } from "@elrondnetwork/erdjs-walletcore";
 import { createESDTInteractor } from "../../system/esdt";
+import { FiveMinutesInMilliseconds } from "../../constants";
 
 describe("esdt Scenario 1", async function () {
     this.bail(true);
@@ -19,7 +19,7 @@ describe("esdt Scenario 1", async function () {
 
     this.beforeAll(async function () {
         await BLS.initIfNecessary();
-        session = await TestSession.loadOnSuite("testnet", suite);
+        session = await TestSession.load("testnet", __dirname);
         provider = session.networkProvider;
         whale = session.users.getUser("whale");
         owner = session.users.getUser("self");
@@ -28,7 +28,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Issue/Check Fungible Token with all properties and wipe afterwards", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -50,7 +50,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Issue SemiFungible Token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -68,7 +68,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Issue NonFungible Token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -84,7 +84,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Burn Token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -98,7 +98,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Set Special Role", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -115,7 +115,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Mint Token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -129,7 +129,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Freeze Token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
         let accountToFreeze = new Address("erd18h5dulxp5zdp80qjndd2w25kufx0rm5yqd2h7ajrfucjhr82y8vqyq0hye")
@@ -144,7 +144,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Unfreeze Token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
         let accountToUnfreeze = new Address("erd18h5dulxp5zdp80qjndd2w25kufx0rm5yqd2h7ajrfucjhr82y8vqyq0hye")
@@ -159,7 +159,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Wipe Token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
         let accountToWipe = new Address("erd18h5dulxp5zdp80qjndd2w25kufx0rm5yqd2h7ajrfucjhr82y8vqyq0hye")
@@ -174,7 +174,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Pause Token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -183,7 +183,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Unpause Token", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -192,7 +192,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Get Token Properties", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -201,7 +201,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Get Special Roles", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -210,7 +210,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Get Contract Configuration", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -219,7 +219,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Claim", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
 
@@ -228,7 +228,7 @@ describe("esdt Scenario 1", async function () {
     });
 
     it("Transfer Token To User", async function () {
-        session.expectLongInteraction(this);
+        this.timeout(FiveMinutesInMilliseconds);
 
         let interactor = await createESDTInteractor(session)
         let receiver = new Address("erd18h5dulxp5zdp80qjndd2w25kufx0rm5yqd2h7ajrfucjhr82y8vqyq0hye")

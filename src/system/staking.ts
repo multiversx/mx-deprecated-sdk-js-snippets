@@ -1,14 +1,13 @@
-import { Address, BigUIntValue, BytesType, BytesValue, ContractFunction, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenIdentifierValue, TokenPayment, TokenProperty, Transaction, TransactionPayload, TransactionWatcher, ESDTTransferPayloadBuilder } from "@elrondnetwork/erdjs";
+import { Address, BigUIntValue, BytesType, BytesValue, ContractFunction, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenIdentifierValue, TokenPayment, Transaction, TransactionPayload, TransactionWatcher, ESDTTransferPayloadBuilder } from "@elrondnetwork/erdjs";
 import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
 import BigNumber from "bignumber.js";
 import { Signer } from "crypto";
 import path from "path";
 import { stringify } from "querystring";
-import { LessThan } from "typeorm";
 import { loadAbiRegistry } from "../contracts";
 import { computeGasLimitOnInteraction, computeGasLimit } from "../gasLimit";
 import { IBLS, IBlsKeyOwnerAddress, ITestSession, ITestUser, IToken } from "../interface";
-import { INetworkProvider } from "../interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider } from "../interfaceOfNetwork";
 
 const StakingContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqllls0lczs7");
 const ValidatorContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllst77y4l");
@@ -28,11 +27,11 @@ export async function createStakingInteractor(session: ITestSession) {
 export class StakingInteractor {
     private readonly contract: SmartContract;
     private readonly networkProvider: INetworkProvider;
-    private readonly networkConfig: NetworkConfig;
+    private readonly networkConfig: INetworkConfig;
     private readonly transactionWatcher: TransactionWatcher;
     private readonly resultsParser: ResultsParser;
 
-    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
+    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig) {
         this.contract = contract;
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;

@@ -82,6 +82,7 @@ export interface IContractQueryResponse {
     returnCode: IContractReturnCode;
     returnMessage: string;
     getReturnDataParts(): Buffer[];
+    returnData: string[];
 }
 
 export interface IContractReturnCode {
