@@ -12,6 +12,10 @@
             {
                 "name": "alice",
                 "pem": "~/elrondsdk/testwallets/latest/users/alice.pem"
+            },
+            {
+                "name": "self",
+                "pem": "~/elrondsdk/testwallets/latest/users/self.pem"
             }
         ],
         "groups": [
@@ -22,6 +26,20 @@
             {
                 "name": "duet",
                 "pem": "~/test-wallets/duet.pem"
+            }
+        ]
+    },
+    "nodes":{
+        "individualNodes": [
+            {
+                "name": "staking-node",
+                "pem": "~/elrondsdk/testwallets/latest/custom-nodes/validatorKey.pem"
+            }
+        ],
+        "groupOfNodes": [
+            {
+                "name": "groupOfNodes",
+                "pem": "~/test-wallets/manyValidatorKeys.pem"
             }
         ]
     }

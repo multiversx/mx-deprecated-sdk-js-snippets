@@ -525,6 +525,209 @@ export class ESDTInteractor {
         return returnCode;
     }
 
+    async stopNFTCreateForever(owner: ITestUser, token: { name: string }): Promise<any> {
+        let interaction = <Interaction>this.contract.methods
+            .stopNFTCreateForever([token.name])
+            .withNonce(owner.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
+
+        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        interaction.withGasLimit(gasLimit);
+
+        let transaction = interaction.buildTransaction();
+        await owner.signer.sign(transaction);
+
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        let logs = transactionOnNetwork.logs;
+        let event = logs.findFirstOrNoneEvent("claim");
+        let identifier = event!.topics[0].toString();
+
+        console.info(`ESDTInteractor.claim [end]: token = ${identifier}`);
+        let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());
+        return returnCode;
+    }
+
+    async transferNFTCreateRole(owner: ITestUser, token: { name: string }, currentNFTCreateOwner: Address, nextNFTCreateOwner: Address): Promise<any> {
+        let interaction = <Interaction>this.contract.methods
+            .transferNFTCreateRole([
+                token.name,
+                currentNFTCreateOwner,
+                nextNFTCreateOwner
+            ])
+            .withNonce(owner.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
+
+        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        interaction.withGasLimit(gasLimit);
+
+        let transaction = interaction.buildTransaction();
+        await owner.signer.sign(transaction);
+
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        let logs = transactionOnNetwork.logs;
+
+        return logs;
+    }
+
+    async unSetSpecialRole(owner: ITestUser, token: { name: string, owner: Address }, roles: string[]): Promise<any> {
+        let interaction = <Interaction>this.contract.methods
+            .unSetSpecialRole([
+                token.name,
+                token.owner,
+                roles
+            ])
+            .withNonce(owner.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
+
+        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        interaction.withGasLimit(gasLimit);
+
+        let transaction = interaction.buildTransaction();
+        await owner.signer.sign(transaction);
+
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        let logs = transactionOnNetwork.logs;
+
+        return logs;
+    }
+
+    async wipeSingleNFT(owner: ITestUser, token: { name: string }, nonce: number, ownerAddress: Address): Promise<any> {
+        let interaction = <Interaction>this.contract.methods
+            .wipeSingleNFT([
+                token.name,
+                nonce,
+                ownerAddress
+            ])
+            .withNonce(owner.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
+
+        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        interaction.withGasLimit(gasLimit);
+
+        let transaction = interaction.buildTransaction();
+        await owner.signer.sign(transaction);
+
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        let logs = transactionOnNetwork.logs;
+
+        return logs;
+    }
+
+    async toggleFreezeSingleNFT(owner: ITestUser, token: { name: string }, nonce: number, ownerAddress: Address): Promise<any> {
+        let interaction = <Interaction>this.contract.methods
+            .freezeSingleNFT([
+                token.name,
+                nonce,
+                ownerAddress
+            ])
+            .withNonce(owner.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
+
+        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        interaction.withGasLimit(gasLimit);
+
+        let transaction = interaction.buildTransaction();
+        await owner.signer.sign(transaction);
+
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        let logs = transactionOnNetwork.logs;
+
+        return logs;
+    }
+
+    async unFreezeSingleNFT(owner: ITestUser, token: { name: string }, nonce: number, ownerAddress: Address): Promise<any> {
+        let interaction = <Interaction>this.contract.methods
+            .unFreezeSingleNFT([
+                token.name,
+                nonce,
+                ownerAddress
+            ])
+            .withNonce(owner.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
+
+        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        interaction.withGasLimit(gasLimit);
+
+        let transaction = interaction.buildTransaction();
+        await owner.signer.sign(transaction);
+
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        let logs = transactionOnNetwork.logs;
+
+        return logs;
+    }
+
+    async getAllAddressesAndRoles(token: { name: string }): Promise<any> {
+        // Prepare the interaction, check it, then build the query:
+        let interaction = <Interaction>this.contract.methods.getAllAddressesAndRoles([token.name]);
+        let query = interaction.check().buildQuery();
+
+        // Let's run the query and parse the results:
+        let queryResponse = await this.networkProvider.queryContract(query);
+        let { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
+
+        const unwrappedValues = values.map(value => value.valueOf());
+
+        console.info(unwrappedValues)
+
+        return unwrappedValues
+    }
+
+    async registerMetaESDT(owner: ITestUser, token: {
+        name: string, ticker: string, decimals: number,
+        canMint?: boolean,
+        canBurn?: boolean,
+        canFreeze?: boolean,
+        canWipe?: boolean,
+        canPause?: boolean,
+        canAddSpecialRoles?: boolean,
+        canChangeOwner?: boolean,
+        canUpgrade?: boolean,
+    }): Promise<IToken> {
+
+        let argsForProperties = [
+            ...(token.canMint ? [["canMint", "true"]] : []),
+            ...(token.canBurn ? [["canBurn", "true"]] : []),
+            ...(token.canFreeze ? [["canFreeze", "true"]] : []),
+            ...(token.canWipe ? [["canWipe", "true"]] : []),
+            ...(token.canPause ? [["canPause", "true"]] : []),
+            ...(token.canAddSpecialRoles ? [["canAddSpecialRoles", "true"]] : []),
+            ...(token.canChangeOwner ? [["canChangeOwner", "true"]] : []),
+            ...(token.canUpgrade ? [["canUpgrade", "true"]] : []),
+        ]
+
+        let interaction = <Interaction>this.contract.methods
+            .registerMetaESDT([
+                token.name,
+                token.ticker,
+                token.decimals,
+                ...argsForProperties
+            ])
+            .withValue(TokenPayment.egldFromAmount(IssuePriceInEgld))
+            .withNonce(owner.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
+
+        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        interaction.withGasLimit(gasLimit);
+
+        let transaction = interaction.buildTransaction();
+        await owner.signer.sign(transaction);
+
+        await this.networkProvider.sendTransaction(transaction);
+        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        let logs = transactionOnNetwork.logs;
+        let event = logs.findFirstOrNoneEvent("registerMetaESDT");
+        let identifier = event!.topics[0].toString();
+
+        console.info(`ESDTInteractor.issueSemiFungible [end]: token = ${identifier}`);
+        return { identifier: identifier, decimals: 0 };
+    }
     async sendToUser(sender: ITestUser, receiver: Address, payment: TokenPayment) {
         let data = new ESDTTransferPayloadBuilder()
             .setPayment(payment)

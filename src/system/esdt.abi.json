@@ -379,6 +379,145 @@
                     "type": "BigUint"
                 }
             ]
+        },
+        {
+            "name": "getAllAddressesAndRoles",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "addressAndRolePair",
+                    "type": "variadic<multi<Address, bytes>>"
+                }
+            ]
+        },
+        {
+            "name": "stopNFTCreate",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "transferNFTCreateRole",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "currentNFTCreateOwner",
+                    "type": "Address"
+                },
+                {
+                    "name": "nextNFTCreateOwner",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unSetSpecialRole",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "currentOwner",
+                    "type": "Address"
+                },
+                {
+                    "name": "roles",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "wipeSingleNFT",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nonce",
+                    "type": "u32"
+                },
+                {
+                    "name": "ownerAddress",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "freezeSingleNFT",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nonce",
+                    "type": "u32"
+                },
+                {
+                    "name": "ownerAddress",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unfreezeSingleNFT",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nonce",
+                    "type": "u32"
+                },
+                {
+                    "name": "ownerAddress",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "registerMetaESDT",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "tickerName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "properties",
+                    "type": "variadic<multi<bytes, bytes>>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "tokenIdentifier",
+                    "type": "bytes"
+                }
+            ]
         }
     ]
 }

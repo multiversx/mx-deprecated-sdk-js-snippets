@@ -1,0 +1,211 @@
+{
+    "name": "validator",
+    "endpoints": [
+        {
+            "name": "init",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "stake",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "numberOfNodes",
+                    "type": "u32"
+                },
+                {
+                    "name": "blsKey",
+                    "type": "variadic<bytes>"
+                },
+                {
+                    "name": "newOwnerAddress",
+                    "type": "optional<Address>"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unStake",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "blsKey",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unStakeNodes",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "blsKey",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unStakeTokens",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "unstakeValue",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unBond",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "blsKey",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unBondNodes",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "blsKeys",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unBondTokens",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "unJail",
+            "inputs": [
+                {
+                    "name": "blsKey",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "blsKeyForNodesWithError",
+                    "type": "variadic<bytes>"
+                }
+            ]
+        },
+        {
+            "name": "changeRewardAddress",
+            "inputs": [
+                {
+                    "name": "newRewardAddress",
+                    "type": "Address"
+                },
+                {
+                    "name": "blsKey",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getTotalStaked",
+            "inputs": [
+                {
+                    "name": "Address",
+                    "type": "variadic<Address>"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getTotalStakedTopUpStakedBlsKeys",
+            "inputs": [
+                {
+                    "name": "validatorAddress",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "totalStaked",
+                    "type": "u32"
+                },
+                {
+                    "name": "totalTopUp",
+                    "type": "u32"
+                },
+                {
+                    "name": "activeBlsKey",
+                    "type": "variadic<Address>"
+                }
+            ]
+        },
+        {
+            "name": "getBlsKeysStatus",
+            "inputs": [
+                {
+                    "name": "validatorAddress",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "keyAndKeyStatusPair",
+                    "type": "variadic<bytes, bytes>"
+                }
+            ]
+        },
+        {
+            "name": "cleanRegisteredData",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "getUnStakedTokensList",
+            "inputs": [
+                {
+                    "name": "validatorAddress",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "unstakedTokensAndRemainingPeriodPair",
+                    "type": "variadic<bytes, bytes>"
+                }
+            ]
+        },
+        {
+            "name": "reStakeUnStakedNodes",
+            "inputs": [
+                {
+                    "name": "blsKeys",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": []
+        }
+    ]
+}

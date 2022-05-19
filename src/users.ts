@@ -2,7 +2,7 @@ import { Account, IAddress } from "@elrondnetwork/erdjs";
 import { parseUserKeys, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs-walletcore";
 import { PathLike, readFileSync, readdirSync } from "fs";
 import { ErrMissingUserOrGroup } from "./errors";
-import { IBunchOfUsers, ITestUser as ITestUser, IUsersConfig } from "./interface";
+import { IBunchOfUsers, ITestNode, ITestUser as ITestUser, IUsersConfig } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
 import { resolvePath } from "./utils";

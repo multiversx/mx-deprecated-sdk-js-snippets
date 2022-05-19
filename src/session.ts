@@ -3,11 +3,13 @@ import { existsSync, PathLike, readFileSync } from "fs";
 import { Address } from "@elrondnetwork/erdjs";
 import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
 import { ErrBadArgument, ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, IMochaSuite, IMochaTest, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
+import { IBunchOfNodes, IBunchOfUsers, IMochaSuite, IMochaTest, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken ,ITestNode} from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
+import { BunchOfNodes} from "./nodes"
 import { resolvePath } from "./utils";
+import { notDeepStrictEqual } from "assert";
 
 const TypeToken = "token";
 const TypeAddress = "address";
@@ -20,6 +22,7 @@ export class TestSession implements ITestSession {
     readonly networkProvider: INetworkProvider;
     readonly users: IBunchOfUsers;
     readonly storage: IStorage;
+    readonly nodes: IBunchOfNodes;
     private networkConfig: NetworkConfig = new NetworkConfig();
 
     constructor(args: {
@@ -27,6 +30,7 @@ export class TestSession implements ITestSession {
         scope: string,
         provider: INetworkProvider,
         users: IBunchOfUsers,
+        nodes: IBunchOfNodes,
         storage: IStorage,
         config: ITestSessionConfig
     }) {
@@ -34,6 +38,7 @@ export class TestSession implements ITestSession {
         this.scope = args.scope;
         this.networkProvider = args.provider;
         this.users = args.users;
+        this.nodes = args.nodes;
         this.storage = args.storage;
     }
 
@@ -55,6 +60,7 @@ export class TestSession implements ITestSession {
 
         let provider = this.createNetworkProvider(sessionName, config.networkProvider);
         let users = new BunchOfUsers(config.users);
+        let nodes = new BunchOfNodes(config.nodes);
         let storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
         let storage = await Storage.create(storageName.toString());
 
@@ -63,6 +69,7 @@ export class TestSession implements ITestSession {
             scope: scope,
             provider: provider,
             users: users,
+            nodes: nodes,
             storage: storage,
             config: config
         });
@@ -119,6 +126,11 @@ export class TestSession implements ITestSession {
         let promises = users.map(user => user.sync(this.networkProvider));
         await Promise.all(promises);
     }
+
+    // async syncNodes(nodes: ITestNode[]): Promise<void> {
+    //     let promises = nodes.map(node => node.sync(this.networkProvider));
+    //     await Promise.all(promises);
+    // }
 
     async saveAddress(name: string, address: Address): Promise<void> {
         console.log(`TestSession.saveAddress(): name = [${name}], address = ${address.bech32()}`);

@@ -48,3 +48,9 @@ export class ErrMissingUserOrGroup extends Err {
         super(`Missing user or group: ${name}`);
     }
 }
+
+export class ErrMissingNodeOrGroupOfNodes extends Err {
+    public constructor(name: string) {
+        super(`Missing node or groupOfNodes: ${name}`);
+    }
+}

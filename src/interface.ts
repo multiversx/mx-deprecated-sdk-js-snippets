@@ -6,6 +6,7 @@ import { ISigner } from "./interfaceOfWalletCore";
 export interface ITestSessionConfig {
     readonly networkProvider: INetworkProviderConfig;
     readonly users: IUsersConfig;
+    readonly nodes: INodesConfig;
 }
 
 export interface INetworkProviderConfig {
@@ -29,12 +30,29 @@ export interface IGroupOfUsersConfig {
     readonly folder?: string;
 }
 
+export interface INodesConfig {
+    readonly individualNodes: INodeConfig[];
+    readonly groupOfNodes: IGroupOfNodesConfig[];
+}
+
+export interface INodeConfig {
+    readonly name: string;
+    readonly pem: string;
+}
+
+export interface IGroupOfNodesConfig {
+    readonly name: string;
+    readonly pem?: string;
+    readonly folder?: string;
+}
+
 export interface ITestSession {
     readonly name: string;
     readonly scope: string;
     readonly networkProvider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
+    readonly nodes: IBunchOfNodes;
 
     expectLongInteraction(mochaTest: IMochaTest, minutes?: number): void;
     syncNetworkConfig(): Promise<void>;
@@ -78,6 +96,28 @@ export interface ITestUser {
     readonly signer: ISigner;
 
     sync(provider: INetworkProvider): Promise<void>;
+}
+
+export interface INodesConfig {
+    readonly nodePem: string;
+    readonly othersPem: string;
+}
+
+export interface IBunchOfNodes {
+    getNode(name: string): ITestNode;
+    getGroupOfNodes(name: string): ITestNode[];
+}
+
+export interface ITestNode {
+    readonly name: string;
+    readonly group: string;
+    // readonly address: IAddress;
+    // readonly account: Account;
+    // readonly signer: ISigner;
+    readonly secretKey: Buffer;
+
+    //sync(provider: INetworkProvider): Promise<void>;
+
 }
 
 /**
@@ -130,6 +170,17 @@ export interface IAccountSnapshotWithinStorage {
     takenAfterInteraction?: IReferenceOfInteractionWithinStorage;
 }
 
-export interface IToken { identifier: string, decimals: number; }
+export interface IToken {
+    identifier: string,
+    decimals: number;
+}
 
-export interface IBLS { key: string, signature: string }
+export interface IBLS {
+    key: string,
+    signature: string
+}
+
+export interface IBlsKeyOwnerAddress {
+    blsKey: string,
+    ownerAddress: IAddress
+}
