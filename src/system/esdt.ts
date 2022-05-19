@@ -6,7 +6,7 @@ import path from "path";
 import { loadAbiRegistry } from "../contracts";
 import { computeGasLimitOnInteraction, computeGasLimit } from "../gasLimit";
 import { ITestSession, ITestUser, IToken } from "../interface";
-import { INetworkProvider } from "../interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider } from "../interfaceOfNetwork";
 
 const ESDTContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u");
 const PathToAbi = path.resolve(__dirname, "esdt.abi.json");
@@ -14,7 +14,7 @@ const IssuePriceInEgld = new BigNumber("0.05");
 
 export async function createESDTInteractor(session: ITestSession) {
     let registry = await loadAbiRegistry(PathToAbi);
-    let abi = new SmartContractAbi(registry, ["esdt"]);
+    let abi = new SmartContractAbi(registry);
     let contract = new SmartContract({ address: ESDTContractAddress, abi: abi });
     let networkProvider = session.networkProvider;
     let networkConfig = session.getNetworkConfig();
@@ -25,11 +25,11 @@ export async function createESDTInteractor(session: ITestSession) {
 export class ESDTInteractor {
     private readonly contract: SmartContract;
     private readonly networkProvider: INetworkProvider;
-    private readonly networkConfig: NetworkConfig;
+    private readonly networkConfig: INetworkConfig;
     private readonly transactionWatcher: TransactionWatcher;
     private readonly resultsParser: ResultsParser;
 
-    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: NetworkConfig) {
+    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig) {
         this.contract = contract;
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;
