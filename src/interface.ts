@@ -46,7 +46,7 @@ export interface IGroupOfNodesConfig {
     readonly pem?: string;
     readonly folder?: string;
 }
-    
+
 export interface IReportingConfig {
     explorerUrl: string;
     apiUrl: string;
@@ -229,4 +229,9 @@ export interface IBLS {
 export interface IBlsKeyOwnerAddress {
     blsKey: string,
     ownerAddress: IAddress
+}
+
+export interface ITokenProperties {
+    property: string,
+    value: any
 }

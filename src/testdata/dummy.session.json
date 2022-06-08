@@ -21,5 +21,9 @@
                 "folder": "~/elrondsdk/testwallets/latest/users"
             }
         ]
+    },
+    "nodes": {
+        "individualNodes": [],
+        "groupOfNodes": []
     }
 }

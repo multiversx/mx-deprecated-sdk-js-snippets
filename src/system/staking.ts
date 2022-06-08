@@ -1,12 +1,8 @@
-import { Address, BigUIntValue, BytesType, BytesValue, ContractFunction, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenIdentifierValue, TokenPayment, Transaction, TransactionPayload, TransactionWatcher, ESDTTransferPayloadBuilder } from "@elrondnetwork/erdjs";
-import { NetworkConfig } from "@elrondnetwork/erdjs-network-providers";
-import BigNumber from "bignumber.js";
-import { Signer } from "crypto";
 import path from "path";
-import { stringify } from "querystring";
+import { Address, Interaction, ResultsParser, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher } from "@elrondnetwork/erdjs";
 import { loadAbiRegistry } from "../contracts";
-import { computeGasLimitOnInteraction, computeGasLimit } from "../gasLimit";
-import { IBLS, IBlsKeyOwnerAddress, ITestSession, ITestUser, IToken } from "../interface";
+import { computeGasLimitOnInteraction } from "../gasLimit";
+import { IBlsKeyOwnerAddress, ITestSession, ITestUser } from "../interface";
 import { INetworkConfig, INetworkProvider } from "../interfaceOfNetwork";
 
 const StakingContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqllls0lczs7");
@@ -24,6 +20,8 @@ export async function createStakingInteractor(session: ITestSession) {
     return interactor;
 }
 
+//majority of functions can be called only by the validator sc address
+//getTotalNumberOfRegisteredNodes, fixWaitingListQueueSize, addMissingNodeToQueue can be called by anyone.
 export class StakingInteractor {
     private readonly contract: SmartContract;
     private readonly networkProvider: INetworkProvider;

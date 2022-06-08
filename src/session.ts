@@ -13,6 +13,7 @@ import { Report } from "./reports/report";
 import { CorrelationHolder } from "./correlationHolder";
 import { BreadcrumbTypeAddress, BreadcrumbTypeArbitrary, BreadcrumbTypeToken } from "./constants";
 import { BunchOfNodes } from "./nodes";
+import { BLS } from "@elrondnetwork/erdjs-walletcore/out";
 
 export class TestSession implements ITestSession {
     readonly config: ITestSessionConfig;
@@ -46,6 +47,7 @@ export class TestSession implements ITestSession {
     }
 
     static async load(sessionName: string, folder: string): Promise<ITestSession> {
+        await BLS.initIfNecessary();
         const configFile = this.findSessionConfigFile(sessionName, folder);
         const folderOfConfigFile = path.dirname(configFile.toString());
         const configJson = readFileSync(configFile, { encoding: "utf8" });
@@ -148,7 +150,7 @@ export class TestSession implements ITestSession {
     async saveToken(params: { name: string, token: IToken }): Promise<void> {
         const name = params.name;
         const token = params.token;
-        
+
         console.log(`TestSession.saveToken(): name = [${name}], token = ${token.identifier}`);
 
         await this.storage.storeBreadcrumb({
