@@ -1,5 +1,5 @@
 import path from "path";
-import { Address, Interaction, ResultsParser, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher } from "@elrondnetwork/erdjs";
+import { Address, Interaction, ResultsParser, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher, ReturnCode } from "@elrondnetwork/erdjs";
 import { loadAbiRegistry } from "../contracts";
 import { computeGasLimitOnInteraction } from "../gasLimit";
 import { IBlsKeyOwnerAddress, ITestSession, ITestUser } from "../interface";
@@ -37,8 +37,8 @@ export class StakingInteractor {
         this.resultsParser = new ResultsParser();
     }
 
-    async stake(owner: ITestUser, blsKey: Buffer, rewardAddress: Address, ownerAddress: Address): Promise<any> {
-        let cost = NodeStakeAmount;
+    async stake(owner: ITestUser, blsKey: Buffer, rewardAddress: Address, ownerAddress: Address): Promise<ReturnCode> {
+        const cost = NodeStakeAmount;
 
         let interaction = <Interaction>this.contract.methods
             .stake([
@@ -51,21 +51,11 @@ export class StakingInteractor {
             .withQuerent(ValidatorContractAddress)
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, (6000000))
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "stake")
     }
 
-    async register(owner: ITestUser, blsKey: Buffer, rewardAddress: Address, ownerAddress: Address): Promise<any> {
-        let cost = NodeStakeAmount;
+    async register(owner: ITestUser, blsKey: Buffer, rewardAddress: Address, ownerAddress: Address): Promise<ReturnCode> {
+        const cost = NodeStakeAmount;
         let interaction = <Interaction>this.contract.methods
             .stake([
                 blsKey,
@@ -77,218 +67,103 @@ export class StakingInteractor {
             .withQuerent(ValidatorContractAddress)
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, (6000000))
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "register")
     }
 
-    async unStake(owner: ITestUser, blsKey: Buffer, rewardAddress: Address): Promise<any> {
-
-        let cost = 0
-
+    async unStake(owner: ITestUser, blsKey: Buffer, rewardAddress: Address): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .unStake([
                 blsKey,
                 rewardAddress
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withQuerent(ValidatorContractAddress)
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "unStake")
     }
 
     async unBond(owner: ITestUser, blsKey: Buffer
-    ): Promise<void> {
-
-        let cost = 0
-
+    ): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .unBond([
                 blsKey,
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
+        return await this.runInteraction(owner, interaction, 6000000, "unBond")
     }
 
-    async checkIfStaked(blsKey: Buffer): Promise<any> {
-
+    async checkIfStaked(blsKey: Buffer): Promise<ReturnCode> {
         // Prepare the interaction, check it, then build the query:
         let interaction = <Interaction>this.contract.methods.isStaked([blsKey]);
         let query = interaction.check().buildQuery();
-        query.caller = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllst77y4l")
+        query.caller = ValidatorContractAddress;
 
         // Let's run the query and parse the results:
         let queryResponse = await this.networkProvider.queryContract(query);
-        let { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
+        let { returnCode } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
 
-        const unwrappedValues = values.map(value => value.valueOf());
-
-        console.info(queryResponse.returnCode)
-
-        return queryResponse.returnCode
-    }
-
-    //To be tested using a local testnet (20min epoch) so that a node could naturally move through observer-> waiting validator ->
-    //eligible -> jailed
-    async jail(owner: ITestUser, ...args: string[]
-    ): Promise<void> {
-
-        let cost = 0
-
-        let interaction = <Interaction>this.contract.methods
-            .jail([
-                ...args,
-            ])
-            .withValue(TokenPayment.egldFromAmount(cost))
-            .withNonce(owner.account.getNonceThenIncrement())
-            .withChainID(this.networkConfig.ChainID);
-
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
+        console.info(queryResponse.returnMessage)
+        return returnCode
     }
 
     //To be unJailed after previous Jail action.
-    async unJail(owner: ITestUser, args: string): Promise<void> {
-
-        let cost = 0
-
+    async unJail(owner: ITestUser, args: string): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .unJail([
                 ...args,
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(2.5))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
+        return await this.runInteraction(owner, interaction, 6000000, "unJail")
     }
 
     async changeRewardAddress(owner: ITestUser, newRewardAddress: Address, blsKey: Buffer
-    ): Promise<any> {
-
-        let cost = 0
-
+    ): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .changeRewardAddress([
                 newRewardAddress,
                 blsKey,
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
-            .withQuerent(new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllst77y4l"))
+            .withQuerent(ValidatorContractAddress)
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "changeRewardAddress")
     }
 
     async changeValidatorKeys(owner: ITestUser, oldBlsKey: Buffer, newBlsKey: Buffer
-    ): Promise<any> {
-
-        let cost = 0
-
+    ): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .changeValidatorKeys([
                 oldBlsKey,
                 newBlsKey,
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withQuerent(ValidatorContractAddress)
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "changeValidatorKeys")
     }
 
-    async switchJailedWithWaiting(owner: ITestUser, blsKey: string): Promise<any> {
-
-        let cost = 0
-
+    async switchJailedWithWaiting(owner: ITestUser, blsKey: string): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .switchJailedWithWaiting([
                 blsKey
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "switchJailedWithWaiting")
     }
 
     async getWaitingListIndex(blsKey: Buffer): Promise<any> {
@@ -303,7 +178,7 @@ export class StakingInteractor {
 
         console.info(queryResponse.returnMessage)
 
-        return queryResponse.returnMessage
+        return queryResponse.returnData
     }
 
     async getWaitingListSize(): Promise<any> {
@@ -382,54 +257,28 @@ export class StakingInteractor {
         return queryResponse.returnMessage
     }
 
-    async updateConfigMinNodes(owner: ITestUser, newMinNodes: number): Promise<any> {
-
-        let cost = 0
-
+    async updateConfigMinNodes(owner: ITestUser, newMinNodes: number): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .updateConfigMinNodes([
                 newMinNodes
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "updateConfigMinNodes")
     }
 
-    async setOwnersOnAddresses(owner: ITestUser, ...BlsKeyOwnerAddressPair: IBlsKeyOwnerAddress[]): Promise<any> {
-        //TODO: parse input
-        let cost = 0
-
+    async setOwnersOnAddresses(owner: ITestUser, ...BlsKeyOwnerAddressPair: IBlsKeyOwnerAddress[]): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .setOwnersOnAddresses([
                 ...BlsKeyOwnerAddressPair
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "setOwnersOnAddresses")
     }
 
     async getOwner(blsKey: Buffer): Promise<any> {
@@ -447,79 +296,40 @@ export class StakingInteractor {
         return queryResponse.returnData
     }
 
-    async updateConfigMaxNodes(owner: ITestUser, newMaxNodes: number): Promise<any> {
-
-        let cost = 0
-
+    async updateConfigMaxNodes(owner: ITestUser, newMaxNodes: number): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .updateConfigMaxNodes([
                 newMaxNodes
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "updateConfigMaxNodes")
     }
 
-    async stakeNodesFromQueue(owner: ITestUser, numberOfNodesFromQueue: number): Promise<any> {
-
-        let cost = 0
-
+    async stakeNodesFromQueue(owner: ITestUser, numberOfNodesFromQueue: number): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .stakeNodesFromQueue([
                 numberOfNodesFromQueue
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "stakeNodesFromQueue")
     }
 
-    async unStakeAtEndOfEpoch(owner: ITestUser, blsKey: string): Promise<any> {
-
-        let cost = 0
-
+    async unStakeAtEndOfEpoch(owner: ITestUser, blsKey: string): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .unStakeAtEndOfEpoch([
                 blsKey
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "unStakeAtEndOfEpoch")
     }
 
     async getTotalNumberOfRegisteredNodes(): Promise<any> {
@@ -537,121 +347,73 @@ export class StakingInteractor {
         return queryResponse.returnData
     }
 
-    async resetLastUnJailedFromQueue(owner: ITestUser): Promise<any> {
-
-        let cost = 0
-
+    async resetLastUnJailedFromQueue(owner: ITestUser): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .resetLastUnJailedFromQueue([])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "unStakeAtEndOfEpoch")
     }
 
-    async cleanAdditionalQueue(owner: ITestUser): Promise<any> {
-
-        let cost = 0
-
+    async cleanAdditionalQueue(owner: ITestUser): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .cleanAdditionalQueue([])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "cleanAdditionalQueue")
     }
 
-    async changeOwnerAndRewardAddress(owner: ITestUser, newOwnerAddress: Address, ...blsKey: Buffer[]): Promise<any> {
-        let cost = 0
-
+    async changeOwnerAndRewardAddress(owner: ITestUser, newOwnerAddress: Address, ...blsKey: Buffer[]): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .changeOwnerAndRewardAddress([
                 newOwnerAddress,
                 ...blsKey
             ])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withQuerent(ValidatorContractAddress)
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 6000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "changeOwnerAndRewardAddress")
     }
 
-    async fixWaitingListQueueSize(owner: ITestUser): Promise<any> {
-
-        let cost = 0
-
+    async fixWaitingListQueueSize(owner: ITestUser): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .fixWaitingListQueueSize([])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 120000000)
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-
-        return logs
+        return await this.runInteraction(owner, interaction, 6000000, "fixWaitingListQueueSize")
     }
 
-    async addMissingNodeToQueue(owner: ITestUser, blsKey: Buffer): Promise<any> {
-
-        let cost = 0
-
+    async addMissingNodeToQueue(owner: ITestUser, blsKey: Buffer): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .addMissingNodeToQueue([blsKey])
-            .withValue(TokenPayment.egldFromAmount(cost))
+            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 300000000)
-        interaction.withGasLimit(gasLimit)
+        return await this.runInteraction(owner, interaction, 6000000, "fixWaitingListQueueSize")
+    }
+
+    async runInteraction(owner: ITestUser, interaction: Interaction, gaslimit: number, endpoint: string): Promise<ReturnCode> {
+        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, gaslimit);
+        interaction.withGasLimit(gasLimit);
 
         let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
+        await owner.signer.sign(transaction);
 
         await this.networkProvider.sendTransaction(transaction);
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
 
-        return logs
+        let endpointDefinition = this.contract.getEndpoint(endpoint);
+        let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, endpointDefinition);
+
+        return returnCode
     }
 }
