@@ -33,7 +33,7 @@
             "inputs": [],
             "outputs": [
                 {
-                    "name": "newAddress",
+                    "name": "newAddresses",
                     "type": "variadic<bytes>"
                 }
             ]

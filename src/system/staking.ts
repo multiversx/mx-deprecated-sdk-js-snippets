@@ -2,7 +2,7 @@ import path from "path";
 import { Address, Interaction, ResultsParser, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher, ReturnCode } from "@elrondnetwork/erdjs";
 import { loadAbiRegistry } from "../contracts";
 import { computeGasLimitOnInteraction } from "../gasLimit";
-import { IBlsKeyOwnerAddress, ITestSession, ITestUser } from "../interface";
+import { IBlsKeyOwnerAddress, ITestSession, ITestUser, IAudit } from "../interface";
 import { INetworkConfig, INetworkProvider } from "../interfaceOfNetwork";
 
 const StakingContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqllls0lczs7");
@@ -11,12 +11,13 @@ const PathToAbi = path.resolve(__dirname, "staking.abi.json");
 const NodeStakeAmount = 2500;
 
 export async function createStakingInteractor(session: ITestSession) {
-    let registry = await loadAbiRegistry(PathToAbi);
-    let abi = new SmartContractAbi(registry, ["staking"]);
-    let contract = new SmartContract({ address: StakingContractAddress, abi: abi });
-    let networkProvider = session.networkProvider;
-    let networkConfig = session.getNetworkConfig();
-    let interactor = new StakingInteractor(contract, networkProvider, networkConfig);
+    const registry = await loadAbiRegistry(PathToAbi);
+    const abi = new SmartContractAbi(registry, ["staking"]);
+    const contract = new SmartContract({ address: StakingContractAddress, abi: abi });
+    const networkProvider = session.networkProvider;
+    const networkConfig = session.getNetworkConfig();
+    const audit = session.audit;
+    const interactor = new StakingInteractor(contract, networkProvider, networkConfig, audit);
     return interactor;
 }
 
@@ -28,13 +29,15 @@ export class StakingInteractor {
     private readonly networkConfig: INetworkConfig;
     private readonly transactionWatcher: TransactionWatcher;
     private readonly resultsParser: ResultsParser;
+    private readonly audit: IAudit;
 
-    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig) {
+    constructor(contract: SmartContract, networkProvider: INetworkProvider, networkConfig: INetworkConfig, audit: IAudit) {
         this.contract = contract;
         this.networkProvider = networkProvider;
         this.networkConfig = networkConfig;
         this.transactionWatcher = new TransactionWatcher(networkProvider);
         this.resultsParser = new ResultsParser();
+        this.audit = audit;
     }
 
     async stake(owner: ITestUser, blsKey: Buffer, rewardAddress: Address, ownerAddress: Address): Promise<ReturnCode> {
@@ -408,11 +411,14 @@ export class StakingInteractor {
         let transaction = interaction.buildTransaction();
         await owner.signer.sign(transaction);
 
-        await this.networkProvider.sendTransaction(transaction);
+        const transactionHash = await this.networkProvider.sendTransaction(transaction);
+        await this.audit.onTransactionSent({ action: endpoint, args: interaction.getArguments(), transactionHash: transactionHash });
+
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        await this.audit.onTransactionCompleted({ transactionHash: transactionHash, transaction: transactionOnNetwork });
 
         let endpointDefinition = this.contract.getEndpoint(endpoint);
-        let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, endpointDefinition);
+        let { returnCode, returnMessage } = this.resultsParser.parseOutcome(transactionOnNetwork, endpointDefinition);
 
         return returnCode
     }

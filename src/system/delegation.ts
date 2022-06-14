@@ -1,4 +1,4 @@
-import { Address, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher } from "@elrondnetwork/erdjs";
+import { Address, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher } from "@elrondnetwork/erdjs";
 import path from "path";
 import { loadAbiRegistry } from "../contracts";
 import { computeGasLimitOnInteraction, computeGasLimit } from "../gasLimit";
@@ -45,7 +45,7 @@ export class DelegationManagerInteractor {
     }
 
     async createNewDelegationContract(owner: ITestUser, denominatedDelegationCap: number, serviceFee: number):
-        Promise<{ delegationContract: string, returnCode: ReturnCode }> {
+        Promise<{ delegationContract: IAddress, returnCode: ReturnCode }> {
         let cost = DelegationContractStake;
 
         let interaction = <Interaction>this.contract.methods
@@ -69,36 +69,11 @@ export class DelegationManagerInteractor {
         let endpointDefinition = this.contract.getEndpoint("createNewDelegationContract");
         let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, endpointDefinition);
         let delegationContractAddress = transactionOnNetwork.receiver;
-        let delegationContractAddressAsString = delegationContractAddress.bech32();
-        return { delegationContract: delegationContractAddressAsString, returnCode }
+        return { delegationContract: delegationContractAddress, returnCode }
     }
 
     feeAsInteger(feeValue: number) {
         return feeValue * 100
-    }
-
-    async getAllContractAddresses(caller: Address): Promise<any> {
-        // Prepare the interaction, check it, then build the query:
-        let interaction = <Interaction>this.contract.methods.getAllContractAddresses().withQuerent(caller);
-        let query = interaction.check().buildQuery();
-
-        // Let's run the query and parse the results:
-        let queryResponse = await this.networkProvider.queryContract(query);
-        let { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
-
-        const unwrappedValues = values.map(value => value.valueOf());
-        let contractAddresses = this.beautifyBufferedContractAddresses(unwrappedValues);
-
-        return contractAddresses
-    }
-
-    private beautifyBufferedContractAddresses(bufferedAddresses: Buffer[]): string[] {
-        let listOfAddresses: string[] = [];
-
-        for (let address of bufferedAddresses) {
-            listOfAddresses.push(new Address(address).bech32());
-        }
-        return listOfAddresses
     }
 
     async getContractConfig(caller: Address): Promise<any> {
@@ -154,6 +129,30 @@ export class DelegatorInteractor {
         this.networkConfig = networkConfig;
         this.transactionWatcher = new TransactionWatcher(networkProvider);
         this.resultsParser = new ResultsParser();
+    }
+
+    async getAllContractAddresses(): Promise<any> {
+        // Prepare the interaction, check it, then build the query:
+        let interaction = <Interaction>this.contract.methods.getAllContractAddresses();
+        let query = interaction.check().buildQuery();
+
+        // Let's run the query and parse the results:
+        let queryResponse = await this.networkProvider.queryContract(query);
+        let { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
+
+        const unwrappedValues = values.map(value => value.valueOf());
+        let contractAddresses = this.beautifyBufferedContractAddresses(unwrappedValues);
+
+        return contractAddresses
+    }
+
+    private beautifyBufferedContractAddresses(bufferedAddresses: Buffer[]): string[] {
+        let listOfAddresses: string[] = [];
+
+        for (let address of bufferedAddresses) {
+            listOfAddresses.push(new Address(address).bech32());
+        }
+        return listOfAddresses
     }
 
     async whitelistForMerge(owner: ITestUser, addressToWhitelist: Address, scCaller: Address): Promise<ReturnCode> {
