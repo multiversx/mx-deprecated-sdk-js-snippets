@@ -128,13 +128,7 @@ export interface IBunchOfNodes {
 export interface ITestNode {
     readonly name: string;
     readonly group: string;
-    // readonly address: IAddress;
-    // readonly account: Account;
-    // readonly signer: ISigner;
     readonly secretKey: Buffer;
-
-    //sync(provider: INetworkProvider): Promise<void>;
-
 }
 
 /**

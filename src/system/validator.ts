@@ -1,4 +1,4 @@
-import { Address, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher } from "@elrondnetwork/erdjs";
+import { Address, Interaction, ResultsParser, ContractFunction, ReturnCode, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher } from "@elrondnetwork/erdjs";
 import path from "path";
 import { loadAbiRegistry } from "../contracts";
 import { computeGasLimitOnInteraction } from "../gasLimit";
@@ -37,14 +37,14 @@ export class ValidatorInteractor {
         this.audit = audit;
     }
 
-    async stake(owner: ITestUser, numberOfNodes: number, ...args: Buffer[]
+    async stake(owner: ITestUser, numberOfNodes: number, stakeAmount: number, ...args: Buffer[]
     ): Promise<{ returnCode: ReturnCode, returnMessage: string }> {
         let keySignaturePair: Buffer[] = [];
 
-        //if even value => a reward address has been provided on the last position
+        //if args has an even value => a reward address has been provided on the last position
         const rewardAddress = ((args.length) % 2 != 0) ? args[args.length - 1] : [];
 
-        for (let i = 0; i < (args.length - 1); i++) {
+        for (let i = 0; i <= (args.length / 2); i + 2) {
             let key = args[i];
             let signature = args[i + 1]
             keySignaturePair.push(key, signature)
@@ -55,11 +55,64 @@ export class ValidatorInteractor {
                 numberOfNodes,
                 keySignaturePair,
             ])
-            .withValue(TokenPayment.egldFromAmount(Number(numberOfNodes) * NodeStakeAmount))
+            .withValue(TokenPayment.egldFromAmount(Number(numberOfNodes) * stakeAmount))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
         return await this.runInteraction(owner, interaction, (6000000 * Number(numberOfNodes)), "stake")
+    }
+
+    async topup(owner: ITestUser, topupValue: number): Promise<{ returnCode: ReturnCode, returnMessage: string }> {
+        let interaction = <Interaction>this.contract.methods
+            .stake([])
+            .withValue(TokenPayment.egldFromAmount(topupValue))
+            .withNonce(owner.account.getNonceThenIncrement())
+            .withChainID(this.networkConfig.ChainID);
+
+        return await this.runInteraction(owner, interaction, (6000000), "stake")
+    }
+
+    async createTopupInteractions(actors: ITestUser[], value: number): Promise<Interaction[]> {
+        let interactions: Interaction[] = [];
+
+        for (let actor of actors) {
+            const topupInteraction = <Interaction>this.contract.methods
+                .stake([])
+                .withValue(TokenPayment.egldFromAmount(value))
+                .withNonce(actor.account.getNonceThenIncrement())
+                .withChainID(this.networkConfig.ChainID);
+            value++;
+            interactions.push(topupInteraction);
+        }
+
+        return interactions
+    }
+
+    async createStakeInteractions(actors: ITestUser[], value: number, ...args: Buffer[]): Promise<Interaction[]> {
+        let interactions: Interaction[] = [];
+        let keySignaturePair: Buffer[] = [];
+        let numberOfNodes = args.length / 2;
+
+        // for (let i = 0; i <= (args.length / 2); i + 2) {
+        //     let key = args[i];
+        //     let signature = args[i + 1]
+        //     keySignaturePair.push(key, signature)
+        // }
+        for (let actor of actors) {
+            const stakeInteraction = <Interaction>this.contract.methods
+                .stake([
+                    numberOfNodes,
+                    keySignaturePair,
+                ])
+                .withValue(TokenPayment.egldFromAmount(Number(numberOfNodes) * value))
+                .withNonce(actor.account.getNonceThenIncrement())
+                .withChainID(this.networkConfig.ChainID);
+            console.log(`Added stake interaction for ${actor.address.bech32()} with value ${value}`);
+            value++;
+
+            interactions.push(stakeInteraction);
+        }
+        return interactions
     }
 
     async unStake(owner: ITestUser, ...blsKeys: Buffer[]): Promise<{ returnCode: ReturnCode, returnMessage: string }> {
