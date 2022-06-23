@@ -1,11 +1,12 @@
-import { Address, BigUIntValue, BytesType, BytesValue, ContractFunction, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenIdentifierValue, TokenPayment, Transaction, TransactionPayload, TransactionWatcher, ESDTTransferPayloadBuilder, ESDTNFTTransferPayloadBuilder, I64Value, U64Value } from "@elrondnetwork/erdjs";
-import { DefinitionOfFungibleTokenOnNetwork } from "@elrondnetwork/erdjs-network-providers";
 import BigNumber from "bignumber.js";
 import path from "path";
 import { loadAbiRegistry } from "../contracts";
+import { ErrNoNFT, ErrNoToken } from "../errors";
+import { DefinitionOfFungibleTokenOnNetwork } from "@elrondnetwork/erdjs-network-providers";
 import { computeGasLimitOnInteraction, computeGasLimit } from "../gasLimit";
 import { IAudit, ITestSession, ITestUser, IToken } from "../interface";
 import { INetworkConfig, INetworkProvider } from "../interfaceOfNetwork";
+import { Address, BigUIntValue, BytesValue, ContractFunction, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenPayment, Transaction, TransactionWatcher, ESDTTransferPayloadBuilder, ESDTNFTTransferPayloadBuilder, U64Value } from "@elrondnetwork/erdjs";
 
 const ESDTContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u");
 const PathToAbi = path.resolve(__dirname, "esdt.abi.json");
@@ -62,7 +63,7 @@ export class ESDTInteractor {
             ...(token.canChangeOwner ? [["canChangeOwner", "true"]] : []),
         ]
 
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .issue([
                 token.name,
                 token.ticker,
@@ -74,23 +75,25 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        const gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
         interaction.withGasLimit(gasLimit);
 
-        let transaction = interaction.buildTransaction();
+        const transaction = interaction.buildTransaction();
         await owner.signer.sign(transaction);
 
         await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-        let event = logs.findFirstOrNoneEvent("issue");
-        let identifier = event!.topics[0].toString();
-        let issuedToken = { identifier: identifier, decimals: token.decimals };
-        // In the end, parse the results:
+        const transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        const logs = transactionOnNetwork.logs;
+        const event = logs.findFirstOrNoneEvent("issueFungibleToken");
         const { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
+        if (event) {
+            const identifier = event!.topics[0].toString();
+            const issuedToken = { identifier: identifier, decimals: token.decimals };
 
-        console.info(`ESDTInteractor.issue [end]: token = ${identifier}`);
-        return { resultedToken: issuedToken, returnCode: returnCode };
+            return { resultedToken: issuedToken, returnCode };
+        }
+
+        throw new ErrNoToken(token.name);
     }
 
     async issueSemiFungibleToken(owner: ITestUser, token: {
@@ -115,7 +118,7 @@ export class ESDTInteractor {
             ...(token.canCreateMultiShard ? [["canCreateMultiShard", "true"]] : []),
         ]
 
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .issueSemiFungible([
                 token.name,
                 token.ticker,
@@ -125,24 +128,25 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        const gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
         interaction.withGasLimit(gasLimit);
 
-        let transaction = interaction.buildTransaction();
+        const transaction = interaction.buildTransaction();
         await owner.signer.sign(transaction);
 
         await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-        let event = logs.findFirstOrNoneEvent("issueSemiFungible");
+        const transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        const logs = transactionOnNetwork.logs;
+        const event = logs.findFirstOrNoneEvent("issueSemiFungible");
         const { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
         if (event) {
-            let identifier = event!.topics[0].toString();
-            let issuedToken = { identifier: identifier };
+            const identifier = event!.topics[0].toString();
+            const issuedToken = { identifier: identifier };
 
             return { resultedToken: issuedToken.identifier, returnCode };
         }
-        return { resultedToken: "no token", returnCode };
+
+        throw new ErrNoToken(token.name);
     }
 
     async issueNonFungibleToken(owner: ITestUser, token: {
@@ -182,64 +186,40 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        const gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
         interaction.withGasLimit(gasLimit);
 
-        let transaction = interaction.buildTransaction();
+        const transaction = interaction.buildTransaction();
         await owner.signer.sign(transaction);
 
         await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-        let event = logs.findFirstOrNoneEvent("issueNonFungible");
+        const transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        const logs = transactionOnNetwork.logs;
+        const event = logs.findFirstOrNoneEvent("issueNonFungible");
         const { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
         if (event) {
-            let identifier = event!.topics[0].toString();
-            let issuedToken = { identifier: identifier };
+            const identifier = event!.topics[0].toString();
+            const issuedToken = { identifier: identifier };
             return { resultedToken: issuedToken.identifier, returnCode };
         }
-        return { resultedToken: "no token", returnCode };
+
+        throw new ErrNoToken(token.name);
     }
 
-    async burnToken(owner: ITestUser, token: { name: string, burnAmount: BigNumber.Value }): Promise<ReturnCode> {
-        let transaction = this.contract.call({
+    async localBurnToken(owner: ITestUser, token: { name: string, burnAmount: BigNumber.Value }): Promise<ReturnCode> {
+        const transaction = this.contract.call({
             func: new ContractFunction("ESDTLocalBurn"),
             gasLimit: 300000,
             args: [BytesValue.fromUTF8(token.name), new BigUIntValue(token.burnAmount)],
             receiver: owner.address,
             chainID: this.networkConfig.ChainID
         });
-        return await this.runTransaction(owner, transaction, "ESDTLocalBurn")
+
+        return await this.runTransaction(owner, transaction, "ESDTLocalBurn");
     }
 
-    async checkForBurning(owner: ITestUser, token: { name: string, burnAmount: BigNumber.Value }): Promise<boolean> {
-        let tokenPropertiesBefore = await this.getTokenProperties({ name: token.name })
-
-        let transaction = this.contract.call({
-            func: new ContractFunction("ESDTLocalBurn"),
-            gasLimit: 300000,
-            args: [BytesValue.fromUTF8(token.name), new BigUIntValue(token.burnAmount)],
-            receiver: owner.address,
-            chainID: this.networkConfig.ChainID
-        });
-        transaction.setNonce(owner.account.getNonceThenIncrement());
-
-        await owner.signer.sign(transaction);
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-
-        let tokenPropertiesAfter = await this.getTokenProperties({ name: token.name })
-
-        let endpointDefinition = this.contract.getEndpoint("ESDTLocalBurn");
-        let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, endpointDefinition);
-
-        if ((tokenPropertiesBefore.supply.toNumber() - tokenPropertiesAfter.supply.toNumber()) == token.burnAmount) { return true }
-
-        return false
-    }
-
-    async mintToken(owner: ITestUser, token: { name: string, newSupply: BigNumber.Value }): Promise<ReturnCode> {
-        let transaction = this.contract.call({
+    async localMintToken(owner: ITestUser, token: { name: string, newSupply: BigNumber.Value }): Promise<ReturnCode> {
+        const transaction = this.contract.call({
             func: new ContractFunction("ESDTLocalMint"),
             gasLimit: 300000,
             args: [BytesValue.fromUTF8(token.name), new BigUIntValue(token.newSupply)],
@@ -247,11 +227,11 @@ export class ESDTInteractor {
             chainID: this.networkConfig.ChainID
         });
 
-        return await this.runTransaction(owner, transaction, "ESDTLocalMint")
+        return await this.runTransaction(owner, transaction, "ESDTLocalMint");
     }
 
     async freezeAccountAddress(owner: ITestUser, token: { name: string, account: Address }): Promise<ReturnCode> {
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .freeze([
                 token.name,
                 token.account,
@@ -259,11 +239,11 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "freeze")
+        return await this.runInteraction(owner, interaction, 60000000, "freeze");
     }
 
     async unfreezeAccountAddress(owner: ITestUser, token: { name: string, account: Address }): Promise<ReturnCode> {
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .unFreeze([
                 token.name,
                 token.account,
@@ -271,11 +251,11 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "unFreeze")
+        return await this.runInteraction(owner, interaction, 60000000, "unFreeze");
     }
 
     async wipeAccount(owner: ITestUser, token: { name: string, account: Address }): Promise<ReturnCode> {
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .wipe([
                 token.name,
                 token.account,
@@ -283,33 +263,33 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "wipe")
+        return await this.runInteraction(owner, interaction, 60000000, "wipe");
     }
 
     async pauseTransactions(owner: ITestUser, token: { name: string }): Promise<ReturnCode> {
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .pause([
                 token.name,
             ])
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "pause")
+        return await this.runInteraction(owner, interaction, 60000000, "pause");
     }
 
     async unPauseTransactions(owner: ITestUser, token: { name: string }): Promise<ReturnCode> {
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .unPause([
                 token.name,
             ])
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "unPause")
+        return await this.runInteraction(owner, interaction, 60000000, "unPause");
     }
 
     async transferOwnership(owner: ITestUser, token: { name: string, newOwner: Address }): Promise<ReturnCode> {
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .transferOwnership([
                 token.name,
                 token.newOwner,
@@ -317,63 +297,35 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "transferOwnership")
+        return await this.runInteraction(owner, interaction, 60000000, "transferOwnership");
     }
 
     async getTokenProperties(token: { name: string }): Promise<DefinitionOfFungibleTokenOnNetwork> {
         // Prepare the interaction, check it, then build the query:
-        let interaction = <Interaction>this.contract.methods.getTokenProperties([token.name]);
-        let query = interaction.check().buildQuery();
+        const interaction = <Interaction>this.contract.methods.getTokenProperties([token.name]);
+        const query = interaction.check().buildQuery();
 
         // Let's run the query and parse the results:
-        let queryResponse = await this.networkProvider.queryContract(query);
-        let {
-            values
-        } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
-
+        const queryResponse = await this.networkProvider.queryContract(query);
+        const { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
         const unwrappedValues = values.map(value => value.valueOf());
+        const tokenProperties = DefinitionOfFungibleTokenOnNetwork.fromResponseOfGetTokenProperties(token.name, unwrappedValues);
 
-        let result = DefinitionOfFungibleTokenOnNetwork.fromResponseOfGetTokenProperties(token.name, unwrappedValues);
-
-        return result
+        return tokenProperties;
     }
 
     async getNFTTokenProperties(token: { name: string }): Promise<DefinitionOfFungibleTokenOnNetwork> {
         // Prepare the interaction, check it, then build the query:
-        let interaction = <Interaction>this.contract.methods.getTokenProperties([token.name]);
-        let query = interaction.check().buildQuery();
+        const interaction = <Interaction>this.contract.methods.getTokenProperties([token.name]);
+        const query = interaction.check().buildQuery();
 
         // Let's run the query and parse the results:
-        let queryResponse = await this.networkProvider.queryContract(query);
-        let {
-            values
-        } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
-
+        const queryResponse = await this.networkProvider.queryContract(query);
+        const { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
         const unwrappedValues = values.map(value => value.valueOf());
+        const nftTokenProperties = DefinitionOfFungibleTokenOnNetwork.fromResponseOfGetTokenProperties(token.name, unwrappedValues);
 
-        let result = DefinitionOfFungibleTokenOnNetwork.fromResponseOfGetTokenProperties(token.name, unwrappedValues);
-
-        return result
-    }
-
-    // Token properties have the following format: {PropertyName}-{PropertyValue}.
-    private parseTokenProperties(propertiesBuffers: Buffer[]): Record<string, any> {
-        let properties: Record<string, any> = {};
-
-        for (let buffer of propertiesBuffers) {
-            let [name, value] = buffer.toString().split("-");
-            properties[name] = this.parseValueOfTokenProperty(value);
-        }
-
-        return properties;
-    }
-
-    parseValueOfTokenProperty(value: string): any {
-        switch (value) {
-            case "true": return true;
-            case "false": return false;
-            default: return new BigNumber(value);
-        }
+        return nftTokenProperties;
     }
 
     async setSpecialRole(owner: ITestUser, token: {
@@ -407,60 +359,55 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "setSpecialRole")
+        return await this.runInteraction(owner, interaction, 60000000, "setSpecialRole");
     }
 
     async getSpecialRoles(token: { name: string }): Promise<any> {
         // Prepare the interaction, check it, then build the query:
-        let interaction = <Interaction>this.contract.methods.getSpecialRoles([token.name]);
-        let query = interaction.check().buildQuery();
+        const interaction = <Interaction>this.contract.methods.getSpecialRoles([token.name]);
+        const query = interaction.check().buildQuery();
 
         // Let's run the query and parse the results:
-        let queryResponse = await this.networkProvider.queryContract(query);
-        let {
-            values
-        } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
-
+        const queryResponse = await this.networkProvider.queryContract(query);
+        const { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
         const unwrappedValues = values.map(value => value.valueOf());
-        let specialRoles = this.parseSpecialRoles(unwrappedValues)
+        const specialRoles = this.parseSpecialRoles(unwrappedValues);
 
-        console.info(specialRoles)
-
-        return specialRoles
+        return specialRoles;
     }
 
     // Special Roles have the following format: {Address}: variadic{Special Roles}.
-    private parseSpecialRoles(specialRolesBuffers: Buffer[]): Record<string, any> {
-        let specialRole: Record<string, any> = {};
+    private parseSpecialRoles(specialRolesBuffers: Buffer[]): Record<string, string> {
+        const specialRole: Record<string, string> = {};
 
-        for (let buffer of specialRolesBuffers) {
-            let [address, roles] = buffer.toString().split(":");
-            specialRole[address] = this.parseAddressSpecialRole(roles);
+        for (const buffer of specialRolesBuffers) {
+            const [address, roles] = buffer.toString().split(":");
+            const specialRoles = this.parseAddressSpecialRole(roles);
+            for (const role of specialRoles) {
+                specialRole[address] = specialRole[address].concat(role);
+            }
         }
 
         return specialRole;
     }
 
-    parseAddressSpecialRole(roles: string): any {
-        let role = roles.toString().split(",");
+    parseAddressSpecialRole(roles: string): string[] {
+        const splitRoles = roles.toString().split(",");
 
-        return role
+        return splitRoles;
     }
 
-    async getContractConfig(): Promise<any> {
+    async getContractConfig(): Promise<any[]> {
         // Prepare the interaction, check it, then build the query:
-        let interaction = <Interaction>this.contract.methods.getContractConfig();
-        let query = interaction.check().buildQuery();
+        const interaction = <Interaction>this.contract.methods.getContractConfig();
+        const query = interaction.check().buildQuery();
 
         // Let's run the query and parse the results:
-        let queryResponse = await this.networkProvider.queryContract(query);
-        let { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
-
+        const queryResponse = await this.networkProvider.queryContract(query);
+        const { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
         const unwrappedValues = values.map(value => value.valueOf());
 
-        console.info(unwrappedValues)
-
-        return unwrappedValues
+        return unwrappedValues;
     }
 
     async claim(owner: ITestUser): Promise<any> {
@@ -469,7 +416,7 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "claim")
+        return await this.runInteraction(owner, interaction, 60000000, "claim");
     }
 
     async stopNFTCreateForever(owner: ITestUser, token: { name: string }): Promise<any> {
@@ -478,7 +425,7 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "stopNFTCreate")
+        return await this.runInteraction(owner, interaction, 60000000, "stopNFTCreate");
     }
 
     async transferNFTCreateRole(owner: ITestUser, token: { name: string }, currentNFTCreateOwner: Address, nextNFTCreateOwner: Address): Promise<any> {
@@ -491,15 +438,15 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "transferNFTCreateRole")
+        return await this.runInteraction(owner, interaction, 60000000, "transferNFTCreateRole");
     }
 
     async unSetSpecialRole(owner: ITestUser, token: { name: string, owner: Address, roleLocalMint?: string, roleLocalBurn?: string }): Promise<ReturnCode> {
-        let argsForProperties = [
+        const argsForProperties = [
             ...(token.roleLocalMint != "" ? ["ESDTRoleLocalMint"] : []),
             ...(token.roleLocalBurn != "" ? ["ESDTRoleLocalBurn"] : []),]
 
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .unSetSpecialRole([
                 token.name,
                 token.owner,
@@ -508,11 +455,11 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "unSetSpecialRole")
+        return await this.runInteraction(owner, interaction, 60000000, "unSetSpecialRole");
     }
 
     async wipeSingleNFT(owner: ITestUser, token: { name: string, nonce: number }, ownerAddress: Address): Promise<any> {
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .wipeSingleNFT([
                 token.name,
                 token.nonce,
@@ -521,23 +468,19 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "wipeSingleNFT")
+        return await this.runInteraction(owner, interaction, 60000000, "wipeSingleNFT");
     }
 
     async getAllAddressesAndRoles(token: { name: string }): Promise<any> {
         // Prepare the interaction, check it, then build the query:
-        let interaction = <Interaction>this.contract.methods.getAllAddressesAndRoles([token.name]);
-        let query = interaction.check().buildQuery();
+        const interaction = <Interaction>this.contract.methods.getAllAddressesAndRoles([token.name]);
+        const query = interaction.check().buildQuery();
 
         // Let's run the query and parse the results:
-        let queryResponse = await this.networkProvider.queryContract(query);
-        let { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
-
+        const queryResponse = await this.networkProvider.queryContract(query);
+        const { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
         const unwrappedValues = values.map(value => value.valueOf());
-
-        console.info(unwrappedValues)
-
-        return unwrappedValues
+        return unwrappedValues;
     }
 
     async registerMetaESDT(owner: ITestUser, token: {
@@ -551,8 +494,7 @@ export class ESDTInteractor {
         canTransferNFTCreateRole?: boolean,
         canCreateMultiShard?: boolean,
     }): Promise<{ resultedToken: string, returnCode: ReturnCode }> {
-
-        let argsForProperties = [
+        const argsForProperties = [
             ...(token.canFreeze ? [["canFreeze", "true"]] : []),
             ...(token.canWipe ? [["canWipe", "true"]] : []),
             ...(token.canPause ? [["canPause", "true"]] : []),
@@ -563,7 +505,7 @@ export class ESDTInteractor {
             ...(token.canCreateMultiShard ? [["canCreateMultiShard", "true"]] : []),
         ]
 
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .registerMetaESDT([
                 token.name,
                 token.ticker,
@@ -574,24 +516,24 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        const gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
         interaction.withGasLimit(gasLimit);
 
-        let transaction = interaction.buildTransaction();
+        const transaction = interaction.buildTransaction();
         await owner.signer.sign(transaction);
 
         await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        let logs = transactionOnNetwork.logs;
-        let event = logs.findFirstOrNoneEvent("registerMetaESDT");
+        const transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        const logs = transactionOnNetwork.logs;
+        const event = logs.findFirstOrNoneEvent("registerMetaESDT");
         const { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
         if (event) {
-            let identifier = event!.topics[0].toString();
-            let issuedToken = { identifier: identifier };
+            const identifier = event!.topics[0].toString();
+            const issuedToken = { identifier: identifier };
 
             return { resultedToken: issuedToken.identifier, returnCode };
         }
-        return { resultedToken: "no token", returnCode };
+        throw new ErrNoToken(token.name);
     }
 
     async controlChanges(owner: ITestUser, token: {
@@ -604,8 +546,7 @@ export class ESDTInteractor {
         canChangeOwner?: boolean,
         canUpgrade?: boolean,
     }): Promise<ReturnCode> {
-
-        let argsForProperties = [
+        const argsForProperties = [
             ...(token.canMint ? [["canMint", "true"]] : []),
             ...(token.canBurn ? [["canBurn", "true"]] : []),
             ...(token.canFreeze ? [["canFreeze", "true"]] : []),
@@ -615,7 +556,7 @@ export class ESDTInteractor {
             ...(token.canChangeOwner ? [["canChangeOwner", "true"]] : []),
             ...(token.canUpgrade ? [["canUpgrade", "true"]] : []),
         ]
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .controlChanges([
                 token.name,
                 ...argsForProperties
@@ -624,17 +565,17 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 350000000, "controlChanges")
+        return await this.runInteraction(owner, interaction, 350000000, "controlChanges");
     }
 
     async sendESDTToUser(sender: ITestUser, receiver: Address, payment: TokenPayment): Promise<ReturnCode> {
-        let data = new ESDTTransferPayloadBuilder()
+        const data = new ESDTTransferPayloadBuilder()
             .setPayment(payment)
             .build();
 
-        let gasLimit = computeGasLimit(this.networkConfig, data.length(), 300000);
+        const gasLimit = computeGasLimit(this.networkConfig, data.length(), 300000);
 
-        let transaction = new Transaction({
+        const transaction = new Transaction({
             nonce: sender.account.getNonceThenIncrement(),
             receiver: receiver,
             data: data,
@@ -644,21 +585,21 @@ export class ESDTInteractor {
 
         await sender.signer.sign(transaction);
         await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        const transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
         const { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
 
-        return returnCode
+        return returnCode;
     }
 
     async sendNFTToUser(sender: ITestUser, receiver: Address, payment: TokenPayment): Promise<ReturnCode> {
-        let data = new ESDTNFTTransferPayloadBuilder()
+        const data = new ESDTNFTTransferPayloadBuilder()
             .setPayment(payment)
             .setDestination(receiver)
             .build();
 
-        let gasLimit = computeGasLimit(this.networkConfig, data.length(), 1000000);
+        const gasLimit = computeGasLimit(this.networkConfig, data.length(), 1000000);
 
-        let transaction = new Transaction({
+        const transaction = new Transaction({
             nonce: sender.account.getNonceThenIncrement(),
             receiver: sender.address,
             data: data,
@@ -668,15 +609,23 @@ export class ESDTInteractor {
 
         await sender.signer.sign(transaction);
         await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        const transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
         const { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
 
-        return returnCode
+        return returnCode;
     }
 
-    async ESDTNFTCreate(owner: ITestUser, nft: { tokenName: string, quantity: number, name: string, royalties: number }):
+    async ESDTNFTCreate(owner: ITestUser, nft: {
+        tokenName: string,
+        quantity: number,
+        name: string,
+        royalties: number,
+        hash: string,
+        metadata: string,
+        url: string
+    }):
         Promise<{ nonce: number, returnCode: ReturnCode }> {
-        let transaction = this.contract.call({
+        const transaction = this.contract.call({
             func: new ContractFunction("ESDTNFTCreate"),
             gasLimit: 4000000,
             args:
@@ -685,9 +634,9 @@ export class ESDTInteractor {
                     new U64Value(nft.quantity),
                     BytesValue.fromUTF8(nft.name),
                     new BigUIntValue(nft.royalties),
-                    BytesValue.fromUTF8("QmNvUWy35W1wGnyusGaZBexdKcXuUVftU6jFy4Kkti1nLL"),//hash
-                    BytesValue.fromUTF8("tags:;metadata:QmSMf3UDDcf9RVmDurDPbbMy6QsHkeF3f3BPDGAcPfSKTE"),
-                    BytesValue.fromUTF8("https://ipfs.io/ipfs/QmNvUWy35W1wGnyusGaZBexdKcXuUVftU6jFy4Kkti1nLL"),
+                    BytesValue.fromUTF8(nft.hash),
+                    BytesValue.fromUTF8(nft.metadata),
+                    BytesValue.fromUTF8(nft.url),
                 ],
             receiver: owner.address,
             chainID: this.networkConfig.ChainID
@@ -697,21 +646,22 @@ export class ESDTInteractor {
 
         await owner.signer.sign(transaction);
         await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        const transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
 
-        let endpointDefinition = this.contract.getEndpoint("ESDTNFTCreate");
-        let { returnCode, returnMessage, values } = this.resultsParser.parseOutcome(transactionOnNetwork, endpointDefinition);
+        const endpointDefinition = this.contract.getEndpoint("ESDTNFTCreate");
+        const { returnCode, returnMessage, values } = this.resultsParser.parseOutcome(transactionOnNetwork, endpointDefinition);
 
         if (returnCode.isSuccess()) {
-            let nonce = values[0].valueOf().toNumber();
-            return { nonce, returnCode }
+            const nonce = values[0].valueOf().toNumber();
+
+            return { nonce, returnCode };
         }
-        const nonce = 0;
-        return { nonce, returnCode }
+
+        throw new ErrNoNFT(nft.name);
     }
 
     async ESDTNFTAddQuantity(owner: ITestUser, sft: { tokenIdentifier: string, nonce: number, quantity: number }): Promise<ReturnCode> {
-        let transaction = this.contract.call({
+        const transaction = this.contract.call({
             func: new ContractFunction("ESDTNFTAddQuantity"),
             gasLimit: 10000000,
             args:
@@ -724,7 +674,7 @@ export class ESDTInteractor {
             chainID: this.networkConfig.ChainID
         });
 
-        return await this.runTransaction(owner, transaction, "ESDTNFTAddQuantity")
+        return await this.runTransaction(owner, transaction, "ESDTNFTAddQuantity");
     }
 
     async ESDTNFTBurn(owner: ITestUser, sft: { tokenIdentifier: string, nonce: number, quantity: number }): Promise<ReturnCode> {
@@ -741,7 +691,7 @@ export class ESDTInteractor {
             chainID: this.networkConfig.ChainID
         });
 
-        return await this.runTransaction(owner, transaction, "ESDTNFTBurn")
+        return await this.runTransaction(owner, transaction, "ESDTNFTBurn");
     }
 
     async ESDTNFTUpdateAttributes(owner: ITestUser, token: { name: string, nonce: number }, attributes: string): Promise<ReturnCode> {
@@ -758,7 +708,7 @@ export class ESDTInteractor {
             chainID: this.networkConfig.ChainID
         });
 
-        return await this.runTransaction(owner, transaction, "ESDTNFTUpdateAttributes")
+        return await this.runTransaction(owner, transaction, "ESDTNFTUpdateAttributes");
     }
 
     async changeSFTToMetaESDT(owner: ITestUser, token: { name: string, decimals: number }): Promise<ReturnCode> {
@@ -771,7 +721,7 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "changeSFTToMetaESDT")
+        return await this.runInteraction(owner, interaction, 60000000, "changeSFTToMetaESDT");
     }
 
     async freezeSingleNFT(owner: ITestUser, token: { name: string, nonce: number }, addressToFreeze: Address): Promise<ReturnCode> {
@@ -785,7 +735,7 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "freezeSingleNFT")
+        return await this.runInteraction(owner, interaction, 60000000, "freezeSingleNFT");
     }
 
     async unFreezeSingleNFT(owner: ITestUser, token: { name: string, nonce: number }, addressToUnFreeze: Address): Promise<ReturnCode> {
@@ -799,7 +749,7 @@ export class ESDTInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 60000000, "unFreezeSingleNFT")
+        return await this.runInteraction(owner, interaction, 60000000, "unFreezeSingleNFT");
     }
 
     async ESDTNFTAddURI(owner: ITestUser, token: { name: string, nonce: number }, URi: string): Promise<ReturnCode> {
@@ -815,7 +765,7 @@ export class ESDTInteractor {
             receiver: owner.address,
             chainID: this.networkConfig.ChainID
         });
-        return await this.runTransaction(owner, transaction, "ESDTNFTAddURI")
+        return await this.runTransaction(owner, transaction, "ESDTNFTAddURI");
     }
 
     async runInteraction(owner: ITestUser, interaction: Interaction, gaslimit: number, endpoint: string): Promise<ReturnCode> {
@@ -846,6 +796,7 @@ export class ESDTInteractor {
 
         const endpointDefinition = this.contract.getEndpoint(endpoint);
         const { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, endpointDefinition);
-        return returnCode
+
+        return returnCode;
     }
 }

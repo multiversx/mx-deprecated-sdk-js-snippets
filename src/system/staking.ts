@@ -43,7 +43,7 @@ export class StakingInteractor {
     async stake(owner: ITestUser, blsKey: Buffer, rewardAddress: Address, ownerAddress: Address): Promise<ReturnCode> {
         const cost = NodeStakeAmount;
 
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .stake([
                 blsKey,
                 rewardAddress,
@@ -54,7 +54,7 @@ export class StakingInteractor {
             .withQuerent(ValidatorContractAddress)
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 6000000, "stake")
+        return await this.runInteraction(owner, interaction, 6000000, "stake");
     }
 
     async register(owner: ITestUser, blsKey: Buffer, rewardAddress: Address, ownerAddress: Address): Promise<ReturnCode> {
@@ -70,26 +70,24 @@ export class StakingInteractor {
             .withQuerent(ValidatorContractAddress)
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 6000000, "register")
+        return await this.runInteraction(owner, interaction, 6000000, "register");
     }
 
     async unStake(owner: ITestUser, blsKey: Buffer, rewardAddress: Address): Promise<ReturnCode> {
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .unStake([
                 blsKey,
                 rewardAddress
             ])
-            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withQuerent(ValidatorContractAddress)
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 6000000, "unStake")
+        return await this.runInteraction(owner, interaction, 6000000, "unStake");
     }
 
-    async unBond(owner: ITestUser, blsKey: Buffer
-    ): Promise<ReturnCode> {
-        let interaction = <Interaction>this.contract.methods
+    async unBond(owner: ITestUser, blsKey: Buffer): Promise<ReturnCode> {
+        const interaction = <Interaction>this.contract.methods
             .unBond([
                 blsKey,
             ])
@@ -97,20 +95,19 @@ export class StakingInteractor {
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, 6000000, "unBond")
+        return await this.runInteraction(owner, interaction, 6000000, "unBond");
     }
 
     async checkIfStaked(blsKey: Buffer): Promise<ReturnCode> {
         // Prepare the interaction, check it, then build the query:
-        let interaction = <Interaction>this.contract.methods.isStaked([blsKey]);
-        let query = interaction.check().buildQuery();
+        const interaction = <Interaction>this.contract.methods.isStaked([blsKey]);
+        const query = interaction.check().buildQuery();
         query.caller = ValidatorContractAddress;
 
         // Let's run the query and parse the results:
         let queryResponse = await this.networkProvider.queryContract(query);
         let { returnCode } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
 
-        console.info(queryResponse.returnMessage)
         return returnCode
     }
 
@@ -404,7 +401,7 @@ export class StakingInteractor {
         return await this.runInteraction(owner, interaction, 6000000, "fixWaitingListQueueSize")
     }
 
-    async runInteraction(owner: ITestUser, interaction: Interaction, gaslimit: number, endpoint: string): Promise<ReturnCode> {
+    private async runInteraction(owner: ITestUser, interaction: Interaction, gaslimit: number, endpoint: string): Promise<ReturnCode> {
         let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, gaslimit);
         interaction.withGasLimit(gasLimit);
 

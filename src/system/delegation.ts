@@ -1,9 +1,10 @@
 import { Address, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher } from "@elrondnetwork/erdjs";
 import path from "path";
 import { loadAbiRegistry } from "../contracts";
-import { computeGasLimitOnInteraction, computeGasLimit } from "../gasLimit";
+import { computeGasLimitOnInteraction } from "../gasLimit";
 import { ITestSession, ITestUser } from "../interface";
 import { INetworkConfig, INetworkProvider } from "../interfaceOfNetwork";
+import { ErrEventOccurance, ErrNumberOfNodesMismatch } from "../errors";
 
 const DelegationManagerContractAddress = new Address("erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllslmq6y6");
 const PathToAbi = path.resolve(__dirname, "delegation.abi.json");
@@ -46,37 +47,54 @@ export class DelegationManagerInteractor {
 
     async createNewDelegationContract(owner: ITestUser, denominatedDelegationCap: number, serviceFee: number):
         Promise<{ delegationContract: IAddress, returnCode: ReturnCode }> {
-        let cost = DelegationContractStake;
+        const cost = DelegationContractStake;
 
-        let interaction = <Interaction>this.contract.methods
+        const interaction = <Interaction>this.contract.methods
             .createNewDelegationContract([
                 TokenPayment.egldFromAmount(denominatedDelegationCap),
-                this.feeAsInteger(serviceFee),
+                serviceFee,
             ])
             .withValue(TokenPayment.egldFromAmount(cost))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, (60000000))
-        interaction.withGasLimit(gasLimit)
+        const gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, 60000000);
+        interaction.withGasLimit(gasLimit);
 
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
+        const transaction = interaction.buildTransaction();
+        await owner.signer.sign(transaction);
 
         await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
+        const transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
 
-        let endpointDefinition = this.contract.getEndpoint("createNewDelegationContract");
-        let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, endpointDefinition);
-        let delegationContractAddress = transactionOnNetwork.receiver;
-        return { delegationContract: delegationContractAddress, returnCode }
+        const { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());
+        const logs = transactionOnNetwork.logs;
+        const event = logs.findFirstOrNoneEvent("SCDeploy");
+        if (event) {
+            let delegationContractAddress = event.address;
+            return { delegationContract: delegationContractAddress, returnCode };
+        }
+
+        throw new ErrEventOccurance("SCDeploy");
     }
 
-    feeAsInteger(feeValue: number) {
-        return feeValue * 100
+
+    async getAllContractAddresses(): Promise<Address[]> {
+        // Prepare the interaction, check it, then build the query:
+        let interaction = <Interaction>this.contract.methods.getAllContractAddresses();
+        let query = interaction.check().buildQuery();
+
+        // Let's run the query and parse the results:
+        let queryResponse = await this.networkProvider.queryContract(query);
+        let { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
+
+        const unwrappedValues = values.map(value => value.valueOf());
+        let contractAddresses = unwrappedValues.map(value => new Address(value.valueOf().tostring()));
+
+        return contractAddresses;
     }
 
-    async getContractConfig(caller: Address): Promise<any> {
+    async getContractConfig(caller: Address): Promise<any[]> {
         // Prepare the interaction, check it, then build the query:
         let interaction = <Interaction>this.contract.methods.getContractConfig().withQuerent(caller);
         let query = interaction.check().buildQuery();
@@ -88,31 +106,6 @@ export class DelegationManagerInteractor {
         const unwrappedValues = values.map(value => value.valueOf());
 
         return unwrappedValues
-    }
-
-    async changeMinDeposit(owner: ITestUser, minDeposit: number): Promise<ReturnCode> {
-        let interaction = <Interaction>this.contract.methods
-            .changeMinDeposit([
-                TokenPayment.egldFromAmount(minDeposit),
-            ])
-            .withValue(TokenPayment.egldFromAmount(0))
-            .withQuerent(DelegationManagerContractAddress)
-            .withNonce(owner.account.getNonceThenIncrement())
-            .withChainID(this.networkConfig.ChainID);
-
-        let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, (60000000))
-        interaction.withGasLimit(gasLimit)
-
-        let transaction = interaction.buildTransaction();
-        await owner.signer.sign(transaction)
-
-        await this.networkProvider.sendTransaction(transaction);
-        let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-
-        let endpointDefinition = this.contract.getEndpoint("changeMinDeposit");
-        let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, endpointDefinition);
-
-        return returnCode
     }
 }
 
@@ -131,37 +124,11 @@ export class DelegatorInteractor {
         this.resultsParser = new ResultsParser();
     }
 
-    async getAllContractAddresses(): Promise<any> {
-        // Prepare the interaction, check it, then build the query:
-        let interaction = <Interaction>this.contract.methods.getAllContractAddresses();
-        let query = interaction.check().buildQuery();
-
-        // Let's run the query and parse the results:
-        let queryResponse = await this.networkProvider.queryContract(query);
-        let { values } = this.resultsParser.parseQueryResponse(queryResponse, interaction.getEndpoint());
-
-        const unwrappedValues = values.map(value => value.valueOf());
-        let contractAddresses = this.beautifyBufferedContractAddresses(unwrappedValues);
-
-        return contractAddresses
-    }
-
-    private beautifyBufferedContractAddresses(bufferedAddresses: Buffer[]): string[] {
-        let listOfAddresses: string[] = [];
-
-        for (let address of bufferedAddresses) {
-            listOfAddresses.push(new Address(address).bech32());
-        }
-        return listOfAddresses
-    }
-
-    async whitelistForMerge(owner: ITestUser, addressToWhitelist: Address, scCaller: Address): Promise<ReturnCode> {
+    async whitelistForMerge(owner: ITestUser, addressToWhitelist: Address): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .whitelistForMerge([
                 addressToWhitelist,
             ])
-            .withValue(TokenPayment.egldFromAmount(0))
-            .withQuerent(scCaller)
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
@@ -171,40 +138,34 @@ export class DelegatorInteractor {
     async deleteWhitelistForMerge(owner: ITestUser): Promise<ReturnCode> {
         let interaction = <Interaction>this.contract.methods
             .deleteWhitelistForMerge([])
-            .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
         return await this.runInteraction(owner, interaction, 60000000, "deleteWhitelistForMerge")
     }
 
-    async getWhitelistForMerge(): Promise<any> {
+    async getWhitelistForMerge(): Promise<any[]> {
         return await this.runQuery(<Interaction>this.contract.methods.getWhitelistForMerge([]))
     }
 
-    async addNodes(owner: ITestUser, ...args: Buffer[]): Promise<ReturnCode> {
-
+    async addNodes(owner: ITestUser, numberOfNodes: number, gasLimit: number, ...args: Buffer[]): Promise<ReturnCode> {
         let keySignaturePair: Buffer[] = [];
 
-        //if even value => a valid combination of @[(public BLS key) + (signed address of the delegation contract with the secret key of the node)]
-        //otherwise => something may be missing, either a BLS key or an address and it should fail
-        let numberOfNodes = ((args.length) % 2 != 0) ? 0 : (args.length / 2);
+        let calculatedNumberOfNodes = ((args.length) % 2 != 0) ? 0 : (args.length / 2);
 
-        for (let i = 0; i < (args.length - 1); i++) {
-            let key = args[i];
-            let signedAddress = args[i + 1]
-            keySignaturePair.push(key, signedAddress)
+        if (numberOfNodes != calculatedNumberOfNodes) {
+            throw new ErrNumberOfNodesMismatch
         }
 
         let variableGasLimit = 1000000 + (Number(numberOfNodes) * 6000000);
 
         let interaction = <Interaction>this.contract.methods
-            .addNodes([...keySignaturePair])
+            .addNodes([...args])
             .withValue(TokenPayment.egldFromAmount(0))
             .withNonce(owner.account.getNonceThenIncrement())
             .withChainID(this.networkConfig.ChainID);
 
-        return await this.runInteraction(owner, interaction, variableGasLimit, "addNodes")
+        return await this.runInteraction(owner, interaction, gasLimit, "addNodes")
     }
 
     async removeNodes(owner: ITestUser, ...publicBLSKeys: Buffer[]): Promise<ReturnCode> {
@@ -474,7 +435,7 @@ export class DelegatorInteractor {
         return await this.runQuery(<Interaction>this.contract.methods.getMetaData([]))
     }
 
-    async runInteraction(owner: ITestUser, interaction: Interaction, gaslimit: number, endpoint: string): Promise<ReturnCode> {
+    private async runInteraction(owner: ITestUser, interaction: Interaction, gaslimit: number, endpoint: string): Promise<ReturnCode> {
         let gasLimit = computeGasLimitOnInteraction(interaction, this.networkConfig, gaslimit);
         interaction.withGasLimit(gasLimit);
 
@@ -490,7 +451,7 @@ export class DelegatorInteractor {
         return returnCode
     }
 
-    async runQuery(interaction: Interaction): Promise<any> {
+    private async runQuery(interaction: Interaction): Promise<any[]> {
         let query = interaction.check().buildQuery();
 
         // Let's run the query and parse the results:

@@ -35,7 +35,7 @@ describe("counter snippet", async function () {
 
         let interactor = await createESDTInteractor(session);
         await session.syncUsers([owner]);
-        let {resultedToken , returnCode}= await interactor.issueFungibleToken(owner, { name: "COUNTER", ticker: "COUNTER", decimals: 0, supply: "100000000" });
+        let { resultedToken, returnCode } = await interactor.issueFungibleToken(owner, { name: "COUNTER", ticker: "COUNTER", decimals: 0, supply: "100000000" });
         await session.saveToken({ name: "counterToken", token: resultedToken });
     });
 
