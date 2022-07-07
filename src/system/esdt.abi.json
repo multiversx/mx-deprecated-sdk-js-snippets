@@ -25,7 +25,7 @@
                 },
                 {
                     "name": "properties",
-                    "type": "variadic<multi<bytes, bool>>",
+                    "type": "variadic<multi<bytes, bytes>>",
                     "multi_arg": true
                 }
             ],
@@ -52,7 +52,7 @@
                 },
                 {
                     "name": "properties",
-                    "type": "variadic<multi<bytes, bool>>",
+                    "type": "variadic<multi<bytes, bytes>>",
                     "multi_arg": true
                 }
             ],
@@ -79,7 +79,7 @@
                 },
                 {
                     "name": "properties",
-                    "type": "variadic<multi<bytes, bool>>",
+                    "type": "variadic<multi<bytes, bytes>>",
                     "multi_arg": true
                 }
             ],
@@ -91,7 +91,7 @@
             ]
         },
         {
-            "name": "ESDTBurn",
+            "name": "ESDTLocalBurn",
             "inputs": [
                 {
                     "name": "tokenName",
@@ -105,7 +105,7 @@
             "outputs": []
         },
         {
-            "name": "mint",
+            "name": "ESDTLocalMint",
             "inputs": [
                 {
                     "name": "tokenName",
@@ -220,8 +220,7 @@
                 },
                 {
                     "name": "properties",
-                    "type": "variadic<multi<bytes, bool>>",
-                    "multi_arg": true
+                    "type": "variadic<multi<bytes, bytes>>"
                 }
             ],
             "outputs": []
@@ -264,7 +263,7 @@
                 },
                 {
                     "name": "totalMinted",
-                    "type": "bytes"
+                    "type": "BigUint"
                 },
                 {
                     "name": "totalBurned",
@@ -359,6 +358,73 @@
             "outputs": []
         },
         {
+            "name": "ESDTNFTCreate",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "quantity",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "nftName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "royalties",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "URI",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "nonce",
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "ESDTNFTUpdateAttributes",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nftNonce",
+                    "type": "u32"
+                },
+                {
+                    "name": "attributes",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "ESDTNFTAddURI",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nftNonce",
+                    "type": "u32"
+                },
+                {
+                    "name": "URi",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": []
+        },
+        {
             "name": "getContractConfig",
             "inputs": [],
             "outputs": [
@@ -379,6 +445,203 @@
                     "type": "BigUint"
                 }
             ]
+        },
+        {
+            "name": "getAllAddressesAndRoles",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "addressAndRolePair",
+                    "type": "variadic<multi<Address, bytes>>"
+                }
+            ]
+        },
+        {
+            "name": "stopNFTCreate",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "transferNFTCreateRole",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "currentNFTCreateOwner",
+                    "type": "Address"
+                },
+                {
+                    "name": "nextNFTCreateOwner",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unSetSpecialRole",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "currentOwner",
+                    "type": "Address"
+                },
+                {
+                    "name": "roles",
+                    "type": "variadic<bytes>"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "wipeSingleNFT",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nonce",
+                    "type": "u32"
+                },
+                {
+                    "name": "ownerAddress",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unFreezeSingleNFT",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nonce",
+                    "type": "u32"
+                },
+                {
+                    "name": "frozenAddress",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "registerMetaESDT",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "tickerName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "decimals",
+                    "type": "u32"
+                },
+                {
+                    "name": "properties",
+                    "type": "variadic<multi<bytes, bytes>>"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "tokenIdentifier",
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "changeSFTToMetaESDT",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "decimals",
+                    "type": "u32"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "tokenIdentifier",
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "ESDTNFTAddQuantity",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nonce",
+                    "type": "u32"
+                },
+                {
+                    "name": "quantity",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "ESDTNFTBurn",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nonce",
+                    "type": "u32"
+                },
+                {
+                    "name": "quantity",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "freezeSingleNFT",
+            "inputs": [
+                {
+                    "name": "tokenName",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nonce",
+                    "type": "u32"
+                },
+                {
+                    "name": "addressToFreeze",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
         }
     ]
 }

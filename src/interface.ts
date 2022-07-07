@@ -5,6 +5,7 @@ import { ISigner } from "./interfaceOfWalletCore";
 export interface ITestSessionConfig {
     readonly networkProvider: INetworkProviderConfig;
     readonly users: IUsersConfig;
+    readonly nodes: INodesConfig;
     readonly reporting: IReportingConfig;
 }
 
@@ -25,6 +26,22 @@ export interface IUserConfig {
 }
 
 export interface IGroupOfUsersConfig {
+    readonly name: string;
+    readonly pem?: string;
+    readonly folder?: string;
+}
+
+export interface INodesConfig {
+    readonly individualNodes: INodeConfig[];
+    readonly groupOfNodes: IGroupOfNodesConfig[];
+}
+
+export interface INodeConfig {
+    readonly name: string;
+    readonly pem: string;
+}
+
+export interface IGroupOfNodesConfig {
     readonly name: string;
     readonly pem?: string;
     readonly folder?: string;
@@ -61,6 +78,7 @@ export interface ITestSession {
     readonly networkProvider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
+    readonly nodes: IBunchOfNodes;
     readonly audit: IAudit;
 
     syncNetworkConfig(): Promise<void>;
@@ -95,6 +113,23 @@ export interface ITestUser {
     readonly signer: ISigner;
 
     sync(provider: INetworkProvider): Promise<void>;
+}
+
+export interface INodesConfig {
+    readonly nodePem: string;
+    readonly othersPem: string;
+}
+
+export interface IBunchOfNodes {
+    getNode(name: string): ITestNode;
+    getGroupOfNodes(name: string): ITestNode[];
+}
+
+export interface ITestNode {
+    readonly name: string;
+    readonly group: string;
+    readonly secretKey: Buffer;
+    readonly publicKey: Buffer;
 }
 
 /**
@@ -179,4 +214,19 @@ export interface IAudit {
 
     emitSnapshotOfUsers(params: { users: ITestUser[], comparableTo?: number }): Promise<number>;
     emitSnapshotOfAccounts(params: { addresses: IAddress[], comparableTo?: number }): Promise<number>;
+}
+
+export interface IBLS {
+    key: string,
+    signature: string
+}
+
+export interface IBlsKeyOwnerAddress {
+    blsKey: string,
+    ownerAddress: IAddress
+}
+
+export interface ITokenProperties {
+    property: string,
+    value: any
 }

@@ -9,12 +9,21 @@ export interface INetworkProvider {
     getTransaction(txHash: string): Promise<ITransactionOnNetwork>;
     sendTransaction(tx: ITransaction): Promise<string>;
     queryContract(query: IContractQuery): Promise<IContractQueryResponse>;
+    getNetworkStatus(): Promise<INetworkStatus>;
+    doGetGeneric(resourceUrl: string): Promise<any>;
 }
 
 export interface ITransaction {
     toSendable(): any;
 }
 
+export interface INetworkStatus {
+    CurrentRound: Number;
+    EpochNumber: number;
+    Nonce: number;
+    RoundAtEpochStart: number;
+    RoundsPerEpoch: number;
+}
 export interface IContractQuery {
     address: IAddress;
     caller?: IAddress;
@@ -82,6 +91,7 @@ export interface IContractQueryResponse {
     returnCode: IContractReturnCode;
     returnMessage: string;
     getReturnDataParts(): Buffer[];
+    returnData: string[];
 }
 
 export interface IContractReturnCode {

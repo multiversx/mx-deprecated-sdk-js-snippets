@@ -3,7 +3,7 @@ import { existsSync, PathLike, readFileSync } from "fs";
 import { Address } from "@elrondnetwork/erdjs";
 import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
 import { ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, ICorrelationHolder, IAudit, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
+import { IBunchOfUsers, ICorrelationHolder, IAudit, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken, IBunchOfNodes } from "./interface";
 import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
@@ -12,6 +12,8 @@ import { Audit } from "./audit";
 import { Report } from "./reports/report";
 import { CorrelationHolder } from "./correlationHolder";
 import { BreadcrumbTypeAddress, BreadcrumbTypeArbitrary, BreadcrumbTypeToken } from "./constants";
+import { BunchOfNodes } from "./nodes";
+import { BLS } from "@elrondnetwork/erdjs-walletcore/out";
 
 export class TestSession implements ITestSession {
     readonly config: ITestSessionConfig;
@@ -20,6 +22,7 @@ export class TestSession implements ITestSession {
     readonly networkProvider: INetworkProvider;
     readonly users: IBunchOfUsers;
     readonly storage: IStorage;
+    readonly nodes: IBunchOfNodes;
     readonly audit: IAudit;
     private networkConfig: INetworkConfig = new NetworkConfig();
 
@@ -29,6 +32,7 @@ export class TestSession implements ITestSession {
         correlation: ICorrelationHolder,
         provider: INetworkProvider,
         users: IBunchOfUsers,
+        nodes: IBunchOfNodes,
         storage: IStorage,
         log: IAudit
     }) {
@@ -37,11 +41,13 @@ export class TestSession implements ITestSession {
         this.correlation = args.correlation;
         this.networkProvider = args.provider;
         this.users = args.users;
+        this.nodes = args.nodes;
         this.storage = args.storage;
         this.audit = args.log;
     }
 
     static async load(sessionName: string, folder: string): Promise<ITestSession> {
+        await BLS.initIfNecessary();
         const configFile = this.findSessionConfigFile(sessionName, folder);
         const folderOfConfigFile = path.dirname(configFile.toString());
         const configJson = readFileSync(configFile, { encoding: "utf8" });
@@ -50,6 +56,7 @@ export class TestSession implements ITestSession {
         const correlation = new CorrelationHolder();
         const networkprovider = this.createNetworkProvider(sessionName, config.networkProvider);
         const users = await BunchOfUsers.create(config.users);
+        const nodes = new BunchOfNodes(config.nodes);
         const storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
         const storage = await Storage.create(storageName.toString());
         const log = new Audit({
@@ -64,6 +71,7 @@ export class TestSession implements ITestSession {
             correlation: correlation,
             provider: networkprovider,
             users: users,
+            nodes: nodes,
             storage: storage,
             log: log
         });
@@ -142,7 +150,7 @@ export class TestSession implements ITestSession {
     async saveToken(params: { name: string, token: IToken }): Promise<void> {
         const name = params.name;
         const token = params.token;
-        
+
         console.log(`TestSession.saveToken(): name = [${name}], token = ${token.identifier}`);
 
         await this.storage.storeBreadcrumb({

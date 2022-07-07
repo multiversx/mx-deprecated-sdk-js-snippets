@@ -6,7 +6,7 @@ import { retryOnError } from "../../faulty";
 import { ITestSession, ITestUser } from "../../interface";
 import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
-import { createESDTInteractor } from "../../system/esdtInteractor";
+import { createESDTInteractor } from "../../system/esdt";
 import { createInteractor } from "./lotteryInteractor";
 
 describe("lottery snippet", async function () {
@@ -46,8 +46,8 @@ describe("lottery snippet", async function () {
 
         let interactor = await createESDTInteractor(session);
         await session.syncUsers([owner]);
-        let token = await interactor.issueFungibleToken(owner, { name: "FOO", ticker: "FOO", decimals: 0, supply: "100000000" });
-        await session.saveToken({ name: "lotteryToken", token: token });
+        let { resultedToken, returnCode } = await interactor.issueFungibleToken(owner, { name: "FOO", ticker: "FOO", decimals: 0, supply: "100000000" });
+        await session.saveToken({ name: "lotteryToken", token: resultedToken });
     });
 
     it("airdrop lottery token", async function () {

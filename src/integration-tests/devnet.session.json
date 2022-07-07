@@ -38,8 +38,8 @@
                 "folder": "~/elrondsdk/testwallets/latest/users"
             },
             {
-                "name": "quartet",
-                "pem": "~/test-wallets/quartet.pem"
+                "name": "duet",
+                "pem": "~/test-wallets/duet.pem"
             },
             {
                 "name": "manyZero",
