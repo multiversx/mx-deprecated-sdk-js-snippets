@@ -129,6 +129,7 @@ export interface ITestNode {
     readonly name: string;
     readonly group: string;
     readonly secretKey: Buffer;
+    readonly publicKey: Buffer;
 }
 
 /**

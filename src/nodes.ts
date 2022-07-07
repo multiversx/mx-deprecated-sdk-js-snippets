@@ -1,23 +1,20 @@
-import { Account, IAddress } from "@elrondnetwork/erdjs";
-import { parseUserKeys, parseValidatorKeys, UserSecretKey, ValidatorSigner, ValidatorSecretKey,ValidatorPublicKey } from "@elrondnetwork/erdjs-walletcore";
+import { parseValidatorKeys, ValidatorSecretKey } from "@elrondnetwork/erdjs-walletcore";
 import { PathLike, readFileSync, readdirSync } from "fs";
 import { ErrMissingNodeOrGroupOfNodes } from "./errors";
-import { IBunchOfNodes, ITestNode, INodesConfig} from "./interface";
-import { INetworkProvider } from "./interfaceOfNetwork";
-import { ISigner } from "./interfaceOfWalletCore";
+import { IBunchOfNodes, ITestNode, INodesConfig } from "./interface";
 import { resolvePath } from "./filesystem";
 
 export class TestNode implements ITestNode {
     readonly name: string;
     readonly group: string;
     readonly secretKey: Buffer;
+    readonly publicKey: Buffer;
 
     constructor(name: string, group: string, secretKey: ValidatorSecretKey) {
-        let publicKey = secretKey.generatePublicKey();
-
         this.name = name;
         this.group = group;
         this.secretKey = Buffer.from(secretKey);
+        this.publicKey = secretKey.generatePublicKey().valueOf();
     }
 }
 
@@ -28,8 +25,8 @@ export class BunchOfNodes implements IBunchOfNodes {
     constructor(config: INodesConfig) {
         // Load individual nodes
         for (const oneNode of config.individualNodes) {
-            let key = loadSecretKeyFromPemFile(oneNode.pem);
-            let node = new TestNode(oneNode.name, "", key);
+            let secretKey = loadSecretKeyFromPemFile(oneNode.pem);
+            let node = new TestNode(oneNode.name, "", secretKey);
 
             this.individualNodes.set(oneNode.name, node)
         }
@@ -38,8 +35,8 @@ export class BunchOfNodes implements IBunchOfNodes {
         for (const group of config.groupOfNodes) {
             // From a single file
             if (group.pem) {
-                let keys = loadMoreSecretKeyFromPemFile(group.pem);
-                let nodes = keys.map(key => new TestNode("", group.name, key));
+                let secretKeys = loadMoreSecretKeyFromPemFile(group.pem);
+                let nodes = secretKeys.map(key => new TestNode("", group.name, key));
 
                 this.groupOfNodes.set(group.name, nodes);
                 continue;
@@ -54,9 +51,9 @@ export class BunchOfNodes implements IBunchOfNodes {
                     if (!file.endsWith(".pem")) {
                         continue;
                     }
-                    
-                    let keys = loadMoreSecretKeyFromPemFile(resolvePath(group.folder, file));
-                    let nodes = keys.map(key => new TestNode("", group.name, key));
+
+                    let secretKeys = loadMoreSecretKeyFromPemFile(resolvePath(group.folder, file));
+                    let nodes = secretKeys.map(key => new TestNode("", group.name, key));
 
                     groupOfNodes.push(...nodes);
                 }
@@ -67,7 +64,7 @@ export class BunchOfNodes implements IBunchOfNodes {
         }
     }
 
-    getNode(name:string): ITestNode {
+    getNode(name: string): ITestNode {
         let node = this.individualNodes.get(name);
         if (node) {
             return node;
@@ -95,7 +92,7 @@ function loadSecretKeyFromPemFile(file: PathLike): ValidatorSecretKey {
 }
 
 function loadMoreSecretKeyFromPemFile(file: PathLike): ValidatorSecretKey[] {
-    
+
     file = resolvePath(file);
     let text = readFileSync(file, { encoding: "utf8" });
     let secretKeys: ValidatorSecretKey[] = parseValidatorKeys(text);
