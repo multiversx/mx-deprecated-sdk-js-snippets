@@ -20,7 +20,7 @@
   "author": "MultiversX",
   "license": "MIT",
   "dependencies": {
-    "@elrondnetwork/erdjs": "10.2.5",
+    "@elrondnetwork/erdjs": "10.2.8",
     "@elrondnetwork/erdjs-network-providers": "0.1.5",
     "@elrondnetwork/erdjs-walletcore": "1.0.0",
     "better-sqlite3": "7.5.0",
