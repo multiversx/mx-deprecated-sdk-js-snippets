@@ -1,7 +1,7 @@
 {
     "networkProvider": {
         "type": "ProxyNetworkProvider",
-        "url": "https://testnet-gateway.elrond.com",
+        "url": "https://testnet-gateway.multiversx.com",
         "timeout": 5000
     },
     "users": {

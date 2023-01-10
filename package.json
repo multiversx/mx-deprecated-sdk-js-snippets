@@ -1,6 +1,6 @@
 {
-  "name": "@elrondnetwork/erdjs-snippets",
-  "version": "3.0.2",
+  "name": "@multiversx/erdjs-snippets",
+  "version": "3.0.3",
   "description": "Base library for (mocha-style) Smart Contract interaction snippets. Based on erdjs. Runnable in VSCode.",
   "main": "out/index.js",
   "types": "out/index.d.js",
@@ -17,8 +17,8 @@
     "copy-reports": "cp src/reports/*.html out/reports",
     "mocha-grep": "mocha --grep ${PATTERN}"
   },
-  "author": "ElrondNetwork",
-  "license": "GPL-3.0-or-later",
+  "author": "MultiversX",
+  "license": "MIT",
   "dependencies": {
     "@elrondnetwork/erdjs": "10.2.5",
     "@elrondnetwork/erdjs-network-providers": "0.1.5",
