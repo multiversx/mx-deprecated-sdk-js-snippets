@@ -1,4 +1,4 @@
-import { AsyncTimer } from "@elrondnetwork/erdjs";
+import { AsyncTimer } from "@multiversx/sdk-core";
 import { TenSecondsInMilliseconds } from "./constants";
 import { ErrNumRetriesExceeded } from "./errors";
 

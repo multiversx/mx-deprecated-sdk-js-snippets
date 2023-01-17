@@ -2,14 +2,14 @@
 /**
  * The code in this file is partially usable as production code, as well.
  * Note: in production code, make sure you do not depend on {@link ITestUser}, {@link IEventLog} etc..
- * Note: in production code, make sure you DO NOT reference the package "erdjs-snippets".
+ * Note: in production code, make sure you DO NOT reference the package "sdk-snippets".
  * Note: in dApps, make sure you use a proper wallet provider to sign the transaction.
  * @module
  */
+import { BigUIntValue, CodeMetadata, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher } from "@multiversx/sdk-core";
 import path from "path";
-import { BigUIntValue, CodeMetadata, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, TransactionWatcher } from "@elrondnetwork/erdjs";
-import { IAudit, ITestSession, ITestUser } from "../../interface";
 import { loadAbiRegistry, loadCode } from "../../contracts";
+import { IAudit, ITestSession, ITestUser } from "../../interface";
 import { INetworkConfig, INetworkProvider } from "../../interfaceOfNetwork";
 
 const PathToWasm = path.resolve(__dirname, "adder.wasm");

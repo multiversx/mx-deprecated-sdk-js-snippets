@@ -1,6 +1,6 @@
-# erdjs-snippets
+# mx-sdk-js-snippets
 
-Base library for (mocha-style) Smart Contract interaction snippets. Based on erdjs. Runnable in VSCode.
+Base library for (mocha-style) Smart Contract interaction snippets. Based on sdk-js. Runnable in VSCode.
 
 This library is meant to be used for testing & auditing Smart Contracts.
 
@@ -8,17 +8,17 @@ This library is meant to be used for testing & auditing Smart Contracts.
 
 ## Documentation
 
- - [Writing and testing interactions](https://docs.multiversx.com/sdk-and-tools/erdjs/writing-and-testing-erdjs-interactions)
- - [erdjs cookbook](https://docs.multiversx.com/sdk-and-tools/erdjs/erdjs-cookbook)
+ - [Writing and testing interactions](https://docs.multiversx.com/sdk-and-tools/sdk-js/writing-and-testing-sdk-js-interactions/)
+ - [cookbook](https://docs.multiversx.com/sdk-and-tools/sdk-js/sdk-js-cookbook/)
 
 ## Distribution
 
-[npm](https://www.npmjs.com/package/@multiversx/erdjs-snippets)
+[npm](https://www.npmjs.com/package/@multiversx/sdk-snippets)
 
 ## Installation
 
 ```
-npm install @multiversx/erdjs-snippets --save-dev
+npm install @multiversx/sdk-snippets --save-dev
 ```
 
 ### Building the library

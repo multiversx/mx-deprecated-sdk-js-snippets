@@ -1,4 +1,4 @@
-import { ReturnCode, TokenPayment } from "@elrondnetwork/erdjs";
+import { ReturnCode, TokenPayment } from "@multiversx/sdk-core";
 import { assert } from "chai";
 import { createAirdropService } from "../../airdrop";
 import { FiveMinutesInMilliseconds } from "../../constants";

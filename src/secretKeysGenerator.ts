@@ -1,4 +1,4 @@
-import { Mnemonic, UserSecretKey } from "@elrondnetwork/erdjs-walletcore";
+import { Mnemonic, UserSecretKey } from "@multiversx/sdk-wallet";
 import { PathLike, writeFileSync } from "fs";
 import { computeShardOfUserPubkey } from "./erdjsPatching/shardComputer";
 import { resolvePath } from "./filesystem";

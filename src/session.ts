@@ -1,17 +1,17 @@
-import path from "path";
+import { Address } from "@multiversx/sdk-core";
+import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@multiversx/sdk-network-providers";
 import { existsSync, PathLike, readFileSync } from "fs";
-import { Address } from "@elrondnetwork/erdjs";
-import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
+import path from "path";
+import { Audit } from "./audit";
+import { BreadcrumbTypeAddress, BreadcrumbTypeArbitrary, BreadcrumbTypeToken } from "./constants";
+import { CorrelationHolder } from "./correlationHolder";
 import { ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, ICorrelationHolder, IAudit, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
+import { resolvePath } from "./filesystem";
+import { IAudit, IBunchOfUsers, ICorrelationHolder, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
 import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
+import { Report } from "./reports/report";
 import { Storage } from "./storage/storage";
 import { BunchOfUsers } from "./users";
-import { resolvePath } from "./filesystem";
-import { Audit } from "./audit";
-import { Report } from "./reports/report";
-import { CorrelationHolder } from "./correlationHolder";
-import { BreadcrumbTypeAddress, BreadcrumbTypeArbitrary, BreadcrumbTypeToken } from "./constants";
 
 export class TestSession implements ITestSession {
     readonly config: ITestSessionConfig;
@@ -142,7 +142,7 @@ export class TestSession implements ITestSession {
     async saveToken(params: { name: string, token: IToken }): Promise<void> {
         const name = params.name;
         const token = params.token;
-        
+
         console.log(`TestSession.saveToken(): name = [${name}], token = ${token.identifier}`);
 
         await this.storage.storeBreadcrumb({

@@ -2,12 +2,12 @@
 /**
  * The code in this file is partially usable as production code, as well.
  * Note: in production code, make sure you do not depend on {@link ITestUser}.
- * Note: in production code, make sure you DO NOT reference the package "erdjs-snippets".
+ * Note: in production code, make sure you DO NOT reference the package "sdk-snippets".
  * Note: in dApps, make sure you use a proper wallet provider to sign the transaction.
  * @module
  */
+import { CodeMetadata, EnumValue, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, Struct, TokenPayment, TransactionWatcher, VariadicValue } from "@multiversx/sdk-core";
 import path from "path";
-import { CodeMetadata, EnumValue, IAddress, Interaction, ResultsParser, ReturnCode, SmartContract, SmartContractAbi, Struct, TokenPayment, TransactionWatcher, VariadicValue } from "@elrondnetwork/erdjs";
 import { loadAbiRegistry, loadCode } from "../../contracts";
 import { IAudit, ITestSession, ITestUser } from "../../interface";
 import { INetworkConfig, INetworkProvider } from "../../interfaceOfNetwork";
