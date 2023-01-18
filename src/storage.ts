@@ -2,8 +2,6 @@ import * as fs from "fs";
 
 interface IBreadcrumbRecord {
     id: number;
-    correlationStep: string;
-    correlationTag: string;
     type: string;
     name: string;
     payload: any;
@@ -11,8 +9,6 @@ interface IBreadcrumbRecord {
 
 interface IAuditEntryRecord {
     id: number;
-    correlationStep: string;
-    correlationTag: string;
     summary: string;
     payload: any;
 }
@@ -80,8 +76,6 @@ export class Storage {
     private hydrateBreadcrumb(item: any): IBreadcrumbRecord {
         return {
             id: item.id,
-            correlationStep: item.correlationStep,
-            correlationTag: item.correlationTag,
             name: item.name,
             type: item.type,
             payload: item.payload
@@ -113,8 +107,6 @@ export class Storage {
     private hydrateAuditEntry(item: any): IAuditEntryRecord {
         return {
             id: item.id,
-            correlationStep: item.correlationStep,
-            correlationTag: item.correlationTag,
             summary: item.summary,
             payload: item.payload
         };

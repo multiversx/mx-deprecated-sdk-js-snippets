@@ -26,10 +26,6 @@ describe("counter snippet", async function () {
         await session.syncNetworkConfig();
     });
 
-    this.beforeEach(async function () {
-        session.correlation.step = this.currentTest?.fullTitle() || "";
-    });
-
     it("issue counter token", async function () {
         this.timeout(FiveMinutesInMilliseconds);
 

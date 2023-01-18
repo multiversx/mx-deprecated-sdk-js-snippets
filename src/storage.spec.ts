@@ -16,8 +16,6 @@ describe("test storage", async function () {
 
         const breadcrumbOne = {
             id: 0,
-            correlationStep: "test",
-            correlationTag: "test",
             type: "typeX",
             name: "A",
             payload: { value: 42 }
@@ -25,8 +23,6 @@ describe("test storage", async function () {
 
         const breadcrumbTwo = {
             id: 0,
-            correlationStep: "test",
-            correlationTag: "test",
             type: "typeX",
             name: "A",
             payload: { value: 43 }
@@ -34,8 +30,6 @@ describe("test storage", async function () {
 
         const breadcrumbThree = {
             id: 0,
-            correlationStep: "test",
-            correlationTag: "test",
             type: "typeX",
             name: "C",
             payload: { value: 42 }
@@ -43,8 +37,6 @@ describe("test storage", async function () {
 
         const breadcrumbFour = {
             id: 0,
-            correlationStep: "test",
-            correlationTag: "test",
             type: "typeY",
             name: "B",
             payload: { value: 44 }
@@ -79,8 +71,6 @@ describe("test storage", async function () {
 
         const entryOne = {
             id: 0,
-            correlationStep: "test",
-            correlationTag: "test",
             summary: "foobar",
             payload: { a: "b", c: "d", foo: 42 }
         };
@@ -89,8 +79,6 @@ describe("test storage", async function () {
 
         const entryTwo = {
             id: 0,
-            correlationStep: "test",
-            correlationTag: "test",
             summary: "foobar",
             payload: { a: "d", c: "b", foo: 43 }
         };

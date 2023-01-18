@@ -19,10 +19,6 @@
             {
                 "name": "friends",
                 "folder": "~/multiversx-sdk/testwallets/latest/users"
-            },
-            {
-                "name": "quartet",
-                "pem": "~/test-wallets/quartet.pem"
             }
         ]
     }

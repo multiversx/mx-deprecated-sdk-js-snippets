@@ -57,7 +57,6 @@ export interface IGeneratedGroupOfUsersConfig {
 
 export interface ITestSession {
     readonly name: string;
-    readonly correlation: ICorrelationHolder;
     readonly networkProvider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
@@ -74,11 +73,6 @@ export interface ITestSession {
     loadBreadcrumb(name: string): Promise<any>;
     loadBreadcrumbsByType(type: string): Promise<any[]>;
     destroy(): Promise<void>;
-}
-
-export interface ICorrelationHolder {
-    step: string;
-    tag: string;
 }
 
 export interface IBunchOfUsers {
@@ -108,8 +102,6 @@ export interface IStorage {
 
 interface IBreadcrumbRecord {
     id: number;
-    correlationStep: string;
-    correlationTag: string;
     type: string;
     name: string;
     payload: any;
@@ -117,8 +109,6 @@ interface IBreadcrumbRecord {
 
 interface IAuditEntryRecord {
     id: number;
-    correlationStep: string;
-    correlationTag: string;
     summary: string;
     payload: any;
 }

@@ -18,40 +18,12 @@
             {
                 "name": "alice",
                 "pem": "~/multiversx-sdk/testwallets/latest/users/alice.pem"
-            },
-            {
-                "name": "zero",
-                "pem": "~/test-wallets/zero.pem"
-            },
-            {
-                "name": "one",
-                "pem": "~/test-wallets/one.pem"
-            },
-            {
-                "name": "two",
-                "pem": "~/test-wallets/two.pem"
             }
         ],
         "groups": [
             {
                 "name": "friends",
                 "folder": "~/multiversx-sdk/testwallets/latest/users"
-            },
-            {
-                "name": "quartet",
-                "pem": "~/test-wallets/quartet.pem"
-            },
-            {
-                "name": "manyZero",
-                "pem": "~/test-wallets/manyZero.pem"
-            },
-            {
-                "name": "manyOne",
-                "pem": "~/test-wallets/manyOne.pem"
-            },
-            {
-                "name": "manyTwo",
-                "pem": "~/test-wallets/manyTwo.pem"
             }
         ]
     }

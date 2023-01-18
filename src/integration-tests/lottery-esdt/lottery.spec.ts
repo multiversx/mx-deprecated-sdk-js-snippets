@@ -29,8 +29,8 @@ describe("lottery snippet", async function () {
         await session.syncNetworkConfig();
     });
 
-    this.beforeEach(async function () {
-        session.correlation.step = this.currentTest?.fullTitle() || "";
+    this.afterAll(async function () {
+        await session.storage.save();
     });
 
     it("airdrop EGLD", async function () {
