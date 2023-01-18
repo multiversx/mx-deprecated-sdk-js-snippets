@@ -1,6 +1,6 @@
 {
   "name": "@multiversx/sdk-snippets",
-  "version": "3.0.3",
+  "version": "4.0.0",
   "description": "Base library for (mocha-style) Smart Contract interaction snippets. Based on sdk-js. Runnable in VSCode.",
   "main": "out/index.js",
   "types": "out/index.d.js",
