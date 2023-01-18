@@ -3,7 +3,6 @@ import { assert } from "chai";
 import { createAirdropService } from "../../airdrop";
 import { FiveMinutesInMilliseconds } from "../../constants";
 import { ITestSession, ITestUser } from "../../interface";
-import { INetworkProvider } from "../../interfaceOfNetwork";
 import { TestSession } from "../../session";
 import { createInteractor } from "./adderInteractor";
 
@@ -11,14 +10,12 @@ describe("adder snippet", async function () {
     this.bail(true);
 
     let session: ITestSession;
-    let provider: INetworkProvider;
     let whale: ITestUser;
     let owner: ITestUser;
     let friends: ITestUser[];
 
     this.beforeAll(async function () {
         session = await TestSession.load("devnet", __dirname);
-        provider = session.networkProvider;
         whale = session.users.getUser("whale");
         owner = session.users.getUser("whale");
         friends = session.users.getGroup("friends");
@@ -61,13 +58,13 @@ describe("adder snippet", async function () {
         const interactor = await createInteractor(session, contractAddress);
 
         const sumBefore = await interactor.getSum();
-        const snapshotBefore = await session.audit.onSnapshot({ state: { sum: sumBefore } });
+        await session.audit.addEntry("sum before add", { sum: sumBefore });
 
         const returnCode = await interactor.add(owner, 3);
-        await session.audit.onContractOutcome({ returnCode });
+        await session.audit.addEntry("add outcome", { returnCode });
 
         const sumAfter = await interactor.getSum();
-        await session.audit.onSnapshot({ state: { sum: sumBefore }, comparableTo: snapshotBefore });
+        await session.audit.addEntry("sum after add", { sum: sumAfter });
 
         assert.isTrue(returnCode.isSuccess());
         assert.equal(sumAfter, sumBefore + 3);

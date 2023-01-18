@@ -64,14 +64,14 @@ export class LotteryInteractor {
         await deployer.signer.sign(transaction);
 
         // The contract address is deterministically computable:
-        let address = SmartContract.computeAddress(transaction.getSender(), transaction.getNonce());
+        const address = SmartContract.computeAddress(transaction.getSender(), transaction.getNonce());
 
         // Let's broadcast the transaction and await its completion:
         const transactionHash = await this.networkProvider.sendTransaction(transaction);
-        await this.audit.onContractDeploymentSent({ transactionHash: transactionHash, contractAddress: address });
+        await this.audit.addEntry("deploy", { transactionHash: transactionHash, contract: address });
 
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        await this.audit.onTransactionCompleted({ transactionHash: transactionHash, transaction: transactionOnNetwork });
+        await this.audit.addEntry("completed", { transactionHash: transactionHash });
 
         // In the end, parse the results:
         let { returnCode } = this.resultsParser.parseUntypedOutcome(transactionOnNetwork);
@@ -107,10 +107,10 @@ export class LotteryInteractor {
 
         // Let's broadcast the transaction and await its completion:
         const transactionHash = await this.networkProvider.sendTransaction(transaction);
-        await this.audit.onTransactionSent({ action: "start", args: [lotteryName, tokenIdentifier], transactionHash: transactionHash });
+        await this.audit.addEntry("start lottery", { lottery: lotteryName, token: tokenIdentifier, transactionHash: transactionHash });
 
         let transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        await this.audit.onTransactionCompleted({ transactionHash: transactionHash, transaction: transactionOnNetwork });
+        await this.audit.addEntry("completed", { transactionHash: transactionHash });
 
         // In the end, parse the results:
         let { returnCode, returnMessage } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());
@@ -139,10 +139,10 @@ export class LotteryInteractor {
 
         // Let's broadcast the transaction and await its completion:
         const transactionHash = await this.networkProvider.sendTransaction(transaction);
-        await this.audit.onTransactionSent({ action: "buyTicket", args: [lotteryName, amount.toPrettyString()], transactionHash: transactionHash });
+        await this.audit.addEntry("buy ticket", { lottery: lotteryName, amount: amount.toPrettyString(), transactionHash: transactionHash });
 
         const transactionOnNetwork = await this.transactionWatcher.awaitCompleted(transaction);
-        await this.audit.onTransactionCompleted({ transactionHash: transactionHash, transaction: transactionOnNetwork });
+        await this.audit.addEntry("completed", { transactionHash: transactionHash });
 
         // In the end, parse the results:
         let { returnCode } = this.resultsParser.parseOutcome(transactionOnNetwork, interaction.getEndpoint());

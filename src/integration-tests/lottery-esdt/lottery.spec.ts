@@ -56,10 +56,7 @@ describe("lottery snippet", async function () {
         let lotteryToken = await session.loadToken("lotteryToken");
         let payment = TokenPayment.fungibleFromAmount(lotteryToken.identifier, "10", lotteryToken.decimals);
         await session.syncUsers([owner]);
-
-        const snapshotBefore = await session.audit.emitSnapshotOfUsers({ users: friends });
         await createAirdropService(session).sendToEachUser(owner, friends, [payment]);
-        await session.audit.emitSnapshotOfUsers({ users: friends, comparableTo: snapshotBefore });
     });
 
     it("setup", async function () {

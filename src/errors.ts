@@ -36,10 +36,5 @@ export class ErrNumRetriesExceeded extends Err {
     public constructor() {
         super(`Number of retries exceeded.`);
     }
-} 
-
-export class ErrBreadcrumbNotFound extends Err {
-    public constructor(breadcrumb: string) {
-        super(`Breadcrumb not found: ${breadcrumb}`);
-    }
 }
+
