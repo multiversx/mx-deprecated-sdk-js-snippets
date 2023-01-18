@@ -24,7 +24,7 @@ describe("transfers snippet", async function () {
     it("transfer NFT", async function () {
         this.timeout(FiveMinutesInMilliseconds);
 
-        let payment = TokenPayment.nonFungible("ERDJS-38f249", 1);
+        const payment = TokenPayment.nonFungible("ERDJS-38f249", 1);
         await session.syncUsers([alice]);
         await createAirdropService(session).sendToEachUser(alice, [bob], [payment]);
     });

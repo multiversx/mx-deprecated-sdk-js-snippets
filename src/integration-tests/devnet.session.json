@@ -4,11 +4,6 @@
         "url": "https://devnet-gateway.multiversx.com",
         "timeout": 5000
     },
-    "reporting": {
-        "explorerUrl": "https://devnet-explorer.multiversx.com",
-        "apiUrl": "https://devnet-api.multiversx.com",
-        "outputFolder": "~/reports"
-    },
     "users": {
         "individuals": [
             {
@@ -18,6 +13,10 @@
             {
                 "name": "alice",
                 "pem": "~/multiversx-sdk/testwallets/latest/users/alice.pem"
+            },
+            {
+                "name": "bob",
+                "pem": "~/multiversx-sdk/testwallets/latest/users/bob.pem"
             }
         ],
         "groups": [
