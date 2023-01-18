@@ -72,6 +72,7 @@ export interface ITestSession {
     saveBreadcrumb(params: { type?: string, name: string, value: any }): Promise<void>;
     loadBreadcrumb(name: string): Promise<any>;
     loadBreadcrumbsByType(type: string): Promise<any[]>;
+    save(): Promise<void>;
     destroy(): Promise<void>;
 }
 

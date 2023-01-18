@@ -41,6 +41,7 @@ describe("adder snippet", async function () {
         assert.isTrue(returnCode.isSuccess());
 
         await session.saveAddress({ name: "adder", address: address });
+        await session.save();
     });
 
     it("add", async function () {
@@ -64,12 +65,13 @@ describe("adder snippet", async function () {
 
         assert.isTrue(returnCode.isSuccess());
         assert.equal(sumAfter, sumBefore + 3);
+        await session.save();
     });
 
     it("getSum", async function () {
-        let contractAddress = await session.loadAddress("adder");
-        let interactor = await createInteractor(session, contractAddress);
-        let result = await interactor.getSum();
+        const contractAddress = await session.loadAddress("adder");
+        const interactor = await createInteractor(session, contractAddress);
+        const result = await interactor.getSum();
         assert.isTrue(result > 0);
     });
 

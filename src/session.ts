@@ -170,6 +170,10 @@ export class TestSession implements ITestSession {
         return payloads;
     }
 
+    async save(): Promise<void> {
+        await this.storage.save();
+    }
+
     async destroy(): Promise<void> {
         await this.storage.destroy();
     }

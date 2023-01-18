@@ -181,7 +181,7 @@ export class Collection {
         };
 
         const json = JSON.stringify(data, null, 4);
-        return fs.promises.writeFile(this.path, json, "utf8");
+        await fs.promises.writeFile(this.path, json, "utf8");
     }
 }
 
