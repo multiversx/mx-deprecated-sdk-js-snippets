@@ -77,10 +77,6 @@ describe("adder snippet", async function () {
         assert.isTrue(result > 0);
     });
 
-    it("generate report", async function () {
-        await session.generateReport();
-    });
-
     it("destroy session", async function () {
         await session.destroy();
     });

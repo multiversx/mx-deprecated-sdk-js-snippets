@@ -9,8 +9,7 @@ import { ErrBadSessionConfig } from "./errors";
 import { resolvePath } from "./filesystem";
 import { IAudit, IBunchOfUsers, ICorrelationHolder, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
 import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
-import { Report } from "./reports/report";
-import { Storage } from "./storage/storage";
+import { Storage } from "./storage";
 import { BunchOfUsers } from "./users";
 
 export class TestSession implements ITestSession {
@@ -54,8 +53,7 @@ export class TestSession implements ITestSession {
         const storage = await Storage.create(storageName.toString());
         const log = new Audit({
             storage: storage,
-            correlation: correlation,
-            networkProvider: networkprovider
+            correlation: correlation
         });
 
         let session = new TestSession({
@@ -183,12 +181,6 @@ export class TestSession implements ITestSession {
         const breadcrumbs = await this.storage.loadBreadcrumbsByType(type);
         const payloads = breadcrumbs.map(breadcrumb => breadcrumb.payload);
         return payloads;
-    }
-
-    async generateReport(tag?: string): Promise<void> {
-        const report = new Report(this.config.reporting, this.storage);
-        await report.prepare();
-        await report.generate(tag);
     }
 
     async destroy(): Promise<void> {
