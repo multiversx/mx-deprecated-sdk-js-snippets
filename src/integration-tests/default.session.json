@@ -8,17 +8,17 @@
         "individuals": [
             {
                 "name": "whale",
-                "pem": "~/elrondsdk/testwallets/latest/users/alice.pem"
+                "pem": "~/multiversx-sdk/testwallets/latest/users/alice.pem"
             },
             {
                 "name": "alice",
-                "pem": "~/elrondsdk/testwallets/latest/users/alice.pem"
+                "pem": "~/multiversx-sdk/testwallets/latest/users/alice.pem"
             }
         ],
         "groups": [
             {
                 "name": "friends",
-                "folder": "~/elrondsdk/testwallets/latest/users"
+                "folder": "~/multiversx-sdk/testwallets/latest/users"
             },
             {
                 "name": "quartet",

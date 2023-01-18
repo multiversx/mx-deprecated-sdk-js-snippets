@@ -1,33 +1,30 @@
 import * as fs from "fs";
 import * as sql from "./sql";
-import DatabaseConstructor, { Database } from "better-sqlite3";
 import { IBreadcrumbRecord, IAuditEntryRecord, IStorage } from "../interface";
 import { ErrBreadcrumbNotFound } from "../errors";
 
 export class Storage implements IStorage {
-    private readonly file: string;
-    private readonly db: Database;
+    private readonly path: string;
+    private readonly auditsPath: string;
+    private readonly breadcrumbsPath: string;
 
-    constructor(file: string, connection: Database) {
-        this.file = file;
-        this.db = connection;
+    constructor(path: string) {
+        this.path = path;
+        this.auditsPath = `${path}/audits.json`;
+        this.breadcrumbsPath = `${path}/breadcrumbs.json`;
     }
 
-    static async create(file: string): Promise<Storage> {
-        let shouldCreateSchema = !fs.existsSync(file);
-        let db = new DatabaseConstructor(file, {});
-
-        if (shouldCreateSchema) {
-            db.prepare(sql.Breadcrumb.CreateTable).run();
-            db.prepare(sql.Audit.CreateTable).run();
+    static async create(path: string): Promise<IStorage> {
+        const shouldCreate = !fs.existsSync(path);
+        if (shouldCreate) {
+            await fs.promises.mkdir(path, { recursive: true });
         }
 
-        return new Storage(file, db);
+        return new Storage(path);
     }
 
     async destroy() {
-        this.db.close();
-        await fs.promises.unlink(this.file);
+        await fs.promises.rmdir(this.path, { recursive: true });
     }
 
     async storeBreadcrumb(record: IBreadcrumbRecord): Promise<number> {
@@ -55,7 +52,7 @@ export class Storage implements IStorage {
     }
 
     async loadBreadcrumb(name: string): Promise<IBreadcrumbRecord> {
-        const find = this.db.prepare(sql.Breadcrumb.GetByName);
+        const breadcrumbs = await this.loadBreadcrumbs();
         const row = find.get({ name: name });
 
         if (!row) {
@@ -78,17 +75,16 @@ export class Storage implements IStorage {
     }
 
     async loadBreadcrumbs(): Promise<IBreadcrumbRecord[]> {
-        const find = this.db.prepare(sql.Breadcrumb.GetAll);
-        const rows = find.all();
-        const records = rows.map(row => this.hydrateBreadcrumb(row));
-        return records;
+        const content = await fs.promises.readFile(this.breadcrumbsPath, "utf8");
+        const records = JSON.parse(content) as any[];
+        const breadcrumbs = records.map(record => this.hydrateBreadcrumb(record));
+        return breadcrumbs;
     }
 
     async loadBreadcrumbsByType(type: string): Promise<IBreadcrumbRecord[]> {
-        const find = this.db.prepare(sql.Breadcrumb.GetByType);
-        const rows = find.all({ type: type });
-        const records = rows.map(row => this.hydrateBreadcrumb(row));
-        return records;
+        const breadcrumbs = await this.loadBreadcrumbs();
+        const filtered = breadcrumbs.filter(breadcrumb => breadcrumb.type === type);
+        return filtered;
     }
 
     async storeAuditEntry(record: IAuditEntryRecord): Promise<number> {
@@ -109,10 +105,10 @@ export class Storage implements IStorage {
     }
 
     async loadAuditEntries(): Promise<IAuditEntryRecord[]> {
-        const find = this.db.prepare(sql.Audit.GetAll);
-        const rows = find.all();
-        const records = rows.map(row => this.hydrateAuditEntry(row));
-        return records;
+        const content = await fs.promises.readFile(this.auditsPath, "utf8");
+        const records = JSON.parse(content) as any[];
+        const auditEntries = records.map(record => this.hydrateAuditEntry(record));
+        return auditEntries;
     }
 
     private hydrateAuditEntry(row: any): IAuditEntryRecord {
@@ -135,3 +131,5 @@ export class Storage implements IStorage {
         return JSON.parse(json);
     }
 }
+
+
