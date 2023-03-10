@@ -1,12 +1,12 @@
-import { Account, IAddress } from "@elrondnetwork/erdjs";
-import { UserPublicKey, UserSecretKey, UserSigner } from "@elrondnetwork/erdjs-walletcore";
+import { Account, IAddress } from "@multiversx/sdk-core";
+import { UserPublicKey, UserSecretKey, UserSigner } from "@multiversx/sdk-wallet";
 import { PathLike, readdirSync, readFileSync } from "fs";
+import { parseUserKeys } from "./erdjsPatching/walletcore";
 import { ErrMissingUserOrGroup } from "./errors";
+import { resolvePath } from "./filesystem";
 import { IAccount, IBunchOfUsers, ITestUser, IUsersConfig } from "./interface";
 import { INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
-import { resolvePath } from "./filesystem";
-import { parseUserKeys } from "./erdjsPatching/walletcore";
 
 export class TestUser implements ITestUser {
     readonly name: string;

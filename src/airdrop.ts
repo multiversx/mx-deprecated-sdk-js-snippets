@@ -1,4 +1,4 @@
-import { Transaction, TransactionFactory, GasEstimator, DefaultGasConfiguration } from "@elrondnetwork/erdjs";
+import { DefaultGasConfiguration, GasEstimator, Transaction, TransactionFactory } from "@multiversx/sdk-core";
 import { AccountWatcher } from "./erdjsPatching/accountWatcher";
 import { ITestSession, ITestUser, ITokenPayment } from "./interface";
 import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";

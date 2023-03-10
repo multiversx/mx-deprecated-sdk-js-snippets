@@ -1,4 +1,4 @@
-import { ReturnCode, TokenPayment } from "@elrondnetwork/erdjs";
+import { ReturnCode, TokenPayment } from "@multiversx/sdk-core";
 import { assert } from "chai";
 import { createAirdropService } from "../../airdrop";
 import { FiveMinutesInMilliseconds } from "../../constants";
@@ -29,14 +29,10 @@ describe("lottery snippet", async function () {
         await session.syncNetworkConfig();
     });
 
-    this.beforeEach(async function () {
-        session.correlation.step = this.currentTest?.fullTitle() || "";
-    });
-
     it("airdrop EGLD", async function () {
         this.timeout(FiveMinutesInMilliseconds);
 
-        let payment = TokenPayment.egldFromAmount(0.1);
+        const payment = TokenPayment.egldFromAmount(0.1);
         await session.syncUsers([whale]);
         await createAirdropService(session).sendToEachUser(whale, friends, [payment]);
     });
@@ -44,22 +40,20 @@ describe("lottery snippet", async function () {
     it("issue lottery token", async function () {
         this.timeout(FiveMinutesInMilliseconds);
 
-        let interactor = await createESDTInteractor(session);
+        const interactor = await createESDTInteractor(session);
         await session.syncUsers([owner]);
-        let token = await interactor.issueFungibleToken(owner, { name: "FOO", ticker: "FOO", decimals: 0, supply: "100000000" });
+        const token = await interactor.issueFungibleToken(owner, { name: "FOO", ticker: "FOO", decimals: 0, supply: "100000000" });
         await session.saveToken({ name: "lotteryToken", token: token });
+        await session.save();
     });
 
     it("airdrop lottery token", async function () {
         this.timeout(FiveMinutesInMilliseconds);
 
-        let lotteryToken = await session.loadToken("lotteryToken");
-        let payment = TokenPayment.fungibleFromAmount(lotteryToken.identifier, "10", lotteryToken.decimals);
+        const lotteryToken = await session.loadToken("lotteryToken");
+        const payment = TokenPayment.fungibleFromAmount(lotteryToken.identifier, "10", lotteryToken.decimals);
         await session.syncUsers([owner]);
-
-        const snapshotBefore = await session.audit.emitSnapshotOfUsers({ users: friends });
         await createAirdropService(session).sendToEachUser(owner, friends, [payment]);
-        await session.audit.emitSnapshotOfUsers({ users: friends, comparableTo: snapshotBefore });
     });
 
     it("setup", async function () {
@@ -67,12 +61,13 @@ describe("lottery snippet", async function () {
 
         await session.syncUsers([owner]);
 
-        let interactor = await createInteractor(session);
-        let { address, returnCode } = await interactor.deploy(owner);
+        const interactor = await createInteractor(session);
+        const { address, returnCode } = await interactor.deploy(owner);
 
         assert.isTrue(returnCode.isSuccess());
 
         await session.saveAddress({ name: "lottery", address: address });
+        await session.save();
     });
 
     it("start lottery", async function () {
@@ -80,20 +75,22 @@ describe("lottery snippet", async function () {
 
         await session.syncUsers([owner]);
 
-        let contractAddress = await session.loadAddress("lottery");
-        let lotteryToken = await session.loadToken("lotteryToken");
-        let interactor = await createInteractor(session, contractAddress);
-        let whitelist = friends.map(user => user.address);
-        let returnCode = await interactor.start(owner, LotteryName, lotteryToken.identifier, 1, whitelist);
+        const contractAddress = await session.loadAddress("lottery");
+        const lotteryToken = await session.loadToken("lotteryToken");
+        const interactor = await createInteractor(session, contractAddress);
+        const whitelist = friends.map(user => user.address);
+        const returnCode = await interactor.start(owner, LotteryName, lotteryToken.identifier, 1, whitelist);
         assert.isTrue(returnCode.isSuccess());
+
+        await session.save();
     });
 
     it("get lottery info and status", async function () {
-        let contractAddress = await session.loadAddress("lottery");
-        let lotteryToken = await session.loadToken("lotteryToken");
-        let interactor = await createInteractor(session, contractAddress);
-        let lotteryInfo = await interactor.getLotteryInfo(LotteryName);
-        let lotteryStatus = await interactor.getStatus(LotteryName);
+        const contractAddress = await session.loadAddress("lottery");
+        const lotteryToken = await session.loadToken("lotteryToken");
+        const interactor = await createInteractor(session, contractAddress);
+        const lotteryInfo = await interactor.getLotteryInfo(LotteryName);
+        const lotteryStatus = await interactor.getStatus(LotteryName);
         console.log("Info:", lotteryInfo.valueOf());
         console.log("Prize pool:", lotteryInfo.getFieldValue("prize_pool").toString());
         console.log("Status:", lotteryStatus);
@@ -103,10 +100,10 @@ describe("lottery snippet", async function () {
     });
 
     it("get whitelist", async function () {
-        let contractAddress = await session.loadAddress("lottery");
-        let interactor = await createInteractor(session, contractAddress);
-        let whitelist = await interactor.getWhitelist(LotteryName);
-        let expectedWhitelist = friends.map(user => user.address).map(address => address.bech32());
+        const contractAddress = await session.loadAddress("lottery");
+        const interactor = await createInteractor(session, contractAddress);
+        const whitelist = await interactor.getWhitelist(LotteryName);
+        const expectedWhitelist = friends.map(user => user.address).map(address => address.bech32());
 
         console.log("Whitelist:", whitelist);
         assert.deepEqual(whitelist, expectedWhitelist);
@@ -120,25 +117,23 @@ describe("lottery snippet", async function () {
             func: async function () {
                 await session.syncUsers([owner, ...friends]);
 
-                let contractAddress = await session.loadAddress("lottery");
-                let lotteryToken = await session.loadToken("lotteryToken");
-                let interactor = await createInteractor(session, contractAddress);
+                const contractAddress = await session.loadAddress("lottery");
+                const lotteryToken = await session.loadToken("lotteryToken");
+                const interactor = await createInteractor(session, contractAddress);
 
-                let payment = TokenPayment.fungibleFromAmount(lotteryToken.identifier, "1", lotteryToken.decimals);
-                let buyPromises = friends.map(friend => interactor.buyTicket(friend, LotteryName, payment));
-                let returnCodes: ReturnCode[] = await Promise.all(buyPromises);
+                const payment = TokenPayment.fungibleFromAmount(lotteryToken.identifier, "1", lotteryToken.decimals);
+                const buyPromises = friends.map(friend => interactor.buyTicket(friend, LotteryName, payment));
+                const returnCodes: ReturnCode[] = await Promise.all(buyPromises);
 
                 for (const returnCode of returnCodes) {
                     assert.isTrue(returnCode.isSuccess());
                 }
+
+                await session.save();
             },
             numRetries: 3,
             delayInMilliseconds: 1000
         });
-    });
-
-    it("generate report", async function () {
-        await session.generateReport();
     });
 
     it("destroy session", async function () {

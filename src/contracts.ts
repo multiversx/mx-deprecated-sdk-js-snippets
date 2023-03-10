@@ -1,4 +1,4 @@
-import { AbiRegistry, Code } from "@elrondnetwork/erdjs";
+import { AbiRegistry, Code } from "@multiversx/sdk-core";
 import { PathLike, promises } from "fs";
 
 export async function loadCode(file: PathLike) {

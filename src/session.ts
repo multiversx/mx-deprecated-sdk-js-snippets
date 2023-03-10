@@ -1,22 +1,19 @@
-import path from "path";
+import { Address } from "@multiversx/sdk-core";
+import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@multiversx/sdk-network-providers";
 import { existsSync, PathLike, readFileSync } from "fs";
-import { Address } from "@elrondnetwork/erdjs";
-import { ApiNetworkProvider, NetworkConfig, ProxyNetworkProvider } from "@elrondnetwork/erdjs-network-providers";
-import { ErrBadSessionConfig } from "./errors";
-import { IBunchOfUsers, ICorrelationHolder, IAudit, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
-import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
-import { Storage } from "./storage/storage";
-import { BunchOfUsers } from "./users";
-import { resolvePath } from "./filesystem";
+import path from "path";
 import { Audit } from "./audit";
-import { Report } from "./reports/report";
-import { CorrelationHolder } from "./correlationHolder";
 import { BreadcrumbTypeAddress, BreadcrumbTypeArbitrary, BreadcrumbTypeToken } from "./constants";
+import { ErrBadSessionConfig } from "./errors";
+import { resolvePath } from "./filesystem";
+import { IAudit, IBunchOfUsers, INetworkProviderConfig, IStorage, ITestSession, ITestSessionConfig, ITestUser, IToken } from "./interface";
+import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
+import { Storage } from "./storage";
+import { BunchOfUsers } from "./users";
 
 export class TestSession implements ITestSession {
     readonly config: ITestSessionConfig;
     readonly name: string;
-    readonly correlation: ICorrelationHolder;
     readonly networkProvider: INetworkProvider;
     readonly users: IBunchOfUsers;
     readonly storage: IStorage;
@@ -26,7 +23,6 @@ export class TestSession implements ITestSession {
     constructor(args: {
         config: ITestSessionConfig,
         name: string,
-        correlation: ICorrelationHolder,
         provider: INetworkProvider,
         users: IBunchOfUsers,
         storage: IStorage,
@@ -34,7 +30,6 @@ export class TestSession implements ITestSession {
     }) {
         this.config = args.config;
         this.name = args.name;
-        this.correlation = args.correlation;
         this.networkProvider = args.provider;
         this.users = args.users;
         this.storage = args.storage;
@@ -47,21 +42,17 @@ export class TestSession implements ITestSession {
         const configJson = readFileSync(configFile, { encoding: "utf8" });
         const config = <ITestSessionConfig>JSON.parse(configJson);
 
-        const correlation = new CorrelationHolder();
         const networkprovider = this.createNetworkProvider(sessionName, config.networkProvider);
         const users = await BunchOfUsers.create(config.users);
-        const storageName = resolvePath(folderOfConfigFile, `${sessionName}.session.sqlite`);
+        const storageName = resolvePath(folderOfConfigFile, `${sessionName}.storage`);
         const storage = await Storage.create(storageName.toString());
         const log = new Audit({
             storage: storage,
-            correlation: correlation,
-            networkProvider: networkprovider
         });
 
         let session = new TestSession({
             config: config,
             name: sessionName,
-            correlation: correlation,
             provider: networkprovider,
             users: users,
             storage: storage,
@@ -125,8 +116,6 @@ export class TestSession implements ITestSession {
 
         await this.storage.storeBreadcrumb({
             id: 0,
-            correlationStep: this.correlation.step,
-            correlationTag: this.correlation.tag,
             type: BreadcrumbTypeAddress,
             name: name,
             payload: address.bech32()
@@ -142,13 +131,11 @@ export class TestSession implements ITestSession {
     async saveToken(params: { name: string, token: IToken }): Promise<void> {
         const name = params.name;
         const token = params.token;
-        
+
         console.log(`TestSession.saveToken(): name = [${name}], token = ${token.identifier}`);
 
         await this.storage.storeBreadcrumb({
             id: 0,
-            correlationStep: this.correlation.step,
-            correlationTag: this.correlation.tag,
             type: BreadcrumbTypeToken,
             name: name,
             payload: token
@@ -166,8 +153,6 @@ export class TestSession implements ITestSession {
 
         await this.storage.storeBreadcrumb({
             id: 0,
-            correlationStep: this.correlation.step,
-            correlationTag: this.correlation.tag,
             type: params.type || BreadcrumbTypeArbitrary,
             name: params.name,
             payload: params.value,
@@ -185,10 +170,8 @@ export class TestSession implements ITestSession {
         return payloads;
     }
 
-    async generateReport(tag?: string): Promise<void> {
-        const report = new Report(this.config.reporting, this.storage);
-        await report.prepare();
-        await report.generate(tag);
+    async save(): Promise<void> {
+        await this.storage.save();
     }
 
     async destroy(): Promise<void> {

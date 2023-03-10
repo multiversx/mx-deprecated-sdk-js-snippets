@@ -1,4 +1,4 @@
-import { UserPublicKey, UserSecretKey, USER_PUBKEY_LENGTH, USER_SEED_LENGTH } from "@elrondnetwork/erdjs-walletcore";
+import { UserPublicKey, UserSecretKey, USER_PUBKEY_LENGTH, USER_SEED_LENGTH } from "@multiversx/sdk-wallet";
 import { Err } from "../errors";
 
 export function parseUserKeys(text: string): { sk: UserSecretKey, pk: UserPublicKey }[] {

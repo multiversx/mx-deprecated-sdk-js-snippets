@@ -1,6 +1,6 @@
 
 
-import { AsyncTimer, Err, IAddress, INonce } from "@elrondnetwork/erdjs";
+import { AsyncTimer, Err, IAddress, INonce } from "@multiversx/sdk-core";
 import { IAccountOnNetwork, INetworkProvider } from "../interfaceOfNetwork";
 
 export class AccountWatcher {
@@ -59,7 +59,7 @@ export class AccountWatcher {
             try {
                 fetchedData = await doFetch();
                 onFetched(fetchedData);
-                
+
                 satisfied = isSatisfied(fetchedData);
                 if (satisfied || stop) {
                     break;

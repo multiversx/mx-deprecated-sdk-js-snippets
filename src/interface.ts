@@ -1,11 +1,10 @@
 import BigNumber from "bignumber.js";
-import { INetworkConfig, INetworkProvider, ITransactionOnNetwork } from "./interfaceOfNetwork";
+import { INetworkConfig, INetworkProvider } from "./interfaceOfNetwork";
 import { ISigner } from "./interfaceOfWalletCore";
 
 export interface ITestSessionConfig {
     readonly networkProvider: INetworkProviderConfig;
     readonly users: IUsersConfig;
-    readonly reporting: IReportingConfig;
 }
 
 export interface INetworkProviderConfig {
@@ -30,12 +29,6 @@ export interface IGroupOfUsersConfig {
     readonly folder?: string;
 }
 
-export interface IReportingConfig {
-    explorerUrl: string;
-    apiUrl: string;
-    outputFolder: string;
-}
-
 export interface ISecretKeysGeneratorConfig {
     readonly mnemonic: string;
     readonly individuals: IGeneratedUserConfig[];
@@ -57,7 +50,6 @@ export interface IGeneratedGroupOfUsersConfig {
 
 export interface ITestSession {
     readonly name: string;
-    readonly correlation: ICorrelationHolder;
     readonly networkProvider: INetworkProvider;
     readonly storage: IStorage;
     readonly users: IBunchOfUsers;
@@ -73,13 +65,8 @@ export interface ITestSession {
     saveBreadcrumb(params: { type?: string, name: string, value: any }): Promise<void>;
     loadBreadcrumb(name: string): Promise<any>;
     loadBreadcrumbsByType(type: string): Promise<any[]>;
-    generateReport(tag?: string): Promise<void>;
+    save(): Promise<void>;
     destroy(): Promise<void>;
-}
-
-export interface ICorrelationHolder {
-    step: string;
-    tag: string;
 }
 
 export interface IBunchOfUsers {
@@ -97,39 +84,27 @@ export interface ITestUser {
     sync(provider: INetworkProvider): Promise<void>;
 }
 
-/**
- * [Design] For the moment, the storage interface holds all functions necessary to store / load records.
- * The functions are not grouped "by entity" ("by record type") at this point - 
- * that is, the interface isn't segregated into more, smaller interfaces yet (for simplicity).
- * It will be split once it grows a little bit more.
- */
 export interface IStorage {
-    storeBreadcrumb(record: IBreadcrumbRecord): Promise<number>;
-    loadBreadcrumb(name: string): Promise<IBreadcrumbRecord>;
-    loadBreadcrumbs(): Promise<IBreadcrumbRecord[]>;
-    loadBreadcrumbsByType(type: string): Promise<IBreadcrumbRecord[]>;
-    storeAuditEntry(record: IAuditEntryRecord): Promise<number>;
-    loadAuditEntries(): Promise<IAuditEntryRecord[]>;
+    storeBreadcrumb(record: IBreadcrumbRecord): void;
+    loadBreadcrumb(name: string): IBreadcrumbRecord;
+    loadBreadcrumbs(): IBreadcrumbRecord[];
+    loadBreadcrumbsByType(type: string): IBreadcrumbRecord[];
+    storeAuditEntry(record: IAuditEntryRecord): void;
+    save(): Promise<void>;
     destroy(): Promise<void>;
 }
 
-export interface IBreadcrumbRecord {
+interface IBreadcrumbRecord {
     id: number;
-    correlationStep: string;
-    correlationTag: string;
     type: string;
     name: string;
     payload: any;
 }
 
-export interface IAuditEntryRecord {
+interface IAuditEntryRecord {
     id: number;
-    correlationStep: string;
-    correlationTag: string;
-    event: string;
     summary: string;
     payload: any;
-    comparableTo: number | null;
 }
 
 export interface IAccount {
@@ -158,25 +133,5 @@ export interface ITokenPayment {
 }
 
 export interface IAudit {
-    onContractDeploymentSent(params: { transactionHash: IHash, contractAddress: IAddress }): Promise<void>;
-
-    onTransactionSent(params: {
-        action?: string,
-        args?: any[],
-        transactionHash: IHash
-    }): Promise<void>;
-
-    onTransactionCompleted(params: { transactionHash: IHash, transaction: ITransactionOnNetwork }): Promise<void>;
-
-    onContractOutcome(params: {
-        transactionHash?: IHash,
-        returnCode?: IReturnCode,
-        returnMessage?: string,
-        values?: any[]
-    }): Promise<void>
-
-    onSnapshot(params: { state: any, summary?: string, comparableTo?: number }): Promise<number>;
-
-    emitSnapshotOfUsers(params: { users: ITestUser[], comparableTo?: number }): Promise<number>;
-    emitSnapshotOfAccounts(params: { addresses: IAddress[], comparableTo?: number }): Promise<number>;
+    addEntry(summary: string, payload: any): Promise<void>;
 }

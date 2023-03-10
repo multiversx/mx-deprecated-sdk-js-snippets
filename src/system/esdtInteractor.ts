@@ -1,4 +1,4 @@
-import { Address, Interaction, ResultsParser, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher } from "@elrondnetwork/erdjs";
+import { Address, Interaction, ResultsParser, SmartContract, SmartContractAbi, TokenPayment, TransactionWatcher } from "@multiversx/sdk-core";
 import BigNumber from "bignumber.js";
 import path from "path";
 import { loadAbiRegistry } from "../contracts";

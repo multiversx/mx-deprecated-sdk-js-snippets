@@ -1,11 +1,15 @@
 {
     "networkProvider": {
         "type": "ProxyNetworkProvider",
-        "url": "http://localhost:7950",
+        "url": "https://devnet-gateway.multiversx.com",
         "timeout": 5000
     },
     "users": {
         "individuals": [
+            {
+                "name": "whale",
+                "pem": "~/multiversx-sdk/testwallets/latest/users/alice.pem"
+            },
             {
                 "name": "alice",
                 "pem": "~/multiversx-sdk/testwallets/latest/users/alice.pem"
