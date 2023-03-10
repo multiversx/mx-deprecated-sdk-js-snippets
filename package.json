@@ -8,12 +8,10 @@
     "out/**/*"
   ],
   "scripts": {
-    "compile": "tsc -p tsconfig.json && npm run copy-files",
+    "compile": "tsc -p tsconfig.json",
     "pretest": "npm run compile",
     "prepare": "npm run compile",
     "lint": "tslint --project .",
-    "copy-files": "npm run copy-abi",
-    "copy-abi": "cp src/system/*.json out/system/",
     "mocha-grep": "mocha --grep ${PATTERN}"
   },
   "author": "MultiversX",
